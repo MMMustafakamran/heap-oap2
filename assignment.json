@@ -1,0 +1,105 @@
+{
+ "framework": "OpenAI Agents SDK (Python)",
+ "ui": "vue",
+ "repo": "OpenAIAgents-Vue",
+ "docBase": "https://docs.copilotkit.ai/vue/openai-agents-python/",
+ "versions": {
+  "@copilotkit/vue": "1.85.0",
+  "@copilotkit/runtime": "1.85.0",
+  "@ag-ui/client": "1.0.4",
+  "vue": "3.5.45",
+  "vite": "8.3.6",
+  "openai-agents": "0.24.0",
+  "ag-ui-openai-agents": "0.1.0"
+ },
+ "testedContext": {
+  "os": "Microsoft Windows 11 Pro",
+  "packageManager": "npm 12 (Node 26.7.0)"
+ },
+ "report": {
+  "style": "team",
+  "h1": "OpenAI Agents SDK",
+  "title": "OpenAI Agents SDK testing",
+  "quickstartHeading": "Quickstarts",
+  "quickstartHeader": null,
+  "clipsToUpload": true,
+  "guidesHeading": "Vue Guides",
+  "columns": [
+   "Page/Section",
+   "OpenAI Agents SDK"
+  ],
+  "resultColumn": 1
+ },
+ "sections": [
+  {
+   "label": "Basics",
+   "cells": [
+    "Section"
+   ]
+  },
+  {
+   "label": "Generative UI",
+   "cells": [
+    "Section"
+   ]
+  },
+  {
+   "label": "Controlled",
+   "cells": [
+    "Sub section"
+   ]
+  },
+  {
+   "label": "Open-ended",
+   "cells": [
+    "Sub section"
+   ]
+  },
+  {
+   "label": "Interactivity",
+   "cells": [
+    "Section"
+   ]
+  },
+  {
+   "label": "Agent capabilities",
+   "cells": [
+    "Section"
+   ]
+  }
+ ],
+ "quickstartBlocked": "the Vue quickstart is the OpenAI Agents SDK landing page; its only runtime code is a Next.js route handler, with no Vue steps and no Python agent, so a reader has no working Vue app to build on",
+ "pages": [
+  {
+   "id": "quickstart",
+   "label": "Vue",
+   "kind": "quickstart",
+   "group": null,
+   "child": false,
+   "docPath": "",
+   "reachable": "sidebar",
+   "status": "❌",
+   "findings": [
+    1
+   ],
+   "notes": [
+    "Issue: the Vue quickstart shows the OpenAI Agents SDK landing page; the only code is a Next.js route handler, no Vue steps and no Python agent."
+   ],
+   "block": null,
+   "links": [
+    {
+     "text": null,
+     "clip": "OAI-vue-01-Quickstart",
+     "loom": null,
+     "narration": "narration/scripts/OAI-vue-01-Quickstart.json"
+    }
+   ],
+   "review": {
+    "verdict": null,
+    "approvedAt": null,
+    "by": null
+   },
+   "added": "2026-11-13"
+  }
+ ]
+}

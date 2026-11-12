@@ -1,0 +1,230 @@
+{
+ "root": "vue/openai-agents-python",
+ "savedAt": "2026-11-12",
+ "pages": {
+  "/vue/openai-agents-python/prebuilt-components": [
+   "/vue/openai-agents-python/vue/prebuilt-components/chat",
+   "/vue/openai-agents-python/vue/prebuilt-components/chat-controls",
+   "/vue/openai-agents-python/vue/prebuilt-components/popup",
+   "/vue/openai-agents-python/vue/prebuilt-components/sidebar"
+  ],
+  "/vue/openai-agents-python/custom-look-and-feel/headless-ui": [
+   "/vue/openai-agents-python/vue/custom-look-and-feel/css",
+   "/vue/openai-agents-python/vue/custom-look-and-feel/slots"
+  ],
+  "/vue/openai-agents-python/custom-look-and-feel/slots": [],
+  "/vue/openai-agents-python": [
+   "/vue/openai-agents-python/backend/copilot-runtime",
+   "/vue/openai-agents-python/inspector",
+   "/vue/openai-agents-python/model-selection",
+   "/vue/openai-agents-python/vue/AG-UI-Streams",
+   "/vue/openai-agents-python/vue/generative-ui/tool-based",
+   "/vue/openai-agents-python/vue/prebuilt-components/copilot-threads-drawer"
+  ],
+  "/vue/openai-agents-python/using-these-docs": [],
+  "/vue/openai-agents-python/build-with-agents": [],
+  "/vue/openai-agents-python/programmatic-control": [
+   "/vue/openai-agents-python/human-in-the-loop",
+   "/vue/openai-agents-python/vue/custom-look-and-feel/headless-ui"
+  ],
+  "/vue/openai-agents-python/prebuilt-components/copilot-threads-drawer": [
+   "/vue/openai-agents-python/vue/AG-UI-Streams",
+   "/vue/openai-agents-python/vue/headless-threads",
+   "/vue/openai-agents-python/vue/threads-lifecycle"
+  ],
+  "/vue/openai-agents-python/frontend-tools": [],
+  "/vue/openai-agents-python/headless-threads": [
+   "/vue/openai-agents-python/intelligence/self-hosting",
+   "/vue/openai-agents-python/intelligence/threads-explained",
+   "/vue/openai-agents-python/threads-import",
+   "/vue/openai-agents-python/vue/prebuilt-components/copilot-threads-drawer",
+   "/vue/openai-agents-python/vue/threads-lifecycle"
+  ],
+  "/vue/openai-agents-python/generative-ui/tool-based": [
+   "/vue/openai-agents-python/vue/generative-ui/tool-rendering",
+   "/vue/openai-agents-python/vue/human-in-the-loop"
+  ],
+  "/vue/openai-agents-python/generative-ui/tool-rendering": [],
+  "/vue/openai-agents-python/generative-ui/state-rendering": [],
+  "/vue/openai-agents-python/generative-ui/mcp-apps": [],
+  "/vue/openai-agents-python/shared-state/rendering-in-app": [
+   "/vue/openai-agents-python/vue/shared-state",
+   "/vue/openai-agents-python/vue/shared-state/agent-readonly",
+   "/vue/openai-agents-python/vue/shared-state/streaming"
+  ],
+  "/vue/openai-agents-python/shared-state/streaming": [
+   "/vue/openai-agents-python/vue/shared-state",
+   "/vue/openai-agents-python/vue/shared-state/agent-readonly"
+  ],
+  "/vue/openai-agents-python/shared-state": [
+   "/vue/openai-agents-python/vue/shared-state/agent-readonly",
+   "/vue/openai-agents-python/vue/shared-state/rendering-in-app",
+   "/vue/openai-agents-python/vue/shared-state/streaming"
+  ],
+  "/vue/openai-agents-python/shared-state/agent-readonly": [
+   "/vue/openai-agents-python/vue/shared-state",
+   "/vue/openai-agents-python/vue/shared-state/streaming"
+  ],
+  "/vue/openai-agents-python/human-in-the-loop": [
+   "/vue/openai-agents-python/vue/human-in-the-loop/headless",
+   "/vue/openai-agents-python/vue/human-in-the-loop/useInterrupt"
+  ],
+  "/vue/openai-agents-python/human-in-the-loop/useInterrupt": [
+   "/vue/openai-agents-python/human-in-the-loop",
+   "/vue/openai-agents-python/human-in-the-loop/headless"
+  ],
+  "/vue/openai-agents-python/human-in-the-loop/headless": [
+   "/vue/openai-agents-python/human-in-the-loop",
+   "/vue/openai-agents-python/human-in-the-loop/useInterrupt"
+  ],
+  "/vue/openai-agents-python/human-in-the-loop/governed-actions": [
+   "/vue/openai-agents-python/frontend-tools",
+   "/vue/openai-agents-python/human-in-the-loop",
+   "/vue/openai-agents-python/human-in-the-loop/useInterrupt"
+  ],
+  "/vue/openai-agents-python/multi-agent/subagents": [
+   "/vue/openai-agents-python/shared-state",
+   "/vue/openai-agents-python/shared-state/streaming"
+  ],
+  "/vue/openai-agents-python/webmcp": [
+   "/vue/openai-agents-python/frontend-tools"
+  ],
+  "/vue/openai-agents-python/AG-UI-Streams": [
+   "/vue/openai-agents-python/headless-threads",
+   "/vue/openai-agents-python/inspector",
+   "/vue/openai-agents-python/intelligence/bring-your-own-thread-system",
+   "/vue/openai-agents-python/intelligence/managed-intelligence-platform",
+   "/vue/openai-agents-python/intelligence/quickstart",
+   "/vue/openai-agents-python/intelligence/self-hosting",
+   "/vue/openai-agents-python/intelligence/threads-explained",
+   "/vue/openai-agents-python/prebuilt-components/copilot-threads-drawer",
+   "/vue/openai-agents-python/threads-import",
+   "/vue/openai-agents-python/threads-lifecycle"
+  ],
+  "/vue/openai-agents-python/threads-import": [
+   "/vue/openai-agents-python/headless-threads",
+   "/vue/openai-agents-python/intelligence/bring-your-own-thread-system",
+   "/vue/openai-agents-python/intelligence/managed-intelligence-platform",
+   "/vue/openai-agents-python/intelligence/quickstart",
+   "/vue/openai-agents-python/intelligence/self-hosting",
+   "/vue/openai-agents-python/intelligence/threads-explained",
+   "/vue/openai-agents-python/prebuilt-components/copilot-threads-drawer"
+  ],
+  "/vue/openai-agents-python/learning": [
+   "/vue/openai-agents-python/AG-UI-Streams",
+   "/vue/openai-agents-python/cli",
+   "/vue/openai-agents-python/inspector",
+   "/vue/openai-agents-python/intelligence/capture-interactions",
+   "/vue/openai-agents-python/intelligence/learned-skills",
+   "/vue/openai-agents-python/intelligence/memories",
+   "/vue/openai-agents-python/intelligence/overview",
+   "/vue/openai-agents-python/intelligence/quickstart",
+   "/vue/openai-agents-python/intelligence/threads-explained"
+  ],
+  "/vue/openai-agents-python/runtime-server-adapter": [
+   "/vue/openai-agents-python/intelligence/quickstart"
+  ],
+  "/vue/openai-agents-python/inspector": [
+   "/vue/openai-agents-python/AG-UI-Streams",
+   "/vue/openai-agents-python/agent-config",
+   "/vue/openai-agents-python/agentic-protocols/ag-ui",
+   "/vue/openai-agents-python/backend/copilot-runtime",
+   "/vue/openai-agents-python/backend/runtime-endpoints",
+   "/vue/openai-agents-python/frontend-tools",
+   "/vue/openai-agents-python/generative-ui/components",
+   "/vue/openai-agents-python/headless-threads",
+   "/vue/openai-agents-python/intelligence/overview",
+   "/vue/openai-agents-python/intelligence/quickstart",
+   "/vue/openai-agents-python/learning",
+   "/vue/openai-agents-python/quickstart",
+   "/vue/openai-agents-python/react-native",
+   "/vue/openai-agents-python/shared-state",
+   "/vue/openai-agents-python/shared-state/agent-readonly",
+   "/vue/openai-agents-python/troubleshooting/debug-mode",
+   "/vue/openai-agents-python/troubleshooting/error-debugging",
+   "/vue/openai-agents-python/vs-code-extension"
+  ],
+  "/vue/openai-agents-python/threads-lifecycle": [
+   "/vue/openai-agents-python/auth",
+   "/vue/openai-agents-python/intelligence/threads-explained",
+   "/vue/openai-agents-python/threads-import",
+   "/vue/openai-agents-python/vue/headless-threads"
+  ],
+  "/vue/openai-agents-python/concepts/architecture": [
+   "/vue/openai-agents-python/agentic-protocols/ag-ui",
+   "/vue/openai-agents-python/intelligence/overview",
+   "/vue/openai-agents-python/quickstart"
+  ],
+  "/vue/openai-agents-python/concepts/generative-ui-overview": [
+   "/vue/openai-agents-python/generative-ui/a2ui",
+   "/vue/openai-agents-python/generative-ui/a2ui/dynamic-schema",
+   "/vue/openai-agents-python/generative-ui/a2ui/fixed-schema",
+   "/vue/openai-agents-python/generative-ui/mcp-apps",
+   "/vue/openai-agents-python/generative-ui/reasoning",
+   "/vue/openai-agents-python/generative-ui/state-rendering",
+   "/vue/openai-agents-python/generative-ui/tool-based",
+   "/vue/openai-agents-python/generative-ui/tool-rendering"
+  ],
+  "/vue/openai-agents-python/concepts/which-hook": [
+   "/vue/openai-agents-python/vue/custom-look-and-feel/slots",
+   "/vue/openai-agents-python/vue/frontend-tools",
+   "/vue/openai-agents-python/vue/generative-ui/tool-based",
+   "/vue/openai-agents-python/vue/generative-ui/tool-rendering",
+   "/vue/openai-agents-python/vue/human-in-the-loop"
+  ],
+  "/vue/openai-agents-python/concepts/oss-vs-enterprise": [
+   "/vue/openai-agents-python/AG-UI-Streams",
+   "/vue/openai-agents-python/backend/copilot-runtime",
+   "/vue/openai-agents-python/inspector",
+   "/vue/openai-agents-python/intelligence/analytics",
+   "/vue/openai-agents-python/intelligence/channels",
+   "/vue/openai-agents-python/intelligence/intelligence-platform",
+   "/vue/openai-agents-python/intelligence/learned-skills",
+   "/vue/openai-agents-python/intelligence/managed-intelligence-platform",
+   "/vue/openai-agents-python/intelligence/memories",
+   "/vue/openai-agents-python/intelligence/overview",
+   "/vue/openai-agents-python/intelligence/self-hosting",
+   "/vue/openai-agents-python/intelligence/self-hosting-ecs",
+   "/vue/openai-agents-python/learning",
+   "/vue/openai-agents-python/quickstart"
+  ],
+  "/vue/openai-agents-python/agentic-protocols": [
+   "/vue/openai-agents-python/generative-ui/a2ui",
+   "/vue/openai-agents-python/generative-ui/mcp-apps"
+  ],
+  "/vue/openai-agents-python/agentic-protocols/ag-ui": [],
+  "/vue/openai-agents-python/agentic-protocols/ag-ui-middleware": [
+   "/vue/openai-agents-python/agentic-protocols/ag-ui",
+   "/vue/openai-agents-python/backend/ag-ui",
+   "/vue/openai-agents-python/backend/copilot-runtime"
+  ],
+  "/vue/openai-agents-python/agentic-protocols/mcp": [
+   "/vue/openai-agents-python/agentic-protocols",
+   "/vue/openai-agents-python/backend/copilot-runtime",
+   "/vue/openai-agents-python/generative-ui/mcp-apps",
+   "/vue/openai-agents-python/generative-ui/tool-rendering",
+   "/vue/openai-agents-python/human-in-the-loop"
+  ],
+  "/vue/openai-agents-python/agentic-protocols/a2a": [
+   "/vue/openai-agents-python/agentic-protocols"
+  ],
+  "/vue/openai-agents-python/troubleshooting/common-issues": [
+   "/vue/openai-agents-python/backend/agent-runner",
+   "/vue/openai-agents-python/backend/runtime-endpoints",
+   "/vue/openai-agents-python/deploy/agentcore",
+   "/vue/openai-agents-python/intelligence/self-hosting",
+   "/vue/openai-agents-python/model-selection",
+   "/vue/openai-agents-python/quickstart",
+   "/vue/openai-agents-python/troubleshooting/error-debugging",
+   "/vue/openai-agents-python/troubleshooting/error-reference"
+  ],
+  "/vue/openai-agents-python/troubleshooting/debug-mode": [
+   "/vue/openai-agents-python/troubleshooting/error-debugging"
+  ],
+  "/vue/openai-agents-python/community-frameworks": [],
+  "/vue/openai-agents-python/troubleshooting/event-inspector": [
+   "/vue/openai-agents-python/inspector",
+   "/vue/openai-agents-python/vs-code-extension"
+  ]
+ }
+}

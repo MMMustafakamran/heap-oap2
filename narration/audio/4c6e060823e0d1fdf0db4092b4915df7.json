@@ -1,0 +1,9 @@
+{
+ "text": "So basically there are no Vue steps here. That route handler can't run in a Vue Vite app, and there's no Python agent code either. The setup guide link just comes back to this same page, so I had to connect Vue to the agent myself.",
+ "model": "s2.1-pro-free",
+ "refSha256": "2c9d0ecf4608feacc07c88e869cd4dec601481306a939b7be92fc1bff521a727",
+ "duration": 14.443,
+ "file": "4c6e060823e0d1fdf0db4092b4915df7.mp3",
+ "clip": "OAI-vue-01-Quickstart",
+ "at": "notepad"
+}
