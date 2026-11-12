@@ -1,12 +1,33 @@
 {
  "clip": "OAI-vue-01-Quickstart",
  "segments": [
-  {"at": "doc", "text": "Ok so, this is the quickstart page in the CopilotKit docs, for Vue with the OpenAI Agents SDK in Python, and I have implemented this page in my project."},
-  {"at": "ide", "text": "So this is my project, umm, and this is the exact code from the doc."},
-  {"at": "demo", "text": "Moving on to the demo. So after sending a message, the chat replies, but only because I wired it up myself."},
-  {"at": "evidence", "text": "Ok so, the page here is just the landing page for this framework."},
-  {"at": "evidence#2", "text": "And the only code on it is this, uh, Next.js route handler."},
-  {"at": "notepad", "text": "So basically there are no Vue steps here. That route handler can't run in a Vue Vite app, and there's no Python agent code either. The setup guide link just comes back to this same page, so I had to connect Vue to the agent myself."},
-  {"at": "+", "text": "So kindly look into it."}
+  {
+   "at": "doc",
+   "text": "Ok so, this is the quickstart page in the CopilotKit docs, for Vue with OpenAI Agents, and I have implemented this page."
+  },
+  {
+   "at": "ide",
+   "text": "So this is my project, umm, and this is the exact code from the doc."
+  },
+  {
+   "at": "demo",
+   "text": "Moving on to the demo. So after sending a message, the chat replies, but only because I wired it up myself."
+  },
+  {
+   "at": "evidence",
+   "text": "Ok so, the page here is just the landing page for this framework."
+  },
+  {
+   "at": "evidence#2",
+   "text": "And the only code on it is this, uh, Next.js route handler."
+  },
+  {
+   "at": "notepad",
+   "text": "So basically there are no Vue steps here. That route handler can't run in a Vue Vite app, and there's no Python agent code either. The setup guide link just comes back to this same page, so I had to connect Vue to the agent myself."
+  },
+  {
+   "at": "+",
+   "text": "So kindly look into it."
+  }
  ]
 }

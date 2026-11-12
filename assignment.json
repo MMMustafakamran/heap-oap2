@@ -38,6 +38,36 @@
    ]
   },
   {
+   "label": "Chat",
+   "cells": [
+    "Sub section"
+   ]
+  },
+  {
+   "label": "Custom Look and Feel",
+   "cells": [
+    "Sub section"
+   ]
+  },
+  {
+   "label": "Chat​",
+   "cells": [
+    "Sub section"
+   ]
+  },
+  {
+   "label": "Threads",
+   "cells": [
+    "Sub section"
+   ]
+  },
+  {
+   "label": "Basics​",
+   "cells": [
+    "Section"
+   ]
+  },
+  {
    "label": "Generative UI",
    "cells": [
     "Section"
@@ -62,9 +92,39 @@
    ]
   },
   {
+   "label": "Shared state",
+   "cells": [
+    "Sub section"
+   ]
+  },
+  {
+   "label": "Human-in-the-loop",
+   "cells": [
+    "Sub section"
+   ]
+  },
+  {
+   "label": "Interactivity​",
+   "cells": [
+    "Section"
+   ]
+  },
+  {
    "label": "Agent capabilities",
    "cells": [
     "Section"
+   ]
+  },
+  {
+   "label": "Backend",
+   "cells": [
+    "Section"
+   ]
+  },
+  {
+   "label": "Debugging",
+   "cells": [
+    "Sub section"
    ]
   }
  ],
@@ -90,10 +150,672 @@
     {
      "text": null,
      "clip": "OAI-vue-01-Quickstart",
-     "loom": null,
+     "loom": "https://www.loom.com/share/3434bce0f604458abbda6f359b28b4b7",
      "narration": "narration/scripts/OAI-vue-01-Quickstart.json"
     }
    ],
+   "review": {
+    "verdict": null,
+    "approvedAt": null,
+    "by": null
+   },
+   "added": "2026-11-13"
+  },
+  {
+   "id": "prebuilt-components",
+   "label": "Prebuilt Components",
+   "kind": "guide",
+   "group": "Chat",
+   "child": true,
+   "docPath": "prebuilt-components",
+   "reachable": "sidebar",
+   "status": "❌",
+   "notTested": true,
+   "findings": [],
+   "notes": [],
+   "block": null,
+   "links": [],
+   "review": {
+    "verdict": null,
+    "approvedAt": null,
+    "by": null
+   },
+   "added": "2026-11-13"
+  },
+  {
+   "id": "slots",
+   "label": "Slots",
+   "kind": "guide",
+   "group": "Custom Look and Feel",
+   "child": true,
+   "docPath": "custom-look-and-feel/slots",
+   "reachable": "sidebar",
+   "status": "❌",
+   "notTested": true,
+   "findings": [],
+   "notes": [],
+   "block": null,
+   "links": [],
+   "review": {
+    "verdict": null,
+    "approvedAt": null,
+    "by": null
+   },
+   "added": "2026-11-13"
+  },
+  {
+   "id": "headless-ui",
+   "label": "Headless UI",
+   "kind": "guide",
+   "group": "Custom Look and Feel",
+   "child": true,
+   "docPath": "custom-look-and-feel/headless-ui",
+   "reachable": "sidebar",
+   "status": "❌",
+   "notTested": true,
+   "findings": [],
+   "notes": [],
+   "block": null,
+   "links": [],
+   "review": {
+    "verdict": null,
+    "approvedAt": null,
+    "by": null
+   },
+   "added": "2026-11-13"
+  },
+  {
+   "id": "programmatic-control",
+   "label": "Programmatic Control",
+   "kind": "guide",
+   "group": "Chat​",
+   "child": true,
+   "docPath": "programmatic-control",
+   "reachable": "sidebar",
+   "status": "❌",
+   "notTested": true,
+   "findings": [],
+   "notes": [],
+   "block": null,
+   "links": [],
+   "review": {
+    "verdict": null,
+    "approvedAt": null,
+    "by": null
+   },
+   "added": "2026-11-13"
+  },
+  {
+   "id": "threads-drawer",
+   "label": "Threads Drawer",
+   "kind": "guide",
+   "group": "Threads",
+   "child": true,
+   "docPath": "prebuilt-components/copilot-threads-drawer",
+   "reachable": "sidebar",
+   "status": "❌",
+   "notTested": true,
+   "findings": [],
+   "notes": [],
+   "block": null,
+   "links": [],
+   "review": {
+    "verdict": null,
+    "approvedAt": null,
+    "by": null
+   },
+   "added": "2026-11-13"
+  },
+  {
+   "id": "headless-threads",
+   "label": "Headless Threads",
+   "kind": "guide",
+   "group": "Threads",
+   "child": true,
+   "docPath": "headless-threads",
+   "reachable": "sidebar",
+   "status": "❌",
+   "notTested": true,
+   "findings": [],
+   "notes": [],
+   "block": null,
+   "links": [],
+   "review": {
+    "verdict": null,
+    "approvedAt": null,
+    "by": null
+   },
+   "added": "2026-11-13"
+  },
+  {
+   "id": "frontend-tools",
+   "label": "Frontend-tools",
+   "kind": "guide",
+   "group": "Basics​",
+   "child": false,
+   "docPath": "frontend-tools",
+   "reachable": "sidebar",
+   "status": "❌",
+   "notTested": true,
+   "findings": [],
+   "notes": [],
+   "block": null,
+   "links": [],
+   "review": {
+    "verdict": null,
+    "approvedAt": null,
+    "by": null
+   },
+   "added": "2026-11-13"
+  },
+  {
+   "id": "tool-based",
+   "label": "Components as Tools",
+   "kind": "guide",
+   "group": "Controlled",
+   "child": true,
+   "docPath": "generative-ui/tool-based",
+   "reachable": "sidebar",
+   "status": "❌",
+   "notTested": true,
+   "findings": [],
+   "notes": [],
+   "block": null,
+   "links": [],
+   "review": {
+    "verdict": null,
+    "approvedAt": null,
+    "by": null
+   },
+   "added": "2026-11-13"
+  },
+  {
+   "id": "tool-rendering",
+   "label": "Tool Call Rendering",
+   "kind": "guide",
+   "group": "Controlled",
+   "child": true,
+   "docPath": "generative-ui/tool-rendering",
+   "reachable": "sidebar",
+   "status": "❌",
+   "notTested": true,
+   "findings": [],
+   "notes": [],
+   "block": null,
+   "links": [],
+   "review": {
+    "verdict": null,
+    "approvedAt": null,
+    "by": null
+   },
+   "added": "2026-11-13"
+  },
+  {
+   "id": "state-rendering",
+   "label": "State Rendering",
+   "kind": "guide",
+   "group": "Controlled",
+   "child": true,
+   "docPath": "generative-ui/state-rendering",
+   "reachable": "sidebar",
+   "status": "❌",
+   "notTested": true,
+   "findings": [],
+   "notes": [],
+   "block": null,
+   "links": [],
+   "review": {
+    "verdict": null,
+    "approvedAt": null,
+    "by": null
+   },
+   "added": "2026-11-13"
+  },
+  {
+   "id": "mcp-apps",
+   "label": "MCP Apps",
+   "kind": "guide",
+   "group": "Open-ended",
+   "child": true,
+   "docPath": "generative-ui/mcp-apps",
+   "reachable": "sidebar",
+   "status": "❌",
+   "notTested": true,
+   "findings": [],
+   "notes": [],
+   "block": null,
+   "links": [],
+   "review": {
+    "verdict": null,
+    "approvedAt": null,
+    "by": null
+   },
+   "added": "2026-11-13"
+  },
+  {
+   "id": "shared-state",
+   "label": "Shared State",
+   "kind": "guide",
+   "group": "Shared state",
+   "child": true,
+   "docPath": "shared-state",
+   "reachable": "sidebar",
+   "status": "❌",
+   "notTested": true,
+   "findings": [],
+   "notes": [],
+   "block": null,
+   "links": [],
+   "review": {
+    "verdict": null,
+    "approvedAt": null,
+    "by": null
+   },
+   "added": "2026-11-13"
+  },
+  {
+   "id": "shared-state-rendering",
+   "label": "Render agent state in your app",
+   "kind": "guide",
+   "group": "Shared state",
+   "child": true,
+   "docPath": "shared-state/rendering-in-app",
+   "reachable": "sidebar",
+   "status": "❌",
+   "notTested": true,
+   "findings": [],
+   "notes": [],
+   "block": null,
+   "links": [],
+   "review": {
+    "verdict": null,
+    "approvedAt": null,
+    "by": null
+   },
+   "added": "2026-11-13"
+  },
+  {
+   "id": "shared-state-streaming",
+   "label": "State Streaming",
+   "kind": "guide",
+   "group": "Shared state",
+   "child": true,
+   "docPath": "shared-state/streaming",
+   "reachable": "sidebar",
+   "status": "❌",
+   "notTested": true,
+   "findings": [],
+   "notes": [],
+   "block": null,
+   "links": [],
+   "review": {
+    "verdict": null,
+    "approvedAt": null,
+    "by": null
+   },
+   "added": "2026-11-13"
+  },
+  {
+   "id": "shared-state-readonly",
+   "label": "Agent Read-Only Context",
+   "kind": "guide",
+   "group": "Shared state",
+   "child": true,
+   "docPath": "shared-state/agent-readonly",
+   "reachable": "sidebar",
+   "status": "❌",
+   "notTested": true,
+   "findings": [],
+   "notes": [],
+   "block": null,
+   "links": [],
+   "review": {
+    "verdict": null,
+    "approvedAt": null,
+    "by": null
+   },
+   "added": "2026-11-13"
+  },
+  {
+   "id": "hitl",
+   "label": "HITL Overview",
+   "kind": "guide",
+   "group": "Human-in-the-loop",
+   "child": true,
+   "docPath": "human-in-the-loop",
+   "reachable": "sidebar",
+   "status": "❌",
+   "notTested": true,
+   "findings": [],
+   "notes": [],
+   "block": null,
+   "links": [],
+   "review": {
+    "verdict": null,
+    "approvedAt": null,
+    "by": null
+   },
+   "added": "2026-11-13"
+  },
+  {
+   "id": "use-interrupt",
+   "label": "Pausing the Agent for Input",
+   "kind": "guide",
+   "group": "Human-in-the-loop",
+   "child": true,
+   "docPath": "human-in-the-loop/useInterrupt",
+   "reachable": "sidebar",
+   "status": "N/A",
+   "findings": [],
+   "notes": [
+    "Note: Not available for OpenAI Agents SDK (the page says \"Not available on this framework.\")"
+   ],
+   "block": null,
+   "links": [],
+   "review": {
+    "verdict": null,
+    "approvedAt": null,
+    "by": null
+   },
+   "added": "2026-11-13"
+  },
+  {
+   "id": "headless-interrupts",
+   "label": "Headless Interrupts",
+   "kind": "guide",
+   "group": "Human-in-the-loop",
+   "child": true,
+   "docPath": "human-in-the-loop/headless",
+   "reachable": "sidebar",
+   "status": "N/A",
+   "findings": [],
+   "notes": [
+    "Note: Not available for OpenAI Agents SDK (the page says \"Not available on this framework.\")"
+   ],
+   "block": null,
+   "links": [],
+   "review": {
+    "verdict": null,
+    "approvedAt": null,
+    "by": null
+   },
+   "added": "2026-11-13"
+  },
+  {
+   "id": "governed-actions",
+   "label": "Governed Action Approval UI",
+   "kind": "guide",
+   "group": "Human-in-the-loop",
+   "child": true,
+   "docPath": "human-in-the-loop/governed-actions",
+   "reachable": "sidebar",
+   "status": "❌",
+   "notTested": true,
+   "findings": [],
+   "notes": [],
+   "block": null,
+   "links": [],
+   "review": {
+    "verdict": null,
+    "approvedAt": null,
+    "by": null
+   },
+   "added": "2026-11-13"
+  },
+  {
+   "id": "webmcp",
+   "label": "WebMCP",
+   "kind": "guide",
+   "group": "Interactivity​",
+   "child": false,
+   "docPath": "webmcp",
+   "reachable": "sidebar",
+   "status": "❌",
+   "notTested": true,
+   "findings": [],
+   "notes": [],
+   "block": null,
+   "links": [],
+   "review": {
+    "verdict": null,
+    "approvedAt": null,
+    "by": null
+   },
+   "added": "2026-11-13"
+  },
+  {
+   "id": "subagents",
+   "label": "Sub-agents",
+   "kind": "guide",
+   "group": "Agent capabilities",
+   "child": false,
+   "docPath": "multi-agent/subagents",
+   "reachable": "sidebar",
+   "status": "❌",
+   "notTested": true,
+   "findings": [],
+   "notes": [],
+   "block": null,
+   "links": [],
+   "review": {
+    "verdict": null,
+    "approvedAt": null,
+    "by": null
+   },
+   "added": "2026-11-13"
+  },
+  {
+   "id": "inspector",
+   "label": "Inspector",
+   "kind": "guide",
+   "group": "Debugging",
+   "child": true,
+   "docPath": "inspector",
+   "reachable": "sidebar",
+   "status": "❌",
+   "notTested": true,
+   "findings": [],
+   "notes": [],
+   "block": null,
+   "links": [],
+   "review": {
+    "verdict": null,
+    "approvedAt": null,
+    "by": null
+   },
+   "added": "2026-11-13"
+  },
+  {
+   "id": "agentic-chat-ui",
+   "label": "Chat Components",
+   "kind": "guide",
+   "group": null,
+   "child": false,
+   "docPath": "agentic-chat-ui",
+   "reachable": "in-content",
+   "linkedFrom": "(quickstart)",
+   "status": "❌",
+   "notTested": true,
+   "findings": [],
+   "notes": [],
+   "block": null,
+   "links": [],
+   "review": {
+    "verdict": null,
+    "approvedAt": null,
+    "by": null
+   },
+   "added": "2026-11-13"
+  },
+  {
+   "id": "agent-config",
+   "label": "Agent Config",
+   "kind": "guide",
+   "group": null,
+   "child": false,
+   "docPath": "agent-config",
+   "reachable": "in-content",
+   "linkedFrom": "inspector",
+   "status": "❌",
+   "notTested": true,
+   "findings": [],
+   "notes": [],
+   "block": null,
+   "links": [],
+   "review": {
+    "verdict": null,
+    "approvedAt": null,
+    "by": null
+   },
+   "added": "2026-11-13"
+  },
+  {
+   "id": "generative-ui-components",
+   "label": "Components and surfaces",
+   "kind": "guide",
+   "group": null,
+   "child": false,
+   "docPath": "generative-ui/components",
+   "reachable": "in-content",
+   "linkedFrom": "inspector",
+   "status": "❌",
+   "notTested": true,
+   "findings": [],
+   "notes": [],
+   "block": null,
+   "links": [],
+   "review": {
+    "verdict": null,
+    "approvedAt": null,
+    "by": null
+   },
+   "added": "2026-11-13"
+  },
+  {
+   "id": "vs-code-extension",
+   "label": "VS Code Extension",
+   "kind": "guide",
+   "group": null,
+   "child": false,
+   "docPath": "vs-code-extension",
+   "reachable": "in-content",
+   "linkedFrom": "inspector",
+   "status": "❌",
+   "notTested": true,
+   "findings": [],
+   "notes": [],
+   "block": null,
+   "links": [],
+   "review": {
+    "verdict": null,
+    "approvedAt": null,
+    "by": null
+   },
+   "added": "2026-11-13"
+  },
+  {
+   "id": "reasoning",
+   "label": "Reasoning",
+   "kind": "guide",
+   "group": null,
+   "child": false,
+   "docPath": "generative-ui/reasoning",
+   "reachable": "in-content",
+   "linkedFrom": "concepts/generative-ui-overview",
+   "status": "❌",
+   "notTested": true,
+   "findings": [],
+   "notes": [],
+   "block": null,
+   "links": [],
+   "review": {
+    "verdict": null,
+    "approvedAt": null,
+    "by": null
+   },
+   "added": "2026-11-13"
+  },
+  {
+   "id": "a2ui",
+   "label": "A2UI",
+   "kind": "guide",
+   "group": null,
+   "child": false,
+   "docPath": "generative-ui/a2ui",
+   "reachable": "in-content",
+   "linkedFrom": "concepts/generative-ui-overview",
+   "status": "❌",
+   "notTested": true,
+   "findings": [],
+   "notes": [],
+   "block": null,
+   "links": [],
+   "review": {
+    "verdict": null,
+    "approvedAt": null,
+    "by": null
+   },
+   "added": "2026-11-13"
+  },
+  {
+   "id": "a2ui-dynamic",
+   "label": "Dynamic Schema A2UI",
+   "kind": "guide",
+   "group": null,
+   "child": false,
+   "docPath": "generative-ui/a2ui/dynamic-schema",
+   "reachable": "in-content",
+   "linkedFrom": "concepts/generative-ui-overview",
+   "status": "❌",
+   "notTested": true,
+   "findings": [],
+   "notes": [],
+   "block": null,
+   "links": [],
+   "review": {
+    "verdict": null,
+    "approvedAt": null,
+    "by": null
+   },
+   "added": "2026-11-13"
+  },
+  {
+   "id": "a2ui-fixed",
+   "label": "Fixed Schema A2UI",
+   "kind": "guide",
+   "group": null,
+   "child": false,
+   "docPath": "generative-ui/a2ui/fixed-schema",
+   "reachable": "in-content",
+   "linkedFrom": "concepts/generative-ui-overview",
+   "status": "❌",
+   "notTested": true,
+   "findings": [],
+   "notes": [],
+   "block": null,
+   "links": [],
+   "review": {
+    "verdict": null,
+    "approvedAt": null,
+    "by": null
+   },
+   "added": "2026-11-13"
+  },
+  {
+   "id": "model-selection",
+   "label": "Model Selection",
+   "kind": "guide",
+   "group": null,
+   "child": false,
+   "docPath": "model-selection",
+   "reachable": "in-content",
+   "linkedFrom": "troubleshooting/common-issues",
+   "status": "❌",
+   "notTested": true,
+   "findings": [],
+   "notes": [],
+   "block": null,
+   "links": [],
    "review": {
     "verdict": null,
     "approvedAt": null,
