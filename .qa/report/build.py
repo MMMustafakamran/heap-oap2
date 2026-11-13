@@ -74,6 +74,9 @@ def status_cell(a, p):
 
 
 def cell(a, p):
+    if a.get('quickstartBlocked') and p.get('kind', 'guide') == 'guide' and p.get('notTested'):
+        # QA-RULES 8b: a page never built because the quickstart blocks the framework
+        return '<br>'.join(['❌', esc('Blocked: ' + a['quickstartBlocked']), esc('Not tested: nothing to build on until the quickstart works.')])
     c = (team_cell if a['report']['style'] == 'team' else status_cell)(a, p)
     # Owner rule (2026-11-12, QA-RULES 8b): when the framework's quickstart is a complete block (level 1, no
     # usable setup), every other page is blocked for a reader: the row is ❌ "Blocked", and what the page did
