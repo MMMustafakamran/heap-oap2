@@ -8,7 +8,7 @@
     "@copilotkit/runtime": "1.88.0",
     "@ag-ui/client": "1.0.4",
     "vue": "3.5.45",
-    "vite": "8.3.6",
+    "vite": "8.3.8",
     "openai-agents": "0.24.0",
     "ag-ui-openai-agents": "0.1.0"
   },
@@ -150,9 +150,45 @@
         {
           "text": null,
           "clip": "OAI-vue-01-Quickstart",
-          "loom": "https://www.loom.com/share/3434bce0f604458abbda6f359b28b4b7",
-          "narration": "narration/scripts/OAI-vue-01-Quickstart.json",
-          "filmed": "2026-11-13"
+          "loom": "https://www.loom.com/share/41698cc95c884c82a595069ca3cc2f17",
+          "narration": {
+            "clip": "OAI-vue-01-Quickstart",
+            "segments": [
+              {
+                "at": "doc",
+                "text": "Ok so this is the quickstart page for Vue with OpenAI Agents, and I'm reporting a problem on this page."
+              },
+              {
+                "at": "evidence",
+                "text": "This is the problem, umm, the page is just the landing page for this framework."
+              },
+              {
+                "at": "evidence#2",
+                "text": "And the only code on it is this, uh, Next.js route handler."
+              },
+              {
+                "at": "ide",
+                "text": "So this is my project, and the route handler here is the exact code from the doc."
+              },
+              {
+                "at": "+",
+                "text": "The runtime and the Python agent weren't on the page, so I added them myself."
+              },
+              {
+                "at": "demo",
+                "text": "Moving on to the demo. After sending a message the chat replies, but only because I wired it up myself."
+              },
+              {
+                "at": "notepad",
+                "text": "So basically, the page should give Vue setup steps and an agent, but there's no Vue code and no Python agent at all."
+              },
+              {
+                "at": "+",
+                "text": "So yeah, please take a look and fix this."
+              }
+            ]
+          },
+          "filmed": "2026-11-17"
         }
       ],
       "review": {
