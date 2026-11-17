@@ -24,7 +24,7 @@ export const PAGES_INTERACT: PageDefinition[] = [
     docPath: 'shared-state/rendering-in-app', route: '/shared-state-rendering',
     ideFile: `${C}/rendering/Canvas.vue`, startLine: 1, endLine: 53,
     extraTabs: [{ filePath: `${P}/RenderingInAppApp.vue`, startLine: 1, endLine: 14 }],
-    prompt: 'What is the title of my project and which items are on the list?',
+    prompt: 'Say hi in one short sentence.',
     waitAfterPromptMs: 4000,
   },
   {

@@ -1,6 +1,6 @@
 /** Page group "genui": per-page handlers (page id -> handler), FINDING_EVIDENCE via registerDocEvidence. */
 import { type PageActionHandler } from '../core/types';
-import { runStandardAction } from '../core/actions';
+import { runStandardAction, sendPrompt } from '../core/actions';
 import { showFinding } from './doc-evidence';
 import { type DocEvidenceItem, registerDocEvidence } from '../core/doc-evidence';
 
@@ -57,7 +57,28 @@ const withNote =
     }
   };
 
+/** Card-only replies (MCP app iframe, A2UI surface): the agent answers with a rendered card and no
+ * text, so wait for the card instead of an assistant text message. */
+const runCardReply: PageActionHandler = async (page, config, _root, ctx) => {
+  await sendPrompt(page, config.prompt ?? '', { timeoutMs: 20_000 });
+  const ok = await page
+    .waitForFunction(
+      () =>
+        !!document.querySelector('iframe, [class*="a2ui" i], [data-a2ui], [class*="surface" i]') ||
+        /Key Metrics|Revenue|Churn/i.test(document.body.innerText.split('Show me a small dashboard').pop() ?? ''),
+      null,
+      { timeout: 90_000 },
+    )
+    .then(() => true)
+    .catch(() => false);
+  if (!ok) ctx.fail('No card rendered for the prompt');
+  await page.waitForTimeout(8000);
+};
+
 export const ACTIONS_GENUI: Record<string, PageActionHandler> = {
+  'mcp-apps': runCardReply,
+  a2ui: runCardReply,
+  'a2ui-dynamic': runCardReply,
   'state-rendering': withNote('state-rendering'),
   'generative-ui-components': withNote('generative-ui-components'),
   'a2ui-fixed': withNote('a2ui-fixed'),

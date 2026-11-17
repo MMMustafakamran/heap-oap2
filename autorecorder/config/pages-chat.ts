@@ -122,7 +122,7 @@ export const PAGES_CHAT: PageDefinition[] = [
     endLine: 65,
     extraTabs: [
       { filePath: PY, startLine: 13, endLine: 19, addedText: 'MODEL = "gpt-4.1-mini"' },
-      { filePath: 'my-copilot-app/src/components/chat/AgentConfigChat.vue', startLine: 1, endLine: 33, addedText: 'useAgentContext({ description: "User response preferences", value: () => ({ ...config }) });' },
+      { filePath: 'my-copilot-app/src/components/chat/AgentConfigChat.vue', startLine: 1, endLine: 33, addedText: '<select v-model="config.tone" aria-label="Tone">' },
     ],
     prompt: 'Explain what an API is.',
   },

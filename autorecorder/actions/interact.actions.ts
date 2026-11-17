@@ -1,6 +1,6 @@
 /** Page group "interact": per-page handlers (page id -> handler), FINDING_EVIDENCE via registerDocEvidence. */
 import { type PageActionHandler } from '../core/types';
-import { runStandardAction } from '../core/actions';
+import { runStandardAction, sendPrompt } from '../core/actions';
 import { sleep } from '../core/overlays/cursor';
 import { type DocEvidence, showFinding } from './doc-evidence';
 import { registerDocEvidence } from '../core/doc-evidence';
@@ -60,7 +60,9 @@ const withNote = (id: string, inner: PageActionHandler = runStandardAction): Pag
 /** Send the prompt, then click the button the HITL card renders and let the run finish. */
 const clickThrough = (button: RegExp | string, settleMs: number): PageActionHandler =>
   async (page, config, root, ctx) => {
-    await runStandardAction(page, config, root, ctx);
+    // The run pauses on the card, so no text reply comes before the click: send only, then click.
+    void root;
+    await sendPrompt(page, config.prompt ?? '', { timeoutMs: 20_000 });
     const btn = page.getByRole('button', { name: button }).first();
     try {
       await btn.waitFor({ state: 'visible', timeout: 60_000 });

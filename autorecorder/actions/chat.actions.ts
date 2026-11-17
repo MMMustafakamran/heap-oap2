@@ -11,7 +11,7 @@ import { type Page } from 'playwright';
 /** ❌ pages. Evidence texts checked against the rendered pages (2026-11-17). */
 export const FINDING_EVIDENCE: Record<string, DocEvidence[]> = {
   'programmatic-control': [
-    { text: 'app = FastAPI(title="OpenAI Agents SDK Agent Server", lifespan=lifespan)', caption: 'lifespan and AGENTS are never defined; no agent code for "sales"' },
+    { text: 'for name, agent in AGENTS.items():', caption: 'lifespan and AGENTS are never defined; no agent code for "sales"' },
   ],
   'agentic-chat-ui': [
     { text: '<CopilotKit runtimeUrl="/api/copilotkit" agent="agentic_chat">', caption: 'React/Next page.tsx on the Vue page' },
