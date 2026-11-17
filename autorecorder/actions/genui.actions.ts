@@ -65,7 +65,8 @@ const runCardReply: PageActionHandler = async (page, config, _root, ctx) => {
     .waitForFunction(
       () =>
         !!document.querySelector('iframe, [class*="a2ui" i], [data-a2ui], [class*="surface" i]') ||
-        /Key Metrics|Revenue|Churn/i.test(document.body.innerText.split('Show me a small dashboard').pop() ?? ''),
+        /Key Metrics|Revenue|Churn/i.test(document.body.innerText.split('Show me a small dashboard').pop() ?? '') ||
+        /\d+\s*°/.test(document.body.innerText),
       null,
       { timeout: 90_000 },
     )
