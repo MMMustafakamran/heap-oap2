@@ -32,6 +32,11 @@ on:
         required: false
         type: boolean
         default: false
+      film_blocked:
+        description: 'quickstartBlocked repos: film every page anyway (first full run of a new harness, WORKFLOW A5)'
+        required: false
+        type: boolean
+        default: false
       use_lockfile:
         description: 'Install the committed lockfiles instead of what a new reader gets today'
         required: false
@@ -95,6 +100,7 @@ jobs:
           USE_LOCKFILE: ${{ inputs.use_lockfile || false }}
           SHARDS: ${{ inputs.shards || 5 }}
           IGNORE_DRIFT: ${{ inputs.ignore_drift || false }}
+          FILM_BLOCKED: ${{ inputs.film_blocked || false }}
         run: |
           set -euo pipefail
           (cd autorecorder && npx tsx -e "import('./config/pages.config.ts').then(m=>{const s=m.SKIP_RECORDING||{};console.log(JSON.stringify(m.PAGES.filter(p=>!s[p.id]).map(p=>({id:p.id,docPath:p.docPath??null}))))})" | tail -1) > recorder-pages.json
@@ -196,9 +202,9 @@ jobs:
           # Owner rule (QA-RULES 8b): while assignment.json has "quickstartBlocked", the framework's quickstart is a
           # complete block, so only the quickstart is recorded (and drift-checked) until it becomes usable.
           PAGES=$(python3 - "$PAGES" <<'PY'
-          import json, sys
+          import json, os, sys
           pages = [p for p in sys.argv[1].split(",") if p]
-          if json.load(open("assignment.json", encoding="utf8")).get("quickstartBlocked"):
+          if json.load(open("assignment.json", encoding="utf8")).get("quickstartBlocked") and os.environ.get("FILM_BLOCKED") != "true":
               keep = [p for p in pages if "quickstart" in p]
               print(f"quickstartBlocked: recording only {keep or 'nothing'} (skipped {len(pages) - len(keep)} pages)", file=sys.stderr)
               pages = keep
@@ -350,7 +356,7 @@ jobs:
           mkdir -p logs
           nohup bash start-all.sh > logs/start-all.log 2>&1 &
           # "localhost", not 127.0.0.1: the LangGraph JS server binds IPv6 ::1 only.
-          for hp in 8131/agent/health 8130/api/copilotkit/info 5130/; do  # HARNESS: OpenAIAgents-Vue ports (add 8132-8139 page agents)
+          for hp in 8131/agent/health 8132/ 8134/ 8135/ 8136/ 8130/api/copilotkit/info 5130/; do  # HARNESS: OpenAIAgents-Vue ports (8132 chat, 8134/8135 genui, 8136 interact)
             port=${hp%%/*}; path=/${hp#*/}
             ok=
             tries=120; case "$port" in 8???) tries=48 ;; esac   # a dead backend costs 4 min, not 10

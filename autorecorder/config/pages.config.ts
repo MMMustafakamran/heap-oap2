@@ -6,6 +6,9 @@
  * Page agents: append one entry per page below (id = assignment.json pages[].id, route = App.vue route).
  */
 import { definePages } from '../core/types';
+import { PAGES_CHAT } from './pages-chat';
+import { PAGES_GENUI } from './pages-genui';
+import { PAGES_INTERACT } from './pages-interact';
 
 export const SKIP_RECORDING: Record<string, string> = {};
 
@@ -28,4 +31,7 @@ export const PAGES = definePages([
     prompt: 'Tell me in one sentence what this app can do.',
     waitAfterPromptMs: 3000,
   },
+  ...PAGES_CHAT,
+  ...PAGES_GENUI,
+  ...PAGES_INTERACT,
 ]);

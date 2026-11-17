@@ -1,0 +1,9 @@
+{
+ "text": "So basically, the page says a time picker shows in the chat, but it never gives you the picker or the common agent file, so uh, you can't build it as written.",
+ "model": "s2.1-pro-free",
+ "refSha256": "2c9d0ecf4608feacc07c88e869cd4dec601481306a939b7be92fc1bff521a727",
+ "duration": 11.471,
+ "file": "bf41f41b672390f7c1b8d33e615e2632.mp3",
+ "clip": "OAI-vue-26-HumanInTheLoop",
+ "at": "notepad"
+}

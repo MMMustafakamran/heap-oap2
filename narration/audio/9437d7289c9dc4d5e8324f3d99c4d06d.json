@@ -1,0 +1,9 @@
+{
+ "text": "Ok so this is the agent config page for Vue with OpenAI Agents, and I'm reporting a problem on this page.",
+ "model": "s2.1-pro-free",
+ "refSha256": "2c9d0ecf4608feacc07c88e869cd4dec601481306a939b7be92fc1bff521a727",
+ "duration": 7.848,
+ "file": "9437d7289c9dc4d5e8324f3d99c4d06d.mp3",
+ "clip": "OAI-vue-09-AgentConfig",
+ "at": "doc"
+}

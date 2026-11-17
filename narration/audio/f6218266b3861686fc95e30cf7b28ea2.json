@@ -1,0 +1,9 @@
+{
+ "text": "Moving on to the demo. I asked for a flight, it should show the flight card, but I just get a red error saying the flight catalog was not found.",
+ "model": "s2.1-pro-free",
+ "refSha256": "2c9d0ecf4608feacc07c88e869cd4dec601481306a939b7be92fc1bff521a727",
+ "duration": 10.031,
+ "file": "f6218266b3861686fc95e30cf7b28ea2.mp3",
+ "clip": "OAI-vue-21-A2uiFixed",
+ "at": "demo"
+}

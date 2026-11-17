@@ -1,0 +1,12 @@
+{
+ "clip": "OAI-vue-08-AgenticChatUi",
+ "segments": [
+  {"at": "doc", "text": "Ok so this is the chat components page for Vue with OpenAI Agents, and I'm reporting a problem on this page."},
+  {"at": "evidence", "text": "This is the problem, umm, this code is React, a page dot tsx with the CopilotKit component, not Vue."},
+  {"at": "ide", "text": "This is my project, I've implemented the exact code from the doc."},
+  {"at": "+", "text": "This part, the Vue provider, wasn't on the page, so I had to write it myself."},
+  {"at": "demo", "text": "Moving on to the demo. The chat replies, but only with my own Vue version of the code."},
+  {"at": "notepad", "text": "So basically, a Vue page should show Vue code, but everything here is React and Next, so none of it runs as written."},
+  {"at": "+", "text": "That's the problem here, please have a look."}
+ ]
+}

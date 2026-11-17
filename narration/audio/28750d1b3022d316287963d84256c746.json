@@ -1,0 +1,9 @@
+{
+ "text": "And the agent uses MODEL and chat settings, uh, which are never shown.",
+ "model": "s2.1-pro-free",
+ "refSha256": "2c9d0ecf4608feacc07c88e869cd4dec601481306a939b7be92fc1bff521a727",
+ "duration": 5.201,
+ "file": "28750d1b3022d316287963d84256c746.mp3",
+ "clip": "OAI-vue-09-AgentConfig",
+ "at": "evidence#2"
+}

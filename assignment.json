@@ -206,12 +206,22 @@
       "child": true,
       "docPath": "prebuilt-components",
       "reachable": "sidebar",
-      "status": "❌",
-      "notTested": true,
-      "findings": [],
-      "notes": [],
+      "status": "✅",
+      "findings": [
+        12
+      ],
+      "notes": [
+        "Note: uses agent-id my-agent, which nothing registers."
+      ],
       "block": null,
-      "links": [],
+      "links": [
+        {
+          "text": "Prebuilt Components - Vue",
+          "clip": "OAI-vue-02-PrebuiltComponents",
+          "loom": null,
+          "filmed": null
+        }
+      ],
       "review": {
         "verdict": null,
         "approvedAt": null,
@@ -227,12 +237,22 @@
       "child": true,
       "docPath": "custom-look-and-feel/slots",
       "reachable": "sidebar",
-      "status": "❌",
-      "notTested": true,
-      "findings": [],
-      "notes": [],
+      "status": "✅",
+      "findings": [
+        13
+      ],
+      "notes": [
+        "Note: the disclaimer slot example renders nothing."
+      ],
       "block": null,
-      "links": [],
+      "links": [
+        {
+          "text": "Slots - Vue",
+          "clip": "OAI-vue-03-Slots",
+          "loom": null,
+          "filmed": null
+        }
+      ],
       "review": {
         "verdict": null,
         "approvedAt": null,
@@ -248,12 +268,18 @@
       "child": true,
       "docPath": "custom-look-and-feel/headless-ui",
       "reachable": "sidebar",
-      "status": "❌",
-      "notTested": true,
+      "status": "✅",
       "findings": [],
       "notes": [],
       "block": null,
-      "links": [],
+      "links": [
+        {
+          "text": "Headless UI - Vue",
+          "clip": "OAI-vue-04-HeadlessUi",
+          "loom": null,
+          "filmed": null
+        }
+      ],
       "review": {
         "verdict": null,
         "approvedAt": null,
@@ -270,11 +296,54 @@
       "docPath": "programmatic-control",
       "reachable": "sidebar",
       "status": "❌",
-      "notTested": true,
-      "findings": [],
-      "notes": [],
+      "findings": [
+        3
+      ],
+      "notes": [
+        "Issue: agent_server.py uses lifespan and AGENTS that are never defined, and no agent is given for agentId \"sales\", so the backend won't start as written."
+      ],
       "block": null,
-      "links": [],
+      "links": [
+        {
+          "text": "Issue",
+          "clip": "OAI-vue-05-ProgrammaticControl",
+          "loom": null,
+          "filmed": null,
+          "narration": {
+            "clip": "OAI-vue-05-ProgrammaticControl",
+            "segments": [
+              {
+                "at": "doc",
+                "text": "Ok so this is the programmatic control page for Vue with OpenAI Agents, and I'm reporting a problem on this page."
+              },
+              {
+                "at": "evidence",
+                "text": "This is the problem, umm, the agent server uses lifespan and AGENTS, and neither is defined anywhere on the page."
+              },
+              {
+                "at": "ide",
+                "text": "This is my project, I've implemented the exact code from the doc."
+              },
+              {
+                "at": "+",
+                "text": "This part, the agents dictionary and the lifespan, wasn't on the page, so I added it myself."
+              },
+              {
+                "at": "demo",
+                "text": "Moving on to the demo. The run button only works because of that, uh, added backend code."
+              },
+              {
+                "at": "notepad",
+                "text": "So basically, as written the server crashes on start with a name error, and there's no sales agent anywhere."
+              },
+              {
+                "at": "+",
+                "text": "So kindly look into it."
+              }
+            ]
+          }
+        }
+      ],
       "review": {
         "verdict": null,
         "approvedAt": null,
@@ -290,12 +359,20 @@
       "child": true,
       "docPath": "prebuilt-components/copilot-threads-drawer",
       "reachable": "sidebar",
-      "status": "❌",
-      "notTested": true,
-      "findings": [],
+      "status": "✅",
+      "findings": [
+        12
+      ],
       "notes": [],
       "block": null,
-      "links": [],
+      "links": [
+        {
+          "text": "Threads Drawer - Vue",
+          "clip": "OAI-vue-06-ThreadsDrawer",
+          "loom": null,
+          "filmed": null
+        }
+      ],
       "review": {
         "verdict": null,
         "approvedAt": null,
@@ -311,12 +388,20 @@
       "child": true,
       "docPath": "headless-threads",
       "reachable": "sidebar",
-      "status": "❌",
-      "notTested": true,
-      "findings": [],
+      "status": "✅",
+      "findings": [
+        14
+      ],
       "notes": [],
       "block": null,
-      "links": [],
+      "links": [
+        {
+          "text": "Headless Threads - Vue",
+          "clip": "OAI-vue-07-HeadlessThreads",
+          "loom": null,
+          "filmed": null
+        }
+      ],
       "review": {
         "verdict": null,
         "approvedAt": null,
@@ -332,12 +417,18 @@
       "child": false,
       "docPath": "frontend-tools",
       "reachable": "sidebar",
-      "status": "❌",
-      "notTested": true,
+      "status": "✅",
       "findings": [],
       "notes": [],
       "block": null,
-      "links": [],
+      "links": [
+        {
+          "text": "Frontend-tools - Vue",
+          "clip": "OAI-vue-12-FrontendTools",
+          "loom": null,
+          "filmed": null
+        }
+      ],
       "review": {
         "verdict": null,
         "approvedAt": null,
@@ -353,12 +444,18 @@
       "child": true,
       "docPath": "generative-ui/tool-based",
       "reachable": "sidebar",
-      "status": "❌",
-      "notTested": true,
+      "status": "✅",
       "findings": [],
       "notes": [],
       "block": null,
-      "links": [],
+      "links": [
+        {
+          "text": "Components as Tools - Vue",
+          "clip": "OAI-vue-13-ToolBased",
+          "loom": null,
+          "filmed": null
+        }
+      ],
       "review": {
         "verdict": null,
         "approvedAt": null,
@@ -374,12 +471,22 @@
       "child": true,
       "docPath": "generative-ui/tool-rendering",
       "reachable": "sidebar",
-      "status": "❌",
-      "notTested": true,
-      "findings": [],
-      "notes": [],
+      "status": "✅",
+      "findings": [
+        16
+      ],
+      "notes": [
+        "Note: WeatherToolCard reads parameters.city but the tool argument is location, so the card heading is empty."
+      ],
       "block": null,
-      "links": [],
+      "links": [
+        {
+          "text": "Tool Call Rendering - Vue",
+          "clip": "OAI-vue-14-ToolRendering",
+          "loom": null,
+          "filmed": null
+        }
+      ],
       "review": {
         "verdict": null,
         "approvedAt": null,
@@ -396,11 +503,58 @@
       "docPath": "generative-ui/state-rendering",
       "reachable": "sidebar",
       "status": "❌",
-      "notTested": true,
-      "findings": [],
-      "notes": [],
+      "findings": [
+        6
+      ],
+      "notes": [
+        "Issue: the UI reads status/draft/completed/total but the agent only writes document, so the panel stays Idle."
+      ],
       "block": null,
-      "links": [],
+      "links": [
+        {
+          "text": "Issue",
+          "clip": "OAI-vue-15-StateRendering",
+          "loom": null,
+          "filmed": null,
+          "narration": {
+            "clip": "OAI-vue-15-StateRendering",
+            "segments": [
+              {
+                "at": "doc",
+                "text": "Ok so this is the State Rendering page for OpenAI Agents with Vue, and I'm reporting a problem on this page."
+              },
+              {
+                "at": "evidence",
+                "text": "This is the problem, umm, the Vue component reads status, draft, completed and total from the agent state."
+              },
+              {
+                "at": "evidence#2",
+                "text": "But the agent code only ever writes a document key, so none of those fields get filled."
+              },
+              {
+                "at": "ide",
+                "text": "This is my project, I've implemented the exact code from the doc."
+              },
+              {
+                "at": "+",
+                "text": "This part, the writer agent that gets wrapped, wasn't on the page, so I had to add it myself."
+              },
+              {
+                "at": "demo",
+                "text": "Moving on to the demo. I asked for a short draft, the panel should show progress and the draft, but it just stays on Idle with an empty bar."
+              },
+              {
+                "at": "notepad",
+                "text": "So basically, the page says the panel follows the agent state live, but the frontend and the agent use different keys, so uh, nothing ever shows up."
+              },
+              {
+                "at": "+",
+                "text": "That's what's breaking here, kindly have it fixed."
+              }
+            ]
+          }
+        }
+      ],
       "review": {
         "verdict": null,
         "approvedAt": null,
@@ -416,12 +570,22 @@
       "child": true,
       "docPath": "generative-ui/mcp-apps",
       "reachable": "sidebar",
-      "status": "❌",
-      "notTested": true,
-      "findings": [],
-      "notes": [],
+      "status": "✅",
+      "findings": [
+        17
+      ],
+      "notes": [
+        "Note: agents: { default: agent } uses an agent that is never defined; the MCP URL is a placeholder."
+      ],
       "block": null,
-      "links": [],
+      "links": [
+        {
+          "text": "MCP Apps - Vue",
+          "clip": "OAI-vue-16-McpApps",
+          "loom": null,
+          "filmed": null
+        }
+      ],
       "review": {
         "verdict": null,
         "approvedAt": null,
@@ -437,12 +601,22 @@
       "child": true,
       "docPath": "shared-state",
       "reachable": "sidebar",
-      "status": "❌",
-      "notTested": true,
-      "findings": [],
-      "notes": [],
+      "status": "✅",
+      "findings": [
+        20
+      ],
+      "notes": [
+        "Note: the agent snippets leave out imports and MODEL/chat_settings, easy to fill in."
+      ],
       "block": null,
-      "links": [],
+      "links": [
+        {
+          "text": "Shared State - Vue",
+          "clip": "OAI-vue-22-SharedState",
+          "loom": null,
+          "filmed": null
+        }
+      ],
       "review": {
         "verdict": null,
         "approvedAt": null,
@@ -458,12 +632,18 @@
       "child": true,
       "docPath": "shared-state/rendering-in-app",
       "reachable": "sidebar",
-      "status": "❌",
-      "notTested": true,
+      "status": "✅",
       "findings": [],
       "notes": [],
       "block": null,
-      "links": [],
+      "links": [
+        {
+          "text": "Render agent state in your app - Vue",
+          "clip": "OAI-vue-23-SharedStateRendering",
+          "loom": null,
+          "filmed": null
+        }
+      ],
       "review": {
         "verdict": null,
         "approvedAt": null,
@@ -479,12 +659,22 @@
       "child": true,
       "docPath": "shared-state/streaming",
       "reachable": "sidebar",
-      "status": "❌",
-      "notTested": true,
-      "findings": [],
-      "notes": [],
+      "status": "✅",
+      "findings": [
+        21
+      ],
+      "notes": [
+        "Note: the agent wrapped by DocumentStreamingAgent is never shown, a plain Agent with write_document works."
+      ],
       "block": null,
-      "links": [],
+      "links": [
+        {
+          "text": "State Streaming - Vue",
+          "clip": "OAI-vue-24-SharedStateStreaming",
+          "loom": null,
+          "filmed": null
+        }
+      ],
       "review": {
         "verdict": null,
         "approvedAt": null,
@@ -500,12 +690,18 @@
       "child": true,
       "docPath": "shared-state/agent-readonly",
       "reachable": "sidebar",
-      "status": "❌",
-      "notTested": true,
+      "status": "✅",
       "findings": [],
       "notes": [],
       "block": null,
-      "links": [],
+      "links": [
+        {
+          "text": "Agent Read-Only Context - Vue",
+          "clip": "OAI-vue-25-SharedStateReadonly",
+          "loom": null,
+          "filmed": null
+        }
+      ],
       "review": {
         "verdict": null,
         "approvedAt": null,
@@ -522,11 +718,58 @@
       "docPath": "human-in-the-loop",
       "reachable": "sidebar",
       "status": "❌",
-      "notTested": true,
-      "findings": [],
-      "notes": [],
+      "findings": [
+        9
+      ],
+      "notes": [
+        "Issue: MeetingApproval imports TimePickerCard.vue and hitl.py imports demo_agents._common, neither is shown on the page."
+      ],
       "block": null,
-      "links": [],
+      "links": [
+        {
+          "text": "Issue",
+          "clip": "OAI-vue-26-HumanInTheLoop",
+          "loom": null,
+          "filmed": null,
+          "narration": {
+            "clip": "OAI-vue-26-HumanInTheLoop",
+            "segments": [
+              {
+                "at": "doc",
+                "text": "Ok so this is the HITL overview page for OpenAI Agents with Vue, and I'm reporting a problem on this page."
+              },
+              {
+                "at": "evidence",
+                "text": "This is the problem, umm, it imports this TimePickerCard component, but the page never shows it."
+              },
+              {
+                "at": "evidence#2",
+                "text": "And the agent imports this common file for the model, which isn't shown anywhere either."
+              },
+              {
+                "at": "ide",
+                "text": "This is my project, I've implemented the exact code from the doc."
+              },
+              {
+                "at": "+",
+                "text": "This part, the time picker card and the common file, wasn't on the page, so I had to add it myself."
+              },
+              {
+                "at": "demo",
+                "text": "Moving on to the demo. After asking to book a call, the picker shows up and the booking goes through, but only with the parts I wrote."
+              },
+              {
+                "at": "notepad",
+                "text": "So basically, the page says a time picker shows in the chat, but it never gives you the picker or the common agent file, so uh, you can't build it as written."
+              },
+              {
+                "at": "+",
+                "text": "That's the problem here, please have a look."
+              }
+            ]
+          }
+        }
+      ],
       "review": {
         "verdict": null,
         "approvedAt": null,
@@ -586,12 +829,22 @@
       "child": true,
       "docPath": "human-in-the-loop/governed-actions",
       "reachable": "sidebar",
-      "status": "❌",
-      "notTested": true,
-      "findings": [],
-      "notes": [],
+      "status": "✅",
+      "findings": [
+        22
+      ],
+      "notes": [
+        "Note: no agent or executeSideEffect shown; the approval card works with the quickstart agent."
+      ],
       "block": null,
-      "links": [],
+      "links": [
+        {
+          "text": "Governed Action Approval UI - Vue",
+          "clip": "OAI-vue-27-GovernedActions",
+          "loom": null,
+          "filmed": null
+        }
+      ],
       "review": {
         "verdict": null,
         "approvedAt": null,
@@ -608,11 +861,54 @@
       "docPath": "webmcp",
       "reachable": "sidebar",
       "status": "❌",
-      "notTested": true,
-      "findings": [],
-      "notes": [],
+      "findings": [
+        10
+      ],
+      "notes": [
+        "Issue: OrderSearch.vue calls searchOrders(), never defined, and the agent never replies."
+      ],
       "block": null,
-      "links": [],
+      "links": [
+        {
+          "text": "Issue",
+          "clip": "OAI-vue-28-WebMcp",
+          "loom": null,
+          "filmed": null,
+          "narration": {
+            "clip": "OAI-vue-28-WebMcp",
+            "segments": [
+              {
+                "at": "doc",
+                "text": "Ok so this is the WebMCP page for OpenAI Agents with Vue, and I'm reporting a problem on this page."
+              },
+              {
+                "at": "evidence",
+                "text": "This is the problem, umm, the handler calls searchOrders, but that function is never defined or imported."
+              },
+              {
+                "at": "ide",
+                "text": "This is my project, I've implemented the exact code from the doc."
+              },
+              {
+                "at": "+",
+                "text": "The provider and the chat weren't on this page, so I added them from the quickstart."
+              },
+              {
+                "at": "demo",
+                "text": "Moving on to the demo. I asked the agent to search my open orders, it should run the tool and answer, but uh, no reply comes back at all."
+              },
+              {
+                "at": "notepad",
+                "text": "So basically, the tool handler throws because searchOrders doesn't exist, and the run just dies without any message."
+              },
+              {
+                "at": "+",
+                "text": "So kindly look into it."
+              }
+            ]
+          }
+        }
+      ],
       "review": {
         "verdict": null,
         "approvedAt": null,
@@ -629,11 +925,58 @@
       "docPath": "multi-agent/subagents",
       "reachable": "sidebar",
       "status": "❌",
-      "notTested": true,
-      "findings": [],
-      "notes": [],
+      "findings": [
+        11
+      ],
+      "notes": [
+        "Issue: the delegation-log section has no Vue code, and subagents.py imports demo_agents._common, never shown."
+      ],
       "block": null,
-      "links": [],
+      "links": [
+        {
+          "text": "Issue",
+          "clip": "OAI-vue-29-SubAgents",
+          "loom": null,
+          "filmed": null,
+          "narration": {
+            "clip": "OAI-vue-29-SubAgents",
+            "segments": [
+              {
+                "at": "doc",
+                "text": "Ok so this is the Sub-Agents page for OpenAI Agents with Vue, and I'm reporting a problem on this page."
+              },
+              {
+                "at": "evidence",
+                "text": "This is the problem, umm, this delegation log section has no code at all, just a sentence."
+              },
+              {
+                "at": "evidence#2",
+                "text": "And the agent imports this common file, which the page never shows."
+              },
+              {
+                "at": "ide",
+                "text": "This is my project, I've implemented the exact code from the doc."
+              },
+              {
+                "at": "+",
+                "text": "This part, the common file and the chat setup, wasn't on the page, so I added it myself."
+              },
+              {
+                "at": "demo",
+                "text": "Moving on to the demo. The agent does answer, but there should be a live delegation log, and uh, nothing like that shows up."
+              },
+              {
+                "at": "notepad",
+                "text": "So basically, the page promises a live delegation log but gives no Vue code to render it, so the main part of the page is missing."
+              },
+              {
+                "at": "+",
+                "text": "Alright, that's the issue, kindly sort it out."
+              }
+            ]
+          }
+        }
+      ],
       "review": {
         "verdict": null,
         "approvedAt": null,
@@ -649,12 +992,18 @@
       "child": true,
       "docPath": "inspector",
       "reachable": "sidebar",
-      "status": "❌",
-      "notTested": true,
+      "status": "✅",
       "findings": [],
       "notes": [],
       "block": null,
-      "links": [],
+      "links": [
+        {
+          "text": "Inspector - Vue",
+          "clip": "OAI-vue-10-Inspector",
+          "loom": null,
+          "filmed": null
+        }
+      ],
       "review": {
         "verdict": null,
         "approvedAt": null,
@@ -672,11 +1021,54 @@
       "reachable": "in-content",
       "linkedFrom": "(quickstart)",
       "status": "❌",
-      "notTested": true,
-      "findings": [],
-      "notes": [],
+      "findings": [
+        4
+      ],
+      "notes": [
+        "Issue: the only code is React/Next (page.tsx with <CopilotKit>), no Vue version."
+      ],
       "block": null,
-      "links": [],
+      "links": [
+        {
+          "text": "Issue",
+          "clip": "OAI-vue-08-AgenticChatUi",
+          "loom": null,
+          "filmed": null,
+          "narration": {
+            "clip": "OAI-vue-08-AgenticChatUi",
+            "segments": [
+              {
+                "at": "doc",
+                "text": "Ok so this is the chat components page for Vue with OpenAI Agents, and I'm reporting a problem on this page."
+              },
+              {
+                "at": "evidence",
+                "text": "This is the problem, umm, this code is React, a page dot tsx with the CopilotKit component, not Vue."
+              },
+              {
+                "at": "ide",
+                "text": "This is my project, I've implemented the exact code from the doc."
+              },
+              {
+                "at": "+",
+                "text": "This part, the Vue provider, wasn't on the page, so I had to write it myself."
+              },
+              {
+                "at": "demo",
+                "text": "Moving on to the demo. The chat replies, but only with my own Vue version of the code."
+              },
+              {
+                "at": "notepad",
+                "text": "So basically, a Vue page should show Vue code, but everything here is React and Next, so none of it runs as written."
+              },
+              {
+                "at": "+",
+                "text": "That's the problem here, please have a look."
+              }
+            ]
+          }
+        }
+      ],
       "review": {
         "verdict": null,
         "approvedAt": null,
@@ -694,11 +1086,58 @@
       "reachable": "in-content",
       "linkedFrom": "inspector",
       "status": "❌",
-      "notTested": true,
-      "findings": [],
-      "notes": [],
+      "findings": [
+        5
+      ],
+      "notes": [
+        "Issue: no Vue frontend at all (Code tab is React only), and agent_config.py needs MODEL / chat_settings from a _common module that's never shown."
+      ],
       "block": null,
-      "links": [],
+      "links": [
+        {
+          "text": "Issue",
+          "clip": "OAI-vue-09-AgentConfig",
+          "loom": null,
+          "filmed": null,
+          "narration": {
+            "clip": "OAI-vue-09-AgentConfig",
+            "segments": [
+              {
+                "at": "doc",
+                "text": "Ok so this is the agent config page for Vue with OpenAI Agents, and I'm reporting a problem on this page."
+              },
+              {
+                "at": "evidence",
+                "text": "This is the problem, umm, it says the page publishes the config with use agent context, but there's no Vue code for it."
+              },
+              {
+                "at": "evidence#2",
+                "text": "And the agent uses MODEL and chat settings, uh, which are never shown."
+              },
+              {
+                "at": "ide",
+                "text": "This is my project, I've implemented the exact code from the doc."
+              },
+              {
+                "at": "+",
+                "text": "These parts, the model settings and the Vue config selects, weren't on the page, so I added them myself."
+              },
+              {
+                "at": "demo",
+                "text": "Moving on to the demo. The agent replies, but only with my own frontend, the page's frontend code is all React."
+              },
+              {
+                "at": "notepad",
+                "text": "So basically, the page should show how the Vue UI sends the config, but there's only React code and missing agent helpers."
+              },
+              {
+                "at": "+",
+                "text": "Alright, that's the issue, kindly sort it out."
+              }
+            ]
+          }
+        }
+      ],
       "review": {
         "verdict": null,
         "approvedAt": null,
@@ -716,11 +1155,50 @@
       "reachable": "in-content",
       "linkedFrom": "inspector",
       "status": "❌",
-      "notTested": true,
-      "findings": [],
-      "notes": [],
+      "findings": [
+        7
+      ],
+      "notes": [
+        "Issue: the Vue server.ts calls chat() without a threadId; today's @tanstack/ai rejects it, so every run fails and nothing renders."
+      ],
       "block": null,
-      "links": [],
+      "links": [
+        {
+          "text": "Issue",
+          "clip": "OAI-vue-17-GenerativeUiComponents",
+          "loom": null,
+          "filmed": null,
+          "narration": {
+            "clip": "OAI-vue-17-GenerativeUiComponents",
+            "segments": [
+              {
+                "at": "doc",
+                "text": "Ok so this is the Components and surfaces page for OpenAI Agents with Vue, and I'm reporting a problem on this page."
+              },
+              {
+                "at": "evidence",
+                "text": "This is the problem, umm, the Vue server code calls the TanStack chat function without a thread ID, and the current package needs one."
+              },
+              {
+                "at": "ide",
+                "text": "This is my project, I've implemented the exact code from the doc."
+              },
+              {
+                "at": "demo",
+                "text": "Moving on to the demo. I asked for the plans table, it should render a table in the chat, but nothing comes back, the run fails with a chat needs a thread ID error."
+              },
+              {
+                "at": "notepad",
+                "text": "So basically, the page's own Vue server breaks on every run with today's install, and uh, there's no OpenAI Agents agent on the page either."
+              },
+              {
+                "at": "+",
+                "text": "So this needs a fix, kindly check it."
+              }
+            ]
+          }
+        }
+      ],
       "review": {
         "verdict": null,
         "approvedAt": null,
@@ -737,12 +1215,22 @@
       "docPath": "vs-code-extension",
       "reachable": "in-content",
       "linkedFrom": "inspector",
-      "status": "❌",
-      "notTested": true,
-      "findings": [],
-      "notes": [],
+      "status": "✅",
+      "findings": [
+        15
+      ],
+      "notes": [
+        "Note: install command uses extension id copilotkit.copilotkit, which isn't on the Marketplace (real id copilotkit.copilotkit-vscode-extension)."
+      ],
       "block": null,
-      "links": [],
+      "links": [
+        {
+          "text": "VS Code Extension - Vue",
+          "clip": "OAI-vue-11-VsCodeExtension",
+          "loom": null,
+          "filmed": null
+        }
+      ],
       "review": {
         "verdict": null,
         "approvedAt": null,
@@ -759,12 +1247,22 @@
       "docPath": "generative-ui/reasoning",
       "reachable": "in-content",
       "linkedFrom": "concepts/generative-ui-overview",
-      "status": "❌",
-      "notTested": true,
-      "findings": [],
-      "notes": [],
+      "status": "✅",
+      "findings": [
+        18
+      ],
+      "notes": [
+        "Note: the page shows no agent; the reasoning card only appears with a reasoning model and reasoning summaries turned on."
+      ],
       "block": null,
-      "links": [],
+      "links": [
+        {
+          "text": "Reasoning - Vue",
+          "clip": "OAI-vue-18-Reasoning",
+          "loom": null,
+          "filmed": null
+        }
+      ],
       "review": {
         "verdict": null,
         "approvedAt": null,
@@ -781,12 +1279,22 @@
       "docPath": "generative-ui/a2ui",
       "reachable": "in-content",
       "linkedFrom": "concepts/generative-ui-overview",
-      "status": "❌",
-      "notTested": true,
-      "findings": [],
-      "notes": [],
+      "status": "✅",
+      "findings": [
+        19
+      ],
+      "notes": [
+        "Note: the provider snippet is React; the runtime-only injectA2UITool path works in Vue."
+      ],
       "block": null,
-      "links": [],
+      "links": [
+        {
+          "text": "A2UI - Vue",
+          "clip": "OAI-vue-19-A2ui",
+          "loom": null,
+          "filmed": null
+        }
+      ],
       "review": {
         "verdict": null,
         "approvedAt": null,
@@ -803,12 +1311,22 @@
       "docPath": "generative-ui/a2ui/dynamic-schema",
       "reachable": "in-content",
       "linkedFrom": "concepts/generative-ui-overview",
-      "status": "❌",
-      "notTested": true,
-      "findings": [],
-      "notes": [],
+      "status": "✅",
+      "findings": [
+        19
+      ],
+      "notes": [
+        "Note: catalog steps are React only; only the runtime fallback works in Vue."
+      ],
       "block": null,
-      "links": [],
+      "links": [
+        {
+          "text": "Dynamic Schema A2UI - Vue",
+          "clip": "OAI-vue-20-A2uiDynamic",
+          "loom": null,
+          "filmed": null
+        }
+      ],
       "review": {
         "verdict": null,
         "approvedAt": null,
@@ -826,11 +1344,58 @@
       "reachable": "in-content",
       "linkedFrom": "concepts/generative-ui-overview",
       "status": "❌",
-      "notTested": true,
-      "findings": [],
-      "notes": [],
+      "findings": [
+        8
+      ],
+      "notes": [
+        "Issue: catalog/renderers/provider code is React only; in Vue the flight card fails with \"Catalog not found\"."
+      ],
       "block": null,
-      "links": [],
+      "links": [
+        {
+          "text": "Issue",
+          "clip": "OAI-vue-21-A2uiFixed",
+          "loom": null,
+          "filmed": null,
+          "narration": {
+            "clip": "OAI-vue-21-A2uiFixed",
+            "segments": [
+              {
+                "at": "doc",
+                "text": "Ok so this is the Fixed Schema A2UI page for OpenAI Agents with Vue, and I'm reporting a problem on this page."
+              },
+              {
+                "at": "evidence",
+                "text": "This is the problem, umm, the catalog renderers are only given in React."
+              },
+              {
+                "at": "evidence#2",
+                "text": "And the catalog is registered on the React provider, there's no Vue version of this anywhere."
+              },
+              {
+                "at": "ide",
+                "text": "This is my project, I've implemented the exact code from the doc."
+              },
+              {
+                "at": "+",
+                "text": "This part, the common model file, wasn't on the page, so I had to add it myself."
+              },
+              {
+                "at": "demo",
+                "text": "Moving on to the demo. I asked for a flight, it should show the flight card, but I just get a red error saying the flight catalog was not found."
+              },
+              {
+                "at": "notepad",
+                "text": "So basically, the agent sends the flight surface fine, but the page only shows how to register the catalog in React, so in Vue, ahh, the card can't render."
+              },
+              {
+                "at": "+",
+                "text": "So umm, this one needs fixing, please look into it."
+              }
+            ]
+          }
+        }
+      ],
       "review": {
         "verdict": null,
         "approvedAt": null,

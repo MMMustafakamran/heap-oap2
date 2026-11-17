@@ -1,0 +1,11 @@
+{
+ "clip": "OAI-vue-17-GenerativeUiComponents",
+ "segments": [
+  {"at": "doc", "text": "Ok so this is the Components and surfaces page for OpenAI Agents with Vue, and I'm reporting a problem on this page."},
+  {"at": "evidence", "text": "This is the problem, umm, the Vue server code calls the TanStack chat function without a thread ID, and the current package needs one."},
+  {"at": "ide", "text": "This is my project, I've implemented the exact code from the doc."},
+  {"at": "demo", "text": "Moving on to the demo. I asked for the plans table, it should render a table in the chat, but nothing comes back, the run fails with a chat needs a thread ID error."},
+  {"at": "notepad", "text": "So basically, the page's own Vue server breaks on every run with today's install, and uh, there's no OpenAI Agents agent on the page either."},
+  {"at": "+", "text": "So this needs a fix, kindly check it."}
+ ]
+}

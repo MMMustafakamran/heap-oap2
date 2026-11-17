@@ -9,10 +9,16 @@ import { type Page } from 'playwright';
 
 import { waitForPageReady } from './page-ready';
 import { runVueQuickstartAction } from './quickstart.actions';
+import { ACTIONS_CHAT } from './chat.actions';
+import { ACTIONS_GENUI } from './genui.actions';
+import { ACTIONS_INTERACT } from './interact.actions';
 
 /** Keys are page ids from `config/pages.config.ts`. Doctor flags any orphans. */
 export const ACTION_MAP: Record<string, PageActionHandler> = {
   quickstart: runVueQuickstartAction,
+  ...ACTIONS_CHAT,
+  ...ACTIONS_GENUI,
+  ...ACTIONS_INTERACT,
 };
 
 export async function executePageAction(

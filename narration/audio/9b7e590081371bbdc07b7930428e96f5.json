@@ -1,0 +1,9 @@
+{
+ "text": "So basically, the page says the panel follows the agent state live, but the frontend and the agent use different keys, so uh, nothing ever shows up.",
+ "model": "s2.1-pro-free",
+ "refSha256": "2c9d0ecf4608feacc07c88e869cd4dec601481306a939b7be92fc1bff521a727",
+ "duration": 11.749,
+ "file": "9b7e590081371bbdc07b7930428e96f5.mp3",
+ "clip": "OAI-vue-15-StateRendering",
+ "at": "notepad"
+}

@@ -9,9 +9,14 @@ cd "$(dirname "$0")"
 mkdir -p logs
 
 (cd backend && uv run --env-file .env uvicorn main:app --port 8131 > ../logs/backend-8131.log 2>&1) &
+(cd backend && uv run --env-file .env uvicorn app:app --app-dir interact --port 8136 > ../logs/backend-8136.log 2>&1) &  # interact pages: shared-state, streaming, hitl, subagents
+(cd backend && uv run --env-file .env uvicorn app:app --app-dir genui --port 8134 > ../logs/backend-8134.log 2>&1) &  # genui pages: tool-rendering, state-rendering, reasoning, a2ui-fixed
+(cd backend && uv run --env-file .env uvicorn pages_chat:app --port 8132 > ../logs/backend-8132.log 2>&1) &  # chat pages
 # (cd backend && uv run --env-file .env uvicorn <module>:app --port 8132 > ../logs/backend-8132.log 2>&1) &
 
 cd my-copilot-app
 (PORT=8130 npx tsx server.openai.ts > ../logs/runtime-8130.log 2>&1) &
 (npm run dev > ../logs/vite-5130.log 2>&1) &
+# HARNESS: Components and surfaces page: its own Vue-tab server.ts verbatim (BuiltInAgent), port 8200 -> 8135
+(npx tsx --env-file=../backend/.env src/pages/genui/components/server.ts > ../logs/runtime-8135.log 2>&1) &
 wait

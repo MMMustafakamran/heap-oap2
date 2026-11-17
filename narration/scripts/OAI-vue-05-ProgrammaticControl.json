@@ -1,0 +1,12 @@
+{
+ "clip": "OAI-vue-05-ProgrammaticControl",
+ "segments": [
+  {"at": "doc", "text": "Ok so this is the programmatic control page for Vue with OpenAI Agents, and I'm reporting a problem on this page."},
+  {"at": "evidence", "text": "This is the problem, umm, the agent server uses lifespan and AGENTS, and neither is defined anywhere on the page."},
+  {"at": "ide", "text": "This is my project, I've implemented the exact code from the doc."},
+  {"at": "+", "text": "This part, the agents dictionary and the lifespan, wasn't on the page, so I added it myself."},
+  {"at": "demo", "text": "Moving on to the demo. The run button only works because of that, uh, added backend code."},
+  {"at": "notepad", "text": "So basically, as written the server crashes on start with a name error, and there's no sales agent anywhere."},
+  {"at": "+", "text": "So kindly look into it."}
+ ]
+}

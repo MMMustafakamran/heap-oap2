@@ -1,0 +1,13 @@
+{
+ "clip": "OAI-vue-09-AgentConfig",
+ "segments": [
+  {"at": "doc", "text": "Ok so this is the agent config page for Vue with OpenAI Agents, and I'm reporting a problem on this page."},
+  {"at": "evidence", "text": "This is the problem, umm, it says the page publishes the config with use agent context, but there's no Vue code for it."},
+  {"at": "evidence#2", "text": "And the agent uses MODEL and chat settings, uh, which are never shown."},
+  {"at": "ide", "text": "This is my project, I've implemented the exact code from the doc."},
+  {"at": "+", "text": "These parts, the model settings and the Vue config selects, weren't on the page, so I added them myself."},
+  {"at": "demo", "text": "Moving on to the demo. The agent replies, but only with my own frontend, the page's frontend code is all React."},
+  {"at": "notepad", "text": "So basically, the page should show how the Vue UI sends the config, but there's only React code and missing agent helpers."},
+  {"at": "+", "text": "Alright, that's the issue, kindly sort it out."}
+ ]
+}

@@ -1,0 +1,9 @@
+{
+ "text": "So basically, the page's own Vue server breaks on every run with today's install, and uh, there's no OpenAI Agents agent on the page either.",
+ "model": "s2.1-pro-free",
+ "refSha256": "2c9d0ecf4608feacc07c88e869cd4dec601481306a939b7be92fc1bff521a727",
+ "duration": 11.006,
+ "file": "532b4451f901c495c8423b54a74f081c.mp3",
+ "clip": "OAI-vue-17-GenerativeUiComponents",
+ "at": "notepad"
+}

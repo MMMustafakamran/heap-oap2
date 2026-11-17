@@ -1,0 +1,9 @@
+{
+ "text": "So basically, the page should show how the Vue UI sends the config, but there's only React code and missing agent helpers.",
+ "model": "s2.1-pro-free",
+ "refSha256": "2c9d0ecf4608feacc07c88e869cd4dec601481306a939b7be92fc1bff521a727",
+ "duration": 9.056,
+ "file": "68887345aa90d9f9e531109f577b1671.mp3",
+ "clip": "OAI-vue-09-AgentConfig",
+ "at": "notepad"
+}

@@ -1,0 +1,13 @@
+{
+ "clip": "OAI-vue-21-A2uiFixed",
+ "segments": [
+  {"at": "doc", "text": "Ok so this is the Fixed Schema A2UI page for OpenAI Agents with Vue, and I'm reporting a problem on this page."},
+  {"at": "evidence", "text": "This is the problem, umm, the catalog renderers are only given in React."},
+  {"at": "evidence#2", "text": "And the catalog is registered on the React provider, there's no Vue version of this anywhere."},
+  {"at": "ide", "text": "This is my project, I've implemented the exact code from the doc."},
+  {"at": "+", "text": "This part, the common model file, wasn't on the page, so I had to add it myself."},
+  {"at": "demo", "text": "Moving on to the demo. I asked for a flight, it should show the flight card, but I just get a red error saying the flight catalog was not found."},
+  {"at": "notepad", "text": "So basically, the agent sends the flight surface fine, but the page only shows how to register the catalog in React, so in Vue, ahh, the card can't render."},
+  {"at": "+", "text": "So umm, this one needs fixing, please look into it."}
+ ]
+}
