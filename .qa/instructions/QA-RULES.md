@@ -31,6 +31,7 @@ Missing steps, undefined identifiers, unstated prerequisites, wrong-framework co
 | Antigravity-react | 3040 | (Next route) | 8040 quickstart · 8041 interrupt · 8042 shared state · 8043 sub-agents · 8044 tool rendering · 8045 state rendering |
 | Antigravity-vue | 5140 (Vite) | 8140 | 8141 own backend (`backend/`, quickstart agent) |
 | OpenAIAgents-Vue | 5130 (Vite) | 8130 (`server.openai.ts`) | 8131 quickstart agent · 8132–8139 page agents (own `backend/`) |
+| OpenAIAgents-React | 3090 | (Next route) | 8091 quickstart · 8092–8094 page agents (own `backend/`) |
 | GoogleADK-vue | 5120 (Vite) | 8120 | 8121 quickstart agent · 8122 page agents (own `backend/`) · 8129 Gemini pool |
 
 Each Vue repo runs its own backend; none depends on a React repo's servers at runtime.

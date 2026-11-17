@@ -22,22 +22,28 @@ export interface DocEvidenceItem {
   clickTab?: string;
 }
 
-const registry = new Map<string, DocEvidenceItem[]>();
+// The repo's map is kept by reference and read when a page records: entries added to it after
+// registerDocEvidence (e.g. later Object.assign blocks in an actions file) still count
+// (LangGraph React lost three pages' evidence that way, review 2026-11-16).
+const sources: { map: Record<string, DocEvidenceItem[] | undefined>; skip: Set<string> }[] = [];
 
 /** Register finding evidence per page id. Ids in `skip` (e.g. KNOWN_ISSUE, level 2) get none. */
 export function registerDocEvidence(
   map: Record<string, DocEvidenceItem[] | undefined>,
   opts: { skip?: Iterable<string> } = {},
 ): void {
-  const skip = new Set(opts.skip ?? []);
-  for (const [id, items] of Object.entries(map)) {
-    if (items?.length && !skip.has(id)) registry.set(id, items);
-    else registry.delete(id);
-  }
+  sources.push({ map, skip: new Set(opts.skip ?? []) });
 }
 
 export function docEvidenceFor(id: string, own?: DocEvidenceItem[]): DocEvidenceItem[] {
-  return own ?? registry.get(id) ?? [];
+  if (own) return own;
+  for (let i = sources.length - 1; i >= 0; i--) {
+    const { map, skip } = sources[i];
+    if (skip.has(id)) return [];
+    const items = map[id];
+    if (items?.length) return items;
+  }
+  return [];
 }
 
 /** Highlight each item on the doc page as it is now (no navigation). Non-fatal. */
@@ -46,16 +52,20 @@ export async function highlightDocEvidence(page: Page, items: DocEvidenceItem[])
   console.log(`   🔎 Highlighting the faulty doc text (${items.length} spot(s))...`);
   for (const item of items) {
     try {
-      mark('evidence', item.text);
+      // A selection left from the doc tour or the previous spot must not show under this line.
+      await page.evaluate(() => window.getSelection()?.removeAllRanges()).catch(() => {});
       if (item.clickTab) await clickDocTab(page, item.clickTab);
       const target = await findEvidence(page, item.text);
       void checkpoint('evidence', `doc shows "${item.text}"`, () => (target ? probeText(target) : null));
       if (!target) {
+        mark('evidence', item.text);
         console.warn(`   ⚠️ Evidence not found on the doc page: "${item.text}"`);
         continue;
       }
       if (item.caption) console.log(`   👉 ${item.caption}`);
       await wheelIntoView(page, target, item.text);
+      // Mark when the faulty text is on screen, so the evidence line starts with the highlight.
+      mark('evidence', item.text);
       await dragSelect(page, target, item.text);
       for (let i = 0; i < 4; i++) {
         await sleep(900);

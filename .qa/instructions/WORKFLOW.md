@@ -31,7 +31,7 @@ Agents may (owner, 2026-11-13): create both repos above, set the main repo's CI 
 7. **Review:** Haiku agents review every clip ([REVIEW.md](REVIEW.md)), 5 per agent.
 8. **Fix and refilm what the review flags:** wrong status or finding → probe, then fix the status, finding, evidence, note and narration. Bad take → fix the recorder. Refilm the flagged pages (CI re-dispatch with `-f pages=<ids>`; a local take is fine for a page that keeps failing in CI). Review the new takes again. At most 3 rounds, then report what is still bad.
 9. **Upload** every final clip to Loom (❌ narrated mp4, ✅ webm), write the links into `assignment.json` (`links[].loom`, `links[].filmed` = date), commit, push.
-10. **Google Doc:** `build.py` → HTML ([REPORT.md](REPORT.md)) → the team Google Doc. Then create the peer repo (see *Two GitHub repos* above).
+10. **Google Doc:** `build.py` → HTML ([REPORT.md](REPORT.md)) → a **new** Google Doc for the day (see REPORT.md §0). Then create the peer repo (see *Two GitHub repos* above).
 11. **Report to the owner:** per page status, new findings, new big bugs (team ✅ but ours ❌), Loom count, doc link, open problems.
 
 ## B. Testing day (existing framework)
@@ -49,7 +49,7 @@ Agents may (owner, 2026-11-13): create both repos above, set the main repo's CI 
 4. **Download** that day's run(s) only, never an older run.
 5. **Review, fix, refilm, report:** same as A steps 7–8. Every downloaded clip is Haiku-reviewed; act on each verdict ([REVIEW.md](REVIEW.md) §9); tell the owner every status, finding or narration change.
 6. **Upload** to Loom only the clips filmed today, overwrite those pages' links, set `links[].filmed`; pages not filmed today keep their link.
-7. **Google Doc:** rebuild the framework's HTML from the committed `assignment.json` files and put it into the Google Doc. Re-export the peer repos (`handoff.sh <fw>/<ui>`).
+7. **Google Doc:** rebuild the framework's HTML from the committed `assignment.json` files and upload it as a **new** Google Doc for the day (REPORT.md §0). Re-export the peer repos (`handoff.sh <fw>/<ui>`).
 8. **Report:** version change yes/no, drift pages and what was applied, status changes, new big bugs, Loom count, doc links.
 
 ## Rules that apply to both
