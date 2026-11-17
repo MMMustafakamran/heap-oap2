@@ -110,6 +110,13 @@ export interface PageDefinition {
    */
   docOnly?: boolean;
 
+  /**
+   * Error clips: faulty doc text to drag-select and hold in the doc step, before the IDE (one
+   * `evidence` mark each). Overrides what the repo registered with `registerDocEvidence`. Leave
+   * unset on ✅ pages.
+   */
+  findingEvidence?: { text: string; caption?: string; clickTab?: string }[];
+
   /** How long to hold on the doc page when `docOnly` (defaults to 6000ms). */
   docViewDurationMs?: number;
 
