@@ -307,7 +307,7 @@
         {
           "text": "Issue",
           "clip": "OAI-vue-05-ProgrammaticControl",
-          "loom": "https://www.loom.com/share/0849bb3304b342f8a638bc624b347860",
+          "loom": "https://www.loom.com/share/523a7a59231742c38491aa10a751878e",
           "filmed": "2026-11-17",
           "narration": {
             "clip": "OAI-vue-05-ProgrammaticControl",
@@ -318,7 +318,7 @@
               },
               {
                 "at": "evidence",
-                "text": "This is the problem, umm, the agent server uses lifespan and AGENTS, and neither is defined anywhere on the page."
+                "text": "This is the problem, umm, lifespan and AGENTS are never defined on the page."
               },
               {
                 "at": "ide",
@@ -1097,7 +1097,7 @@
         {
           "text": "Issue",
           "clip": "OAI-vue-09-AgentConfig",
-          "loom": "https://www.loom.com/share/ac87f32210154e70b99fb5c3890874e2",
+          "loom": "https://www.loom.com/share/45b33c9a07a94cf7b6b85f6390953d50",
           "filmed": "2026-11-17",
           "narration": {
             "clip": "OAI-vue-09-AgentConfig",
