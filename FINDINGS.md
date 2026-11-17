@@ -57,7 +57,7 @@ Stack: @copilotkit/vue 1.88.0, @copilotkit/runtime 1.88.0 (declared ^1.88.0), @a
 
 ## Minor notes
 
-- **#2 Dead links (404).** The landing page and Common Issues link to `/vue/openai-agents-python/model-selection` (gone). Links built with a doubled `/vue/` (`/vue/openai-agents-python/vue/...`) 404: generative-ui/tool-based, prebuilt-components/copilot-threads-drawer, AG-UI-Streams, custom-look-and-feel/css, custom-look-and-feel/slots, generative-ui/tool-rendering (from the landing page, Headless Threads, Threads Drawer, Headless UI, Which hook, Components as Tools).
+- **#2 Dead links (404).** The landing page and Common Issues link to `/vue/openai-agents-python/model-selection` (gone). Links built with a doubled `/vue/` (`/vue/openai-agents-python/vue/...`) 404: generative-ui/tool-based, prebuilt-components/copilot-threads-drawer, AG-UI-Streams, shared-state, custom-look-and-feel/css, custom-look-and-feel/slots, generative-ui/tool-rendering (from the landing page, the Shared State sub-pages, Headless Threads, Threads Drawer, Headless UI, Which hook, Components as Tools).
 - **#12** Prebuilt Components / Threads Drawer: `agent-id` "my-agent" / "support" that nothing registers.
 - **#13** Slots: the disclaimer slot snippet (`#input` → `CopilotChatInput` → `#disclaimer`) renders nothing; two different snippets are both titled `SupportChat.vue`.
 - **#14** Headless Threads: `server.ts` uses `agent` and `verifyAppSession` without defining them.
