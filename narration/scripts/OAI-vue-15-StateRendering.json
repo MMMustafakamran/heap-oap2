@@ -1,13 +1,37 @@
 {
  "clip": "OAI-vue-15-StateRendering",
  "segments": [
-  {"at": "doc", "text": "Ok so this is the State Rendering page for OpenAI Agents with Vue, and I'm reporting a problem on this page."},
-  {"at": "evidence", "text": "This is the problem, umm, the Vue component reads status, draft, completed and total from the agent state."},
-  {"at": "evidence#2", "text": "But the agent code only ever writes a document key, so none of those fields get filled."},
-  {"at": "ide", "text": "This is my project, I've implemented the exact code from the doc."},
-  {"at": "+", "text": "This part, the writer agent that gets wrapped, wasn't on the page, so I had to add it myself."},
-  {"at": "demo", "text": "Moving on to the demo. I asked for a short draft, the panel should show progress and the draft, but it just stays on Idle with an empty bar."},
-  {"at": "notepad", "text": "So basically, the page says the panel follows the agent state live, but the frontend and the agent use different keys, so uh, nothing ever shows up."},
-  {"at": "+", "text": "That's what's breaking here, kindly have it fixed."}
+  {
+   "at": "doc",
+   "text": "Ok so this is the State Rendering page for OpenAI Agents with Vue, and I'm reporting a problem on this page."
+  },
+  {
+   "at": "evidence",
+   "text": "This is the problem, umm, the panel reads status and draft from the state."
+  },
+  {
+   "at": "evidence#2",
+   "text": "But the agent code only ever writes a document key, so none of those fields get filled."
+  },
+  {
+   "at": "ide",
+   "text": "This is my project, I've implemented the exact code from the doc."
+  },
+  {
+   "at": "+",
+   "text": "This part, the writer agent that gets wrapped, wasn't on the page, so I had to add it myself."
+  },
+  {
+   "at": "demo",
+   "text": "Moving on to the demo. I asked for a short draft, the panel should show progress and the draft, but it just stays on Idle with an empty bar."
+  },
+  {
+   "at": "notepad",
+   "text": "So basically, the page says the panel follows the agent state live, but the frontend and the agent use different keys, so uh, nothing ever shows up."
+  },
+  {
+   "at": "+",
+   "text": "That's what's breaking here, kindly have it fixed."
+  }
  ]
 }

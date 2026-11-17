@@ -76,6 +76,7 @@ const runCardReply: PageActionHandler = async (page, config, _root, ctx) => {
 };
 
 export const ACTIONS_GENUI: Record<string, PageActionHandler> = {
+  'tool-based': runCardReply,
   'mcp-apps': runCardReply,
   a2ui: runCardReply,
   'a2ui-dynamic': runCardReply,

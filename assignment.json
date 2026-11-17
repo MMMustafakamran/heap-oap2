@@ -525,7 +525,7 @@
               },
               {
                 "at": "evidence",
-                "text": "This is the problem, umm, the Vue component reads status, draft, completed and total from the agent state."
+                "text": "This is the problem, umm, the panel reads status and draft from the state."
               },
               {
                 "at": "evidence#2",
