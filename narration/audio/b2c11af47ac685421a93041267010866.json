@@ -1,0 +1,9 @@
+{
+ "text": "So basically, the page should give Vue setup steps and an agent, but there's no Vue code and no Python agent at all.",
+ "model": "s2.1-pro-free",
+ "refSha256": "2c9d0ecf4608feacc07c88e869cd4dec601481306a939b7be92fc1bff521a727",
+ "duration": 10.588,
+ "file": "b2c11af47ac685421a93041267010866.mp3",
+ "clip": "OAI-vue-01-Quickstart",
+ "at": "notepad"
+}

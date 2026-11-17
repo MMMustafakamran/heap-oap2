@@ -21,9 +21,9 @@ export const PAGES = definePages([
     endLine: 20,
     extraTabs: [
       { filePath: 'my-copilot-app/doc-verbatim/route.ts', startLine: 1, endLine: 25 },
-      { filePath: 'my-copilot-app/server.openai.ts', startLine: 1, endLine: 40 },
+      { filePath: 'my-copilot-app/server.openai.ts', startLine: 1, endLine: 40, addedText: 'const AGENT_URL = process.env.AGENT_URL ?? "http://localhost:8131/agent"; // HARNESS: doc 8000 -> 8131' },
       { filePath: 'my-copilot-app/src/pages/QuickstartApp.vue', startLine: 1, endLine: 15 },
-      { filePath: 'backend/main.py', startLine: 1, endLine: 20 },
+      { filePath: 'backend/main.py', startLine: 1, endLine: 20, addedText: 'agent = OpenAIAgentsAgent(' },
     ],
     prompt: 'Tell me in one sentence what this app can do.',
     waitAfterPromptMs: 3000,

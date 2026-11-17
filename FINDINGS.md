@@ -1,7 +1,7 @@
 # FINDINGS — OpenAIAgents-Vue
 
 Open doc defects found implementing https://docs.copilotkit.ai/vue/openai-agents-python (Vue frontend + OpenAI Agents SDK Python backend).
-Stack: @copilotkit/vue 1.85.0, @copilotkit/runtime 1.85.0 (declared ^1.85.0), @ag-ui/client 1.0.4, vue 3.5.45, vite 8.3.6; openai-agents 0.24.0, ag-ui-openai-agents 0.1.0, fastapi 0.162.5, uvicorn 0.54.0; Python 3.13.15, Node 26.7.0, npm 12.0.2; Microsoft Windows 11 Pro. Docs: https://docs.copilotkit.ai/vue/openai-agents-python (snapshot 2026-11-13).
+Stack: @copilotkit/vue 1.88.0, @copilotkit/runtime 1.88.0 (declared ^1.88.0), @ag-ui/client 1.0.4, vue 3.5.45, vite 8.3.8; openai-agents 0.24.0, ag-ui-openai-agents 0.1.0, fastapi 0.163.1, uvicorn 0.54.0; Python 3.13.15, Node 26.7.0, npm 12.0.2; Microsoft Windows 11 Pro. Docs: https://docs.copilotkit.ai/vue/openai-agents-python (snapshot 2026-11-17).
 
 ## Dev blockers
 

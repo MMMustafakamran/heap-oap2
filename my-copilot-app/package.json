@@ -11,9 +11,9 @@
     "type-check": "vue-tsc --build"
   },
   "dependencies": {
-    "@ag-ui/client": "^1.0.4",
-    "@copilotkit/runtime": "^1.85.0",
-    "@copilotkit/vue": "^1.85.0",
+    "@ag-ui/client": "1.0.4",
+    "@copilotkit/runtime": "1.88.0",
+    "@copilotkit/vue": "1.88.0",
     "vue": "^3.5.42"
   },
   "devDependencies": {

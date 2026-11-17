@@ -1,6 +1,6 @@
 {
  "root": "vue/openai-agents-python",
- "savedAt": "2026-11-12",
+ "savedAt": "2026-11-17",
  "pages": {
   "/vue/openai-agents-python/prebuilt-components": [
    "/vue/openai-agents-python/vue/prebuilt-components/chat",
@@ -225,6 +225,36 @@
   "/vue/openai-agents-python/troubleshooting/event-inspector": [
    "/vue/openai-agents-python/inspector",
    "/vue/openai-agents-python/vs-code-extension"
+  ],
+  "/vue/openai-agents-python/agentic-chat-ui": [],
+  "/vue/openai-agents-python/agent-config": [
+   "/vue/openai-agents-python/shared-state"
+  ],
+  "/vue/openai-agents-python/generative-ui/components": [
+   "/vue/openai-agents-python/generative-ui/components/catalogs",
+   "/vue/openai-agents-python/generative-ui/components/from-a2ui",
+   "/vue/openai-agents-python/generative-ui/components/markdown-mode",
+   "/vue/openai-agents-python/generative-ui/components/state-and-actions",
+   "/vue/openai-agents-python/generative-ui/components/surfaces",
+   "/vue/openai-agents-python/generative-ui/components/theming",
+   "/vue/openai-agents-python/generative-ui/components/transports",
+   "/vue/openai-agents-python/inspector",
+   "/vue/openai-agents-python/react-native"
+  ],
+  "/vue/openai-agents-python/vs-code-extension": [
+   "/vue/openai-agents-python/troubleshooting/event-inspector"
+  ],
+  "/vue/openai-agents-python/generative-ui/reasoning": [],
+  "/vue/openai-agents-python/generative-ui/a2ui": [
+   "/vue/openai-agents-python/generative-ui/a2ui/dynamic-schema",
+   "/vue/openai-agents-python/generative-ui/a2ui/fixed-schema",
+   "/vue/openai-agents-python/generative-ui/components"
+  ],
+  "/vue/openai-agents-python/generative-ui/a2ui/dynamic-schema": [
+   "/vue/openai-agents-python/generative-ui/a2ui/fixed-schema"
+  ],
+  "/vue/openai-agents-python/generative-ui/a2ui/fixed-schema": [
+   "/vue/openai-agents-python/generative-ui/a2ui/dynamic-schema"
   ]
  }
 }
