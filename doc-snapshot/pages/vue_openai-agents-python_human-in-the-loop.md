@@ -2,7 +2,7 @@
 
 > Allow your agent and users to collaborate on complex tasks.
 
-## What is this?
+## What is this? [#what-is-this]
 
 Human-in-the-loop (HITL) lets an agent pause mid-run to collect input, confirmation, or a choice from the user, then resume with that answer folded back into its reasoning. It's what turns an autonomous workflow into a collaborative one: the agent keeps its context, the user keeps the steering wheel.
 
@@ -16,16 +16,15 @@ Human-in-the-loop (HITL) lets an agent pause mid-run to collect input, confirmat
   muted
 />
 
-## When should I use this?
+## When should I use this? [#when-should-i-use-this]
 
 Use HITL when you need:
 
-- **Quality control** — a human gate at high-stakes decision points
-- **Edge cases** — graceful fallbacks when the agent's confidence is low
-- **Expert input** — lean on the user for domain knowledge the model lacks
-- **Reliability** — a more robust loop for real-world, production traffic
+- **Quality control**: a human gate at high-stakes decision points.
+- **Missing information**: the agent asks the user for a value it cannot find.
+- **Expert input**: the user supplies domain knowledge the model lacks.
 
-## Two patterns for HITL in CopilotKit
+## Two patterns for HITL in CopilotKit [#two-patterns-for-hitl-in-copilotkit]
 
 <Steps>
   <Step>
@@ -55,7 +54,6 @@ Use HITL when you need:
     call it. A model that is never told about `book_call` will answer in prose
     and the picker will never mount.
 
-    
 ~~~~python title="hitl.py"
 from agents import Agent
 
@@ -79,7 +77,6 @@ hitl_in_chat_agent = Agent(
 
 ~~~~
 
-
   </Step>
   <Step>
     ### Or gate a server tool with `needs_approval`
@@ -91,7 +88,6 @@ hitl_in_chat_agent = Agent(
     its `metadata` carries `tool_name` and the parsed `tool_input`, and it
     asks for `{"approved": boolean}`.
 
-    
 ~~~~python title="interrupt_agent.py"
 @function_tool(needs_approval=True)
 def schedule_meeting(ctx: ToolContext[Any], topic: str, attendee: str = "") -> str:
@@ -111,7 +107,6 @@ def schedule_meeting(ctx: ToolContext[Any], topic: str, attendee: str = "") -> s
 
 ~~~~
 
-
     The next request resumes the interrupt. `{"approved": true}` runs the
     tool before the model is called again. Any other answer gives the model
     the SDK's rejection text, and a cancelled interrupt answers the call as
@@ -129,7 +124,6 @@ def schedule_meeting(ctx: ToolContext[Any], topic: str, attendee: str = "") -> s
     each request's answers, by tool call id, where `schedule_meeting` can
     read them:
 
-    
 ~~~~python title="interrupt_agent.py"
 class SchedulerAgent(OpenAIAgentsAgent):
     """Lets ``schedule_meeting`` read the time the user picked.
@@ -155,7 +149,6 @@ class SchedulerAgent(OpenAIAgentsAgent):
 
 ~~~~
 
-
   </Step>
 </Steps>
 
@@ -172,13 +165,13 @@ CopilotKit ships two complementary ways to pause an agent turn and ask the human
 | Pattern | Who decides to pause? | Backend surface |
 | --- | --- | --- |
 | `useHumanInTheLoop` | The **LLM**, by calling a registered client-side tool | A frontend-only tool description (Zod schema + `render`) |
-| `useInterrupt` | The **graph**, by calling `interrupt(...)` during a node | A server-side `interrupt()` call in your agent |
+| `useInterrupt` | Your **agent code**, at a step that must stop for a person | An interrupt the agent emits, for example `interrupt()` in a LangGraph node |
 
-**Pick `useHumanInTheLoop`** when the pause is an _agent-initiated_ decision — the model chose to ask the user — and you want the picker UI inlined into the normal tool-call flow.
+**Pick `useHumanInTheLoop`** when the pause is an _agent-initiated_ decision (the model chose to ask the user) and you want the picker UI inlined into the normal tool-call flow.
 
-**Pick `useInterrupt`** when the pause is a _graph-enforced_ checkpoint — the code path deterministically requires a human answer — and you want the runtime interrupt as the server-side contract.
+**Pick `useInterrupt`** when the pause is a checkpoint in your agent code: the code path always requires a human answer, and the server-side contract is an interrupt. On the Built-in Agent, interrupts are temporarily unavailable, so use `useHumanInTheLoop` there.
 
-## Pattern 1 — `useHumanInTheLoop` (tool-based)
+## Pattern 1: `useHumanInTheLoop` (tool-based) [#pattern-1-usehumanintheloop-tool-based]
 
 The app registers a HITL tool on the client with `useHumanInTheLoop`. When the LLM calls that tool, CopilotKit renders your Vue component and gives it a `respond` callback during the executing phase. The agent sees the answer as the tool result and continues from there.
 
@@ -202,16 +195,46 @@ useHumanInTheLoop({
 <template><p>Meeting approval tool registered.</p></template>
 ```
 
+`TimePickerCard.vue` receives the tool arguments and a `respond` callback. `respond` is defined only while the tool call is executing:
+
+```vue title="src/components/TimePickerCard.vue"
+<script setup lang="ts">
+const props = defineProps<{
+  args: { topic?: string; attendee?: string };
+  respond?: (result: unknown) => Promise<void>;
+}>();
+</script>
+
+<template>
+  <section>
+    <p>Pick a time for {{ props.args.topic ?? "the meeting" }}</p>
+    <button
+      :disabled="!props.respond"
+      @click="props.respond?.({ chosen_time: '09:00' })"
+    >
+      Tomorrow at 09:00
+    </button>
+  </section>
+</template>
+```
+
 The picker UI can use static candidate slots, live availability, a calendar API, or any other application data. Mount the registration component beneath `CopilotKitProvider` so the composable can reach the runtime.
 
-## Pattern 2 — `useInterrupt` (graph-paused)
+## Pattern 2: `useInterrupt` (graph-paused) [#pattern-2-useinterrupt-graph-paused]
 
-With a runtime interrupt, the pause is enforced by the graph itself: a node interrupts with a serializable payload, the run suspends, the client receives the payload, renders a UI, and resumes the run with the user's answer. CopilotKit's `useInterrupt` composable and `CopilotChat`'s `#interrupt` slot form the Vue render contract.
+With a runtime interrupt, your agent code enforces the pause:
 
-See the [`useInterrupt` deep dive](/vue/openai-agents-python/vue/human-in-the-loop/useInterrupt) for the full walkthrough, including the backend contract and Vue slot wiring.
+1. The agent interrupts with a serializable payload.
+2. The run stops.
+3. The client renders your UI with the payload.
+4. The user answers, and the client resumes the run with the answer.
 
-## Going headless
+CopilotKit's `useInterrupt` composable and `CopilotChat`'s `#interrupt` slot form the Vue render contract.
 
-Both patterns above can drive custom UI. For runtime interrupts, set `renderInChat: false` and use the reactive state returned by `useInterrupt`; for a frontend-tool pause, let the Promise-returning HITL tool drive application state. See the [headless interrupts guide](/vue/openai-agents-python/vue/human-in-the-loop/headless) for the interrupt path.
+See the [`useInterrupt` deep dive](/vue/human-in-the-loop/useInterrupt) for the full walkthrough, including the backend contract and Vue slot wiring.
+
+## Going headless [#going-headless]
+
+Both patterns above can drive custom UI. For runtime interrupts, set `renderInChat: false` and use the reactive state returned by `useInterrupt`; for a frontend-tool pause, let the Promise-returning HITL tool drive application state. See the [headless interrupts guide](/vue/human-in-the-loop/headless) for the interrupt path.
 
 <IntegrationGrid path="human-in-the-loop" />

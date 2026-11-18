@@ -6,7 +6,12 @@ import { CopilotChat, CopilotChatInput } from "@copilotkit/vue/v2";
 <template>
 <CopilotChat>
   <template #input="inputProps">
-    <CopilotChatInput v-bind="inputProps">
+    <CopilotChatInput
+      v-bind="inputProps"
+      :mode="inputProps.inputMode"
+      :tools-menu="inputProps.inputToolsMenu"
+      :show-disclaimer="true"
+    >
       <template #disclaimer>
         <p class="support-disclaimer">Responses may be inaccurate.</p>
       </template>

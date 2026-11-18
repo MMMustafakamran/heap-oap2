@@ -28,17 +28,15 @@ function submitDecision(approved: boolean) {
 }
 
 watchEffect(() => {
-  if (props.args.verdict === "allow") submitDecision(true);
   if (props.args.verdict === "deny") submitDecision(false);
 });
 </script>
 
 <template>
   <section>
-    <p v-if="props.args.verdict === 'allow'">Allowed by policy</p>
-    <p v-else-if="props.args.verdict === 'deny'">Blocked by policy</p>
+    <p v-if="props.args.verdict === 'deny'">Blocked by policy</p>
     <p>{{ props.args.summary ?? "Preparing approval…" }}</p>
-    <div v-if="ready && !submitted && props.args.verdict === 'require_approval'">
+    <div v-if="ready && !submitted && props.args.verdict !== 'deny'">
       <button @click="submitDecision(true)">Approve and run</button>
       <button @click="submitDecision(false)">Reject</button>
     </div>

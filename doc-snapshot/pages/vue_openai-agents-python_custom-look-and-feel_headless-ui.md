@@ -2,18 +2,18 @@
 
 > Build a Vue surface on CopilotKit’s reactive agent and runtime primitives.
 
-## What is this?
+## What is this? [#what-is-this]
 
 A headless UI gives you full control over the experience. You bring your own
 components, layout, and styling while CopilotKit handles agent communication,
 reactive message state, tool registration, and streaming. No `CopilotChat`
 shell is required: your Vue components compose the low-level primitives.
 
-## When should I use this?
+## When should I use this? [#when-should-i-use-this]
 
 Use headless UI when:
 
-- The [slot system](/vue/openai-agents-python/vue/custom-look-and-feel/slots) is not enough for the
+- The [slot system](/vue/custom-look-and-feel/slots) is not enough for the
   layout you need.
 - You are embedding chat into an existing interface with its own patterns.
 - You are building a non-chat surface such as a dashboard, canvas, or
@@ -23,9 +23,11 @@ Use headless UI when:
 
 Going headless also transfers responsibility for the composer, accessibility,
 scroll behavior, attachments, reasoning, interrupts, and every message role to
-your application unless you deliberately compose the public Vue chat leaves.
+your application, unless you compose the CopilotKit chat components
+(`CopilotChatMessageView`, `CopilotChatAssistantMessage`,
+`CopilotChatUserMessage`).
 
-## The core composables
+## The core composables [#the-core-composables]
 
 These composables provide the same agent and runtime state used by the prebuilt
 chat:
@@ -42,15 +44,7 @@ chat:
 Composables must execute in a component below `CopilotKitProvider`; calling one
 above the provider has no injected runtime context.
 
-<Callout type="info" title="Vue has no useRenderToolCall composable">
-  The current Vue public API can register renderers with `useRenderTool` and
-  `useDefaultRenderTool`, but it does not expose React's resolver-style
-  `useRenderToolCall`. Use `CopilotChatMessageView` when a custom outer layout
-  still needs the registered tool-rendering pipeline, or own tool-call
-  dispatch explicitly through Vue slots.
-</Callout>
-
-## Minimal example
+## Minimal example [#minimal-example]
 
 Start with a text-only message list and composer built from `useAgent` and
 `useCopilotKit`:
@@ -106,14 +100,17 @@ agent-scoped custom renderers can resolve consistently:
 </CopilotKitProvider>
 ```
 
+Type a message and press **Send**. Your message appears in the list,
+"Thinking…" shows while the agent runs, and then the reply appears.
+
 The trade-off is deliberate: this minimal example renders only text. Tool
 calls, reasoning messages, activity messages, interrupts, attachments, and
 custom before/after content do not appear until you wire them in.
 
-## Complete example
+## Complete example [#complete-example]
 
 For a custom outer layout that should retain CopilotKit's complete message
-composition, use the public Vue leaves rather than rebuilding their state
+composition, use these chat components rather than rebuilding their state
 machines. `CopilotChatMessageView` already dispatches assistant, user,
 reasoning, tool, activity, interrupt, and custom before/after content:
 
@@ -148,16 +145,13 @@ const isRunning = computed(() => agent.value?.isRunning ?? false);
 </template>
 ```
 
-### The Vue composition equivalent
+### The Vue composition equivalent [#the-vue-composition-equivalent]
 
-React's complete example manually builds `useRenderedMessages()` from
-`useRenderToolCall`, `useRenderActivityMessage`, and
-`useRenderCustomMessages`. Vue exposes the latter two resolvers but not
-`useRenderToolCall`, so there is no honest one-for-one manual hook recreation.
-`CopilotChatMessageView` is the supported public composition boundary when you
-need all registered tool renderers.
+`CopilotChatMessageView` is the public component that renders tool calls with
+every registered tool renderer. Use it as shown above when your layout needs
+those renderers.
 
-### Per-role dispatch
+### Per-role dispatch [#per-role-dispatch]
 
 If you choose a completely manual renderer, switch on every AG-UI message role:
 
@@ -172,23 +166,18 @@ If you choose a completely manual renderer, switch on every AG-UI message role:
 Missing a role means that content silently disappears from your custom
 surface.
 
-### Tool-call composition
+### Tool-call composition [#tool-call-composition]
 
-The prebuilt message view resolves tool calls in this order: a named
+`CopilotChatMessageView` resolves tool calls in this order: a named
 `tool-call-<name>` slot, the `tool-call` fallback slot, then renderers
-registered through `useRenderTool` / `useDefaultRenderTool`. Keep the public
-message view to retain that behavior. A fully manual Vue surface must own its
+registered through `useRenderTool` / `useDefaultRenderTool`. Keep
+`CopilotChatMessageView` to retain that behavior. A fully manual Vue surface must own its
 tool-call rendering because no public resolver composable currently exposes
 the registered renderer as a callable function.
 
-### Bubble chrome
+### Bubble chrome [#bubble-chrome]
 
-Keep bubble components as pure chrome around already-rendered public leaves.
+Keep bubble components as pure chrome around these already-rendered chat
+components.
 That lets your design system own spacing, colors, and layout without copying
 the message parsing, toolbar, Markdown, tool-call, or reasoning logic.
-
-## Next steps
-
-- [Slots](/vue/openai-agents-python/vue/custom-look-and-feel/slots) for a lower-effort customization.
-- [CSS customization](/vue/openai-agents-python/vue/custom-look-and-feel/css) when only the visual
-  design needs to change.

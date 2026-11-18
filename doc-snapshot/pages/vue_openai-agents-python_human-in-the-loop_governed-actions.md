@@ -2,7 +2,7 @@
 
 > Gate side-effecting agent actions with an approval UI before they execute.
 
-## What is this?
+## What is this? [#what-is-this]
 
 Some agent actions are safe to run immediately, while others should be blocked or paused for user approval before they create side effects. A governed action approval UI gives the user a clear checkpoint:
 
@@ -13,7 +13,7 @@ Some agent actions are safe to run immediately, while others should be blocked o
 
 Use this pattern when the agent proposes an action such as sending an email, updating a record, creating a ticket, applying a discount, or calling any write API.
 
-## Action envelope
+## Action envelope [#action-envelope]
 
 Keep the approval payload small, serializable, and vendor-neutral. The agent or backend can attach any policy engine result to the action as long as the UI receives the same basic envelope:
 
@@ -36,9 +36,9 @@ The frontend should handle each verdict deterministically:
 | `deny` | Do not execute the action. Show the reason or reference and ask the agent to choose a safer path. |
 | `require_approval` | Render a user approval card. Execute only if the user approves. |
 
-## Inline approval with `useInterrupt`
+## Inline approval with `useInterrupt` [#inline-approval-with-useinterrupt]
 
-If your runtime can pause an agent run, model the approval as an interrupt. The agent proposes the action, the UI renders the checkpoint, and the run resumes with the user's decision. Vue exposes the primary `resolve` and `cancel` methods on `slotProps`:
+If your runtime can pause an agent run, model the approval as an interrupt. The agent proposes the action, the UI renders the checkpoint, and the run resumes with the user's decision. For how your agent emits the interrupt, see [Pausing the Agent for Input](/vue/human-in-the-loop/useInterrupt). Vue exposes the primary `resolve` and `cancel` methods on `slotProps`:
 
 ```vue title="src/components/GovernedActionApproval.vue"
 <script setup lang="ts">
@@ -129,9 +129,9 @@ async function handleApproval(
 }
 ```
 
-## Tool-call approval with `useHumanInTheLoop`
+## Tool-call approval with `useHumanInTheLoop` [#tool-call-approval-with-usehumanintheloop]
 
-For LLM-initiated pauses, register the approval checkpoint as a human-in-the-loop tool. The model asks to call `approve_governed_action`, your Vue component renders the card, and the tool result tells the agent whether it may continue:
+For LLM-initiated pauses, register the approval checkpoint as a human-in-the-loop [frontend tool](/vue/frontend-tools). To compare this pattern with interrupts, see the [HITL Overview](/vue/human-in-the-loop). The model asks to call `approve_governed_action`, your Vue component renders the card, and the tool result tells the agent whether it can continue:
 
 ```vue title="src/components/GovernedActionTool.vue"
 <script setup lang="ts">
@@ -193,17 +193,15 @@ function submitDecision(approved: boolean) {
 }
 
 watchEffect(() => {
-  if (props.args.verdict === "allow") submitDecision(true);
   if (props.args.verdict === "deny") submitDecision(false);
 });
 </script>
 
 <template>
   <section>
-    <p v-if="props.args.verdict === 'allow'">Allowed by policy</p>
-    <p v-else-if="props.args.verdict === 'deny'">Blocked by policy</p>
+    <p v-if="props.args.verdict === 'deny'">Blocked by policy</p>
     <p>{{ props.args.summary ?? "Preparing approval…" }}</p>
-    <div v-if="ready && !submitted && props.args.verdict === 'require_approval'">
+    <div v-if="ready && !submitted && props.args.verdict !== 'deny'">
       <button @click="submitDecision(true)">Approve and run</button>
       <button @click="submitDecision(false)">Reject</button>
     </div>
@@ -211,7 +209,9 @@ watchEffect(() => {
 </template>
 ```
 
-## Provider setup
+The model writes these arguments, including `verdict`. A model can write `"allow"` for any action, so the card never approves without a click. Your backend must check the policy again before it runs the action.
+
+## Provider setup [#provider-setup]
 
 Both composables must run in components beneath `CopilotKitProvider`:
 
@@ -231,16 +231,12 @@ import GovernedActionTool from "./components/GovernedActionTool.vue";
 </template>
 ```
 
-## Recommended guardrails
+Ask the agent to send an email. The approval card shows the action, its reference, and its arguments. Click **Approve and run**, and the agent continues with the approved action.
+
+## Recommended guardrails [#recommended-guardrails]
 
 - Check policy on the server before presenting the approval, not only in the browser.
 - Include a stable `action.id` and `reference` so the approval cannot be replayed for a different action.
 - Show the exact action arguments before the user approves.
 - Treat `deny` as terminal for that proposed action; do not execute a denied side effect from a later UI callback.
 - Log the proposal, verdict, user decision, and execution result so the action is auditable.
-
-## Going further
-
-- [Pausing the Agent for Input](./useInterrupt) — use graph-enforced interrupts when the backend must stop before a side effect.
-- [HITL Overview](../human-in-the-loop) — compare tool-based and interrupt-based human-in-the-loop patterns.
-- [Frontend Tools](../frontend-tools) — register browser-side tools that can display approval UI or update application state.

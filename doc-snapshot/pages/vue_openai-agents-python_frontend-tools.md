@@ -2,13 +2,13 @@
 
 > Let your agent interact with and update your application's UI.
 
-## What is this?
+## What is this? [#what-is-this]
 
-Frontend tools let your agent define and invoke client-side functions that run entirely in the user's browser. Because the handler executes on the frontend, it has direct access to component state, browser APIs, and any third-party UI library the page already uses. That's how an agent can "reach into" the app: update Vue state, trigger animations, read `localStorage`, pop a toast, or steer the user's view.
+A frontend tool is a function that you register in the browser. Your agent can call it, and the function runs in the user's browser. Because the handler runs in the browser, it has direct access to component state, browser APIs, and any third-party UI library the page already uses. That's how an agent can "reach into" the app: update Vue state, trigger animations, read `localStorage`, pop a toast, or steer the user's view.
 
-This page covers the "agent drives the UI" shape of frontend tools. The same primitive also powers Generative UI and Human-in-the-loop; see those pages for interaction patterns.
+This page covers the "agent drives the UI" shape of frontend tools. To render a component for a tool call, see [Components as Tools](/vue/generative-ui/tool-based). To ask the user before a tool runs, see [Human in the Loop](/vue/human-in-the-loop).
 
-## When should I use this?
+## When should I use this? [#when-should-i-use-this]
 
 Use frontend tools when your agent needs to:
 
@@ -17,9 +17,8 @@ Use frontend tools when your agent needs to:
 - Trigger UI updates, animations, or transitions
 - Show alerts, toasts, or notifications
 - Interact with third-party frontend libraries
-- Perform anything that requires the user's immediate browser context
 
-## How it works in code
+## How it works in code [#how-it-works-in-code]
 
 Register a frontend tool with `useFrontendTool`. Give it a name, a Zod schema for parameters, and a handler. The agent can then call it like any other tool and your frontend runs it in the browser.
 
@@ -55,7 +54,7 @@ useFrontendTool(
 
 The handler receives the parsed, type-safe parameters and can do anything the browser can: update state, call an API, or touch the DOM. Its return value is sent back to the agent as the tool result so the model can reason about what happened.
 
-The second argument is an array of Vue watch sources. Include refs or getters read by the registration so the handler sees current values.
+The second argument is an optional array of Vue watch sources. When one changes, CopilotKit registers the tool again. The handler reads refs when it runs, so it always sees current values.
 
 ```vue title="src/App.vue"
 <script setup lang="ts">
@@ -70,6 +69,15 @@ import DashboardAgent from "./components/DashboardAgent.vue";
 </template>
 ```
 
-Your agent discovers the name, description, and parameter schema through the runtime connection. Make descriptions narrow, validate inputs, and ask for explicit confirmation before irreversible actions. Privileged mutations, secret-bearing API calls, and authorization decisions belong on a trusted backend. For a tool that must wait for a user's answer, use `useHumanInTheLoop` instead.
+Ask the agent to show only sev1 incidents. "Current filter" changes to `sev1`, and the agent replies after it reads the `{ applied: true }` result.
+
+Your agent discovers the name, description, and parameter schema through the runtime connection. Before you ship a tool:
+
+- Keep the description narrow.
+- Validate the inputs.
+- Ask the user before an action that cannot be undone.
+- Keep privileged changes, secret API calls, and authorization checks on your backend.
+
+For a tool that must wait for a user's answer, use `useHumanInTheLoop` instead.
 
 <IntegrationGrid path="frontend-tools" />

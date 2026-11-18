@@ -2,28 +2,27 @@
 
 > Connect a Vue app to Copilot Runtime with CopilotKit.
 
-
 `@copilotkit/vue` provides Vue 3 components and composables for CopilotKit. This guide gets you to a working Vue app with a chat UI backed by a local [Copilot Runtime](/vue/openai-agents-python/backend/copilot-runtime) and `BuiltInAgent`.
 
 The runtime runs on your server, keeps model credentials out of the browser, and exposes the `default` agent that `CopilotChat` uses automatically.
 
-## Start with your coding agent
+## Start with your coding agent [#start-with-your-coding-agent]
 
 Use this prompt to connect your Vue app to Copilot Runtime with the selected agent backend, then verify a working conversation. You can also follow the manual steps below.
 
-Ask your coding agent to follow the setup steps on this page for your selected framework and frontend.
+<PageAgentPrompt />
 
-## Prerequisites
+## Prerequisites [#prerequisites]
 
-- An OpenAI API key (or another model provider supported by [Model Selection](/vue/openai-agents-python/model-selection))
+- An OpenAI API key (or another model provider supported by [Model Selection](/model-selection))
 - Vue 3.3+
 - Node.js 20+
 
-## Getting started
+## Getting started [#getting-started]
 
 <Steps>
     <Step>
-        ### Create your Vue app
+        ### Create your Vue app [#create-your-vue-app]
 
         If you don't have one already:
 
@@ -34,7 +33,7 @@ Ask your coding agent to follow the setup steps on this page for your selected f
         ```
     </Step>
     <Step>
-        ### Install CopilotKit
+        ### Install CopilotKit [#install-copilotkit]
 
         Install the Vue frontend package and `@copilotkit/runtime` for your local Copilot Runtime server:
 
@@ -60,12 +59,12 @@ Ask your coding agent to follow the setup steps on this page for your selected f
         </Tabs>
     </Step>
     <Step>
-        ### Create the Copilot Runtime
+        ### Create the Copilot Runtime [#create-the-copilot-runtime]
 
-        Add a small Node server that hosts Copilot Runtime at `/api/copilotkit` and registers a `default` built-in agent:
+        Add a small runtime server that hosts Copilot Runtime at `/api/copilotkit` and registers a `default` built-in agent:
 
         <Callout type="warn" title="Already have an agent? Do not use BuiltInAgent">
-          `BuiltInAgent` is CopilotKit's own agent — it calls the model directly.
+          `BuiltInAgent` is CopilotKit's own agent. It calls the model directly.
           Registering it as `default` means chat talks to it, not to an agent you
           already wrote. It replaces your agent rather than connecting to it.
 
@@ -105,11 +104,11 @@ Ask your coding agent to follow the setup steps on this page for your selected f
         ```
 
         <Callout type="info" title="Vite and Copilot Runtime run on separate origins">
-          Vite serves the Vue app (usually on `http://localhost:5173`) while this Node server runs on `http://localhost:8200`. Because the browser calls across those origins, `cors: true` is required for local development; the Node listener does not enable CORS by default.
+          Vite serves the Vue app (usually on `http://localhost:5173`) while the runtime server runs on `http://localhost:8200`. Because the browser calls across those origins, `cors: true` is required for local development. `createCopilotNodeListener` does not enable CORS by default.
         </Callout>
     </Step>
     <Step>
-        ### Import the styles
+        ### Import the styles [#import-the-styles]
 
         Import the package stylesheet once in your app entry. It's self-contained, so the chat renders without any other CSS.
 
@@ -122,7 +121,7 @@ Ask your coding agent to follow the setup steps on this page for your selected f
         ```
     </Step>
     <Step>
-        ### Connect to Copilot Runtime
+        ### Connect to Copilot Runtime [#connect-to-copilot-runtime]
 
         Point `CopilotKitProvider` at the runtime endpoint and drop in `CopilotChat`. Because the runtime registers an agent named `default`, the chat picks it up automatically.
 
@@ -148,7 +147,7 @@ Ask your coding agent to follow the setup steps on this page for your selected f
         </Callout>
     </Step>
     <Step>
-        ### Run the runtime and app
+        ### Run the runtime and app [#run-the-runtime-and-app]
 
         Start Copilot Runtime in one terminal:
 
@@ -169,32 +168,30 @@ Ask your coding agent to follow the setup steps on this page for your selected f
             <Accordion title="Troubleshooting">
                 - **Chat renders unstyled**: Make sure you imported `@copilotkit/vue/styles.css` in your app entry.
                 - **No response from the agent**: Confirm the runtime server is running and `http://localhost:8200/api/copilotkit/info` returns agent information.
-                - **CORS errors**: The Vite app and Node runtime use different origins. Keep `cors: true` in `createCopilotNodeListener` for local development; the Node listener is CORS-disabled by default. Configure an explicit allowed origin before deploying.
+                - **CORS errors**: The Vite app and the runtime server use different origins. Keep `cors: true` in `createCopilotNodeListener` for local development. It is CORS-disabled by default. Configure an explicit allowed origin before deploying.
                 - **Model auth errors**: Confirm `OPENAI_API_KEY` is set in the terminal running `npx tsx server.ts`.
             </Accordion>
         </Accordions>
     </Step>
     <Step>
-        ### Open Inspector and confirm setup
+        ### Open Inspector and confirm setup [#open-inspector-and-confirm-setup]
 
-On localhost, click the Inspector button in the corner of the app.
+        On localhost, click the Inspector button in the corner of the app.
 
-1. Open **Agents**, then **Agent**. Your agent is listed.
-2. Send a chat message. Open **Agents**, then **AG-UI Events**. Events are moving.
-3. Open **Rich Threads**. The list is unlocked (Intelligence is on), or locked with Enable Intelligence (Intelligence is off).
+        1. Open **Inspect**, then **Agent**. Your agent is listed.
+        2. Send a chat message. Open **Inspect**, then **AG-UI Events**. Events are moving.
+        3. Open **Rich Threads**. The list is unlocked (Intelligence is on), or locked with **Copy setup prompt** (Intelligence is off).
 
-More detail: [Inspector](/vue/openai-agents-python/inspector).
-
+        More detail: [Inspector](/vue/openai-agents-python/inspector).
     </Step>
 </Steps>
 
-## Where to go next
+## Where to go next [#where-to-go-next]
 
 - [Copilot Runtime](/vue/openai-agents-python/backend/copilot-runtime): the backend layer this frontend connects to.
-- [Built-in Agent quickstart](/quickstart): a framework-neutral path if you want CopilotKit to own the agent too.
-- [Generative UI](/vue/openai-agents-python/vue/generative-ui/tool-based): render a tool result as a card or another interactive surface instead of plain text.
-- [AG-UI Streams](/vue/openai-agents-python/vue/AG-UI-Streams): persist conversations and work with the thread API directly.
-- [Threads Drawer](/vue/openai-agents-python/vue/prebuilt-components/copilot-threads-drawer): add a ready-made thread switcher beside the chat.
+- [Generative UI](/vue/generative-ui/tool-based): render a tool result as a card or another interactive surface instead of plain text.
+- [AG-UI Streams](/vue/AG-UI-Streams): persist conversations and work with the thread API directly.
+- [Threads Drawer](/vue/prebuilt-components/copilot-threads-drawer): add a ready-made thread switcher beside the chat.
 - [Vue API reference](/reference/vue): find the current `@copilotkit/vue/v2` component and composable APIs.
 
 The Vue reference also covers slot-based customization, thread management, interrupts, and lazy-loaded custom elements for SSR.

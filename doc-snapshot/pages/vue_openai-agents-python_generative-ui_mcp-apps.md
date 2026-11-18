@@ -2,28 +2,20 @@
 
 > Render interactive UI components from MCP servers directly in your chat interface.
 
-## What is this?
+## What is this? [#what-is-this]
 
-MCP Apps are MCP servers that expose tools with associated UI resources. When the agent calls one of these tools, CopilotKit automatically fetches the resource and renders the UI component in the chat; no additional frontend code required.
-
-<Callout type="info">
-  **Free course:** See this pattern built end-to-end in [Build Interactive
-  Agents with Generative
-  UI](https://www.deeplearning.ai/short-courses/build-interactive-agents-with-generative-ui/)
-  — a free DeepLearning.AI short course taught by CopilotKit's CEO covering the
-  full Generative UI spectrum (Controlled, Declarative, and Open-Ended).
-</Callout>
+MCP Apps are MCP servers that expose tools with associated UI resources. When the agent calls one of these tools, CopilotKit automatically fetches the resource and renders the UI component in the chat. You do not need to write more frontend code.
 
 Key benefits:
 
-- **Zero frontend code** — UI components are served by the MCP server
-- **Full interactivity** — components can use HTML, CSS, and JavaScript
-- **Secure sandboxing** — content runs in isolated iframes
-- **Thread persistence** — MCP Apps are stored in conversation history and restored on reconnect
+- **Zero frontend code**: UI components are served by the MCP server
+- **Full interactivity**: components can use HTML, CSS, and JavaScript
+- **Secure sandboxing**: content runs in isolated iframes
+- **Thread persistence**: MCP Apps are stored in conversation history and restored on reconnect
 
-## Wire the runtime to your MCP server(s)
+## Wire the runtime to your MCP server(s) [#wire-the-runtime-to-your-mcp-servers]
 
-A single `mcpApps.servers` entry on the runtime is all it takes. The runtime auto-applies the MCP Apps middleware to every registered agent: each time an agent calls a tool backed by an MCP UI resource, the middleware fetches the resource and emits an `activity` event that Vue's built-in `MCPAppsActivityRenderer` renders inline in the chat as a sandboxed iframe.
+Add your servers to `mcpApps.servers` on the runtime. The runtime adds the MCP Apps middleware to every registered agent. When an agent calls a tool that has a UI resource, the middleware gets the resource and sends an `activity` event. The Vue `MCPAppsActivityRenderer` shows it in the chat as a sandboxed iframe.
 
 ```ts title="server.ts"
 import { CopilotRuntime } from "@copilotkit/runtime/v2";
@@ -49,9 +41,9 @@ const runtime = new CopilotRuntime({
   threads.
 </Callout>
 
-## No frontend renderer needed
+## No frontend renderer needed [#no-frontend-renderer-needed]
 
-Unlike custom activity types, the MCP Apps renderer is already registered by `CopilotKitProvider` out of the box. A plain `<CopilotChat />` is enough; no manual renderer wiring is required.
+Unlike custom activity types, the MCP Apps renderer is already registered by `CopilotKitProvider`. A plain `<CopilotChat />` is enough; no manual renderer wiring is required.
 
 ```vue title="src/App.vue"
 <script setup lang="ts">
@@ -65,7 +57,9 @@ import { CopilotChat, CopilotKitProvider } from "@copilotkit/vue/v2";
 </template>
 ```
 
-## Sandbox and widget storage
+Ask the agent to use a tool from your MCP server. The tool's UI appears in the chat as an iframe.
+
+## Sandbox and widget storage [#sandbox-and-widget-storage]
 
 Each MCP App runs in a sandboxed iframe with an opaque origin. A widget can't
 read your page's cookies, storage or DOM. It can't read responses from your
@@ -111,11 +105,11 @@ import { CopilotChat, CopilotKitProvider } from "@copilotkit/vue/v2";
   servers.
 </Callout>
 
-## Transport types
+## Transport types [#transport-types]
 
 The middleware supports two transport types:
 
-### HTTP
+### HTTP [#http]
 
 Use this format to connect to an MCP server that accepts standard HTTP requests:
 
@@ -127,7 +121,7 @@ Use this format to connect to an MCP server that accepts standard HTTP requests:
 }
 ```
 
-### SSE
+### SSE [#sse]
 
 Use this format to connect to an MCP server that streams events over a persistent connection:
 
@@ -144,11 +138,11 @@ Use this format to connect to an MCP server that streams events over a persisten
 
 Keep credentials on the runtime; do not expose private MCP tokens in Vue code.
 
-## Example MCP servers
+## Example MCP servers [#example-mcp-servers]
 
 Try these open-source MCP Apps servers to get started:
 
-- [Excalidraw](https://mcp.excalidraw.com) — collaborative whiteboard rendered in-chat
-- [modelcontextprotocol/ext-apps](https://github.com/modelcontextprotocol/ext-apps) — canonical reference implementations
+- [Excalidraw](https://mcp.excalidraw.com): collaborative whiteboard rendered in-chat
+- [modelcontextprotocol/ext-apps](https://github.com/modelcontextprotocol/ext-apps): canonical reference implementations
 
 <IntegrationGrid path="generative-ui/mcp-apps" />

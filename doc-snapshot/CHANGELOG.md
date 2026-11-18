@@ -2,6 +2,35 @@
 
 ## 2026-11-12
 
+## 2026-11-18
+
+- (root): LOW prose (+14 / -17)
+- custom-look-and-feel/slots: HIGH code, structure (+30 / -22)
+- programmatic-control: HIGH code, structure (+9 / -21)
+- custom-look-and-feel/headless-ui: MEDIUM structure (+15 / -26)
+- prebuilt-components: HIGH code, structure (+13 / -16)
+- prebuilt-components/copilot-threads-drawer: HIGH code, structure (+46 / -45)
+- headless-threads: HIGH code, structure (+15 / -17)
+- generative-ui/tool-rendering: HIGH code, structure (+45 / -49)
+- frontend-tools: LOW prose (+13 / -5)
+- generative-ui/mcp-apps: MEDIUM structure (+10 / -16)
+- generative-ui/state-rendering: HIGH code, structure (+3 / -11)
+- generative-ui/tool-based: LOW prose (+5 / -3)
+- shared-state: HIGH code, structure (+7 / -15)
+- shared-state/rendering-in-app: MEDIUM structure (+6 / -11)
+- shared-state/streaming: HIGH code, structure (+5 / -14)
+- shared-state/agent-readonly: MEDIUM structure (+3 / -8)
+- human-in-the-loop: HIGH code, structure (+36 / -13)
+- human-in-the-loop/useInterrupt: HIGH code, structure, banner (+9 / -45)
+- human-in-the-loop/headless: HIGH code, structure, banner (+6 / -42)
+- human-in-the-loop/governed-actions: HIGH code, structure (+6 / -10)
+- webmcp: MEDIUM structure (+17 / -17)
+- multi-agent/subagents: HIGH code, structure (+19 / -29)
+- vs-code-extension: LOW prose (+14 / -11)
+- inspector: LOW prose (+26 / -29)
+- agent-config: LOW prose (+3 / -15)
+- sidebar: added /vue/openai-agents-python/telemetry, /vue/openai-agents-python/vs-code-extension; removed /vue/openai-agents-python/using-these-docs, /vue/openai-agents-python/programmatic-control, /vue/openai-agents-python/intelligence/quickstart, /vue/openai-agents-python/intelligence/intelligence-platform, /vue/openai-agents-python/intelligence/plans, /vue/openai-agents-python/AG-UI-Streams, /vue/openai-agents-python/intelligence/bring-your-own-thread-system, /vue/openai-agents-python/threads-import, /vue/openai-agents-python/threads-lifecycle, /vue/openai-agents-python/intelligence/threads-explained, /vue/openai-agents-python/learning, /vue/openai-agents-python/intelligence/learned-skills, /vue/openai-agents-python/intelligence/memories, /vue/openai-agents-python/intelligence/trajectories, /vue/openai-agents-python/intelligence/captured-data, /vue/openai-agents-python/intelligence/trajectories-reference, /vue/openai-agents-python/intelligence/standalone-collector, /vue/openai-agents-python/intelligence/analytics, /vue/openai-agents-python/intelligence/channels, /vue/openai-agents-python/intelligence/managed-intelligence-platform, /vue/openai-agents-python/intelligence/self-hosting, /vue/openai-agents-python/intelligence/self-hosting-ecs, /vue/openai-agents-python/intelligence/self-hosting-local, /vue/openai-agents-python/backend/copilot-runtime, /vue/openai-agents-python/backend/runtime-endpoints, /vue/openai-agents-python/backend/custom-agent, /vue/openai-agents-python/backend/custom-ag-ui-agent, /vue/openai-agents-python/backend/agent-runner, /vue/openai-agents-python/backend/message-history, /vue/openai-agents-python/backend/self-managed-agents, /vue/openai-agents-python/backend/ag-ui, /vue/openai-agents-python/runtime-server-adapter, /vue/openai-agents-python/deploy/agentcore, /vue/openai-agents-python/deploy/aws-lambda, /vue/openai-agents-python/deploy/langsmith, /vue/openai-agents-python/concepts/architecture, /vue/openai-agents-python/concepts/generative-ui-overview, /vue/openai-agents-python/concepts/which-hook, /vue/openai-agents-python/concepts/oss-vs-enterprise, /vue/openai-agents-python/agentic-protocols, /vue/openai-agents-python/agentic-protocols/ag-ui, /vue/openai-agents-python/agentic-protocols/ag-ui-middleware, /vue/openai-agents-python/agentic-protocols/mcp, /vue/openai-agents-python/agentic-protocols/a2a, /vue/openai-agents-python/troubleshooting/common-issues, /vue/openai-agents-python/troubleshooting/debug-mode, /vue/openai-agents-python/troubleshooting/event-inspector
+
 ## 2026-11-17
 
 - custom-look-and-feel/headless-ui: NEW new (+195 / -0)

@@ -3,11 +3,11 @@ import { runStandardAction } from '../core/actions';
 import { type DocEvidence, showFinding } from './doc-evidence';
 import { registerDocEvidence } from '../core/doc-evidence';
 
-/** Texts checked against the rendered page (2026-11-13). FINDINGS.md #1. */
+/** Texts checked against the rendered page (2026-11-18). FINDINGS.md #1. */
 export const FINDING_EVIDENCE: Record<string, DocEvidence[]> = {
   quickstart: [
-    { text: 'Bring your OpenAI Agents SDK agents', caption: 'The Vue quickstart URL shows the landing page, not Vue steps' },
-    { text: 'import type { NextRequest } from "next/server";', caption: 'The only runtime code is a Next.js route handler' },
+    { text: 'Already have an agent? Do not use BuiltInAgent', caption: 'The page only sets up BuiltInAgent and says not to use it with your own agent' },
+    { text: "use your framework's quickstart for the runtime wiring", caption: 'It points to the framework quickstart, which is this page: no OpenAI Agents SDK wiring' },
   ],
 };
 
@@ -16,11 +16,11 @@ registerDocEvidence(FINDING_EVIDENCE);
 
 /** Generic wording (owner rule): what the page shows vs what a Vue reader needs. */
 const QUICKSTART_FINDING = [
-  'vue quickstart should give vue setup steps and an agent to connect to',
-  'instead its just the landing page for this framework',
-  'only code on it is a next js route handler, cant run that in a vue vite app',
-  'no vue install,no node runtime for vue,no python agent code',
-  'so i had to wire the vue app to the python agent myself',
+  'openai agents vue quickstart should show how to hook my openai agents sdk agent into a vue app',
+  'instead it only sets up builtinagent,copilotkits own agent that calls the model directly',
+  'callout even says if u already have an agent dont use builtinagent,use your frameworks quickstart for the wiring',
+  'but this is the framework quickstart,no httpagent no python agent no ag_ui_openai_agents anywhere',
+  'so the chat replies but its not talking to an openai agents agent at all',
 ].join('\n');
 
 export const runVueQuickstartAction: PageActionHandler = async (page, config, root, ctx) => {

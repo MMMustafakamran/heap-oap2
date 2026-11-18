@@ -53,6 +53,9 @@ if (process.env.CPK_INTELLIGENCE_API_KEY) {
       if (!session?.user) throw new Error("Unauthorized");
       return { id: session.user.id, name: session.user.name };
     },
+    // Each new thread is named from its first user message.
+    // For a short title from a model, pass { model: "openai/gpt-5-mini" }.
+    // Set to false to disable:
     // generateThreadNames: false,
     // lockTtlSeconds: 20,
     // lockHeartbeatIntervalSeconds: 15,

@@ -10,13 +10,6 @@ export const FINDING_EVIDENCE: Record<string, DocEvidenceItem[]> = {
     { text: 'type ResearchState = { status?: string; draft?: string; completed?: number; total?: number };', caption: 'The UI reads status/draft/completed/total' },
     { text: 'shared_state().update(document=document)', caption: 'The agent only ever writes document' },
   ],
-  'generative-ui-components': [
-    { text: 'const { messages, systemPrompts, tools } = convertInputToTanStackAI(input);', caption: 'Vue server.ts: chat() gets no threadId; @tanstack/ai now requires one', clickTab: 'Vue' },
-  ],
-  'a2ui-fixed': [
-    { text: 'Implement the React renderers', caption: 'The catalog renderers are React only (renderers.tsx), no Vue code' },
-    { text: '<CopilotKit runtimeUrl="/api/copilotkit" a2ui={{ catalog: myCatalog }}>', caption: 'The catalog is registered on the React provider only' },
-  ],
 };
 
 // Evidence is highlighted by the engine inside the doc step, before the IDE (AUTORECORDER §2).
@@ -30,20 +23,6 @@ const NOTES: Record<string, string> = {
     'the vue component reads status draft completed and total',
     'but the agent code on the page only writes document into state,so nothing matches',
     'page also never shows the shared_state_streaming_agent it wraps,had to write that myself',
-  ].join('\n'),
-  'generative-ui-components': [
-    'components page says run the vue server.ts and ask for a plans table,the table should render',
-    'instead nothing comes back,run_error chat() needs a threadId',
-    'the server.ts on the vue tab calls chat from tanstack ai without a threadId',
-    'tanstack ai that npm install gives u today requires it so every run fails',
-    'also its a builtinagent,no openai agents sdk agent anywhere on the page',
-  ].join('\n'),
-  'a2ui-fixed': [
-    'fixed schema page says the agent returns the flight schema and a flight card renders',
-    'in vue i get a red box,a2ui render error catalog not found copilotkit flight-fixed-catalog',
-    'the catalog definitions renderers and provider code are all react,page.tsx renderers.tsx',
-    'theres no vue way shown to register that catalog so the card cant render',
-    'agent file also imports demo_agents._common which is never shown,had to stub it',
   ].join('\n'),
 };
 
@@ -79,9 +58,5 @@ const runCardReply: PageActionHandler = async (page, config, _root, ctx) => {
 export const ACTIONS_GENUI: Record<string, PageActionHandler> = {
   'tool-based': runCardReply,
   'mcp-apps': runCardReply,
-  a2ui: runCardReply,
-  'a2ui-dynamic': runCardReply,
   'state-rendering': withNote('state-rendering'),
-  'generative-ui-components': withNote('generative-ui-components'),
-  'a2ui-fixed': withNote('a2ui-fixed'),
 };

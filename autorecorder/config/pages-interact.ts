@@ -53,7 +53,7 @@ export const PAGES_INTERACT: PageDefinition[] = [
     extraTabs: [
       { filePath: `${B}/hitl.py`, startLine: 1, endLine: 19 },
       COMMON,
-      { filePath: `${C}/hitl/TimePickerCard.vue`, startLine: 1, endLine: 21, addedText: '<!-- HARNESS: the HITL overview imports ./TimePickerCard.vue but never shows it. Minimal picker' },
+      { filePath: `${C}/hitl/TimePickerCard.vue`, startLine: 1, endLine: 17 },
     ],
     prompt: 'Please book an onboarding call with the sales team, my name is Sam.',
     waitAfterPromptMs: 5000,
@@ -63,7 +63,7 @@ export const PAGES_INTERACT: PageDefinition[] = [
     docPath: 'human-in-the-loop/governed-actions', route: '/governed-actions',
     ideFile: `${C}/governed/GovernedActionTool.vue`, startLine: 1, endLine: 24,
     extraTabs: [
-      { filePath: `${C}/governed/GovernedActionCard.vue`, startLine: 1, endLine: 46 },
+      { filePath: `${C}/governed/GovernedActionCard.vue`, startLine: 1, endLine: 44 },
       { filePath: `${C}/governed/GovernedActionApproval.vue`, startLine: 1, endLine: 58 },
       { filePath: `${P}/GovernedActionsApp.vue`, startLine: 1, endLine: 14 },
     ],

@@ -2,7 +2,6 @@
 
 > Verify your setup, debug agent runs, reproduce issues, and review AG-UI streams and Automatic Learning.
 
-
 The CopilotKit Inspector is a debugging overlay for the live connection between
 your frontend and agents. Use it while developing to follow a run from the
 application UI through the AG-UI event stream, tools, state, and saved Threads.
@@ -11,7 +10,7 @@ Reach for Inspector after a [quickstart](/vue/openai-agents-python/quickstart) t
 are connected, while adding tools or shared state, or when you need to reproduce
 an issue from a real conversation. Inspector shows what the browser received;
 [Runtime Debug Mode](/vue/openai-agents-python/troubleshooting/debug-mode) adds the server-side view, and
-[Error Debugging & Observability](/vue/openai-agents-python/troubleshooting/error-debugging) covers
+[Error Debugging & Observability](/troubleshooting/error-debugging) covers
 production error reporting.
 
 <video
@@ -24,7 +23,7 @@ production error reporting.
   muted
 />
 
-## Choose what you need to do
+## Choose what you need to do [#choose-what-you-need-to-do]
 
 | Your goal                                      | Start here                              |
 | ---------------------------------------------- | --------------------------------------- |
@@ -38,10 +37,11 @@ production error reporting.
 | Review what Learning found                     | **Automatic Learning**                  |
 | Move or hide the overlay                       | The Inspector header and settings       |
 
-## Show Inspector and confirm your setup
+## Show Inspector and confirm your setup [#show-inspector-and-confirm-your-setup]
 
 Inspector appears by default in development builds of React, Vue, and Angular
-browser applications. Open your application and click the Inspector button in
+browser applications. In React, Inspector appears only when the page host is
+`localhost`, `127.0.0.1`, or `[::1]`. Open your application and click the Inspector button in
 the corner. The first open lands on **Home**; later opens return to the last
 pane you used.
 
@@ -63,7 +63,7 @@ If the agent is missing or no events arrive, first confirm the
 missing piece, follow the [Intelligence quickstart](/vue/openai-agents-python/intelligence/quickstart)
 instead of changing the agent connection.
 
-## Find the cause of a failed run
+## Find the cause of a failed run [#find-the-cause-of-a-failed-run]
 
 When CopilotKit reports an error, the Inspector launcher turns red. When there
 is room, an error pill briefly names the failure. Click either one to open the
@@ -89,21 +89,16 @@ event stream stops before it reaches the browser, enable [Runtime Debug
 Mode](/vue/openai-agents-python/troubleshooting/debug-mode) to inspect the server-side pipeline. Use
 `onError` on `CopilotKit` or `CopilotChat` when the application UI or your
 production observability system should also receive the error. See [Error
-Debugging & Observability](/vue/openai-agents-python/troubleshooting/error-debugging) for that setup.
+Debugging & Observability](/troubleshooting/error-debugging) for that setup.
 
-## What's New
+## What's New [#whats-new]
 
 What's New lists updates that match your stable frontend SDK version and confirmed
 runtime configuration. A single preview beside the launcher highlights an update.
 Read it or close its preview to quiet the updates already available to you. They remain
 in What's New for later reading. Reading a different update does not dismiss the highlight.
 
-New updates can show a preview later. Copy edits to an update you already read stay quiet.
-The Inspector shares recent read and dismissed updates across ports on the current host.
-It keeps the selected update and full history in storage for each origin. Updates load
-once per page and do not poll. If cookies are blocked, read and dismissed updates
-stay on the current origin.
-Production, server rendering, and disabled Inspectors do not fetch notifications.
+{/* Maintainer notes on the What's New feed. New updates can show a preview later. Copy edits to an update you already read stay quiet. The Inspector shares recent read and dismissed updates across ports on the current host. It keeps the selected update and full history in storage for each origin. Updates load once per page and do not poll. If cookies are blocked, read and dismissed updates stay on the current origin. Production, server rendering, and disabled Inspectors do not fetch notifications. */}
 
 React, Vue, and Angular set the notification context when they mount Inspector.
 If you mount `<cpk-web-inspector>` yourself, set its `notificationContext`
@@ -111,12 +106,9 @@ property before connecting it to the page. Include `development: true`, your
 `framework`, and the version of that frontend SDK package as `sdkVersion`.
 Without that context, the element leaves notifications off.
 
-The cohort-capable Inspector reads only the versioned notification feed. Older SDK
-releases continue reading the separate legacy `announcements.json` feed. A legacy
-announcement reaches those older clients without cohort targeting; it is not a
-fallback for the updated Inspector when the cohort feed is empty or unavailable.
+{/* Maintainer notes on the What's New feed. The cohort-capable Inspector reads only the versioned notification feed. Older SDK releases continue reading the separate legacy announcements.json feed. A legacy announcement reaches those older clients without cohort targeting. It is not a fallback for the updated Inspector when the cohort feed is empty or unavailable. */}
 
-## Follow a run from input to result
+## Follow a run from input to result [#follow-a-run-from-input-to-result]
 
 Send a message in your application, then use these views to answer the next
 debugging question:
@@ -124,19 +116,24 @@ debugging question:
 | Question                                                    | Open                                                                | Related guide                                               |
 | ----------------------------------------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------- |
 | Which agent ran, and what did it do?                        | **Agent**                                                           | [Agent configuration](/vue/openai-agents-python/agent-config)                        |
-| Which events crossed the AG-UI connection?                  | **AG-UI Events**                                                    | [AG-UI protocol](/vue/openai-agents-python/agentic-protocols/ag-ui)                  |
+| Which events crossed the AG-UI connection?                  | **AG-UI Events**                                                    | [AG-UI protocol](/agentic-protocols/ag-ui)                  |
 | Which browser-side tools are registered?                    | **Frontend Tools**                                                  | [Frontend Tools](/vue/openai-agents-python/frontend-tools)                           |
 | What readable or document context was shared?               | **Context**                                                         | [Agent read-only context](/vue/openai-agents-python/shared-state/agent-readonly)     |
-| Which components can the agent render, and what did it see? | **Generative UI**                                                   | [Components and surfaces](/vue/openai-agents-python/generative-ui/components)        |
+| Which components can the agent render, and what did it see? | **Generative UI**                                                   | [Components and surfaces](/generative-ui/components)        |
 | What did a saved conversation contain?                      | **Rich Threads** → **Conversation**, **AG-UI Events**, or **State** | [AG-UI Streams](/vue/openai-agents-python/AG-UI-Streams) and [Shared State](/vue/openai-agents-python/shared-state) |
 
 In an official React `CopilotChat`, open an assistant message's toolbar and
 choose **View in Inspector** to jump directly to that message in its Thread.
 This local development shortcut is useful when you already know which response
-you need to explain. See the [`CopilotChat` reference](/reference/vue/components/CopilotChat)
+you need to explain. See the [`CopilotChat` reference](/reference/components/CopilotChat)
 for its configuration.
 
-**Conversation** shows messages, expandable tool calls, and Generative UI component names. Generated interfaces render in your application, not inside Inspector. Choose **Show event timeline** for run markers and state changes, or **AG-UI Events** for raw events. **Hide thread list** gives the conversation more room; the title and conversation actions stay visible while scrolling.
+In **Rich Threads**, a saved Thread has these controls:
+
+- **Conversation**: messages, expandable tool calls, and Generative UI component names. Generated interfaces render in your application, not inside Inspector.
+- **Show event timeline**: run markers and state changes.
+- **AG-UI Events**: raw events.
+- **Hide thread list**: more room for the conversation. The title and conversation actions stay visible while scrolling.
 
 **Frontend Tools** appears only after your application registers a frontend
 tool. **Capabilities** appears only when an A2UI catalog is present; use it to
@@ -156,19 +153,19 @@ It has three tabs:
   the next run.
 
 If a surface does not render, see
-[When something does not render](/vue/openai-agents-python/generative-ui/components#when-something-does-not-render)
+[When something does not render](/generative-ui/components#when-something-does-not-render)
 for the tab to open.
 
 On narrow windows, or when Inspector is docked left, the sidebar collapses to
 icons. **Talk to an Engineer** remains in the sidebar footer.
 
-## Reproduce an issue without changing the saved Thread
+## Reproduce an issue without changing the saved Thread [#reproduce-an-issue-without-changing-the-saved-thread]
 
 Use **Playground** when you have already observed a problem and want to vary the
-prompt, state, or next message without touching the original [Rich
-Thread](/vue/openai-agents-python/AG-UI-Streams). Its messages and state stay separate from your application
-chat and stored Threads, so you can run, stop, retry, and continue an experiment
-safely.
+prompt, state, or next message without touching the original saved Thread. Its
+messages and state stay separate from your application chat and stored Threads,
+so you can run, stop, retry, and continue an experiment safely. To learn how
+Threads are saved, see [AG-UI Streams](/vue/openai-agents-python/AG-UI-Streams).
 
 To reproduce a problem from a real conversation:
 
@@ -185,7 +182,7 @@ video, three local example Threads, their detail tabs, and a guided tour. These
 examples do not send real Thread requests. With reduced motion enabled, the
 video starts paused. If the video fails, the examples and tour still work.
 
-## Continue a saved Thread in your application
+## Continue a saved Thread in your application [#continue-a-saved-thread-in-your-application]
 
 Selecting a Thread in Inspector does not change the live chat. To continue the
 conversation in an official `CopilotChat`, sidebar, or popup:
@@ -214,23 +211,27 @@ the same `requestId` in every lifecycle event:
 If you are building the Thread picker and conversation surface yourself, see
 [Headless Threads](/vue/openai-agents-python/headless-threads) for the persistence and lifecycle APIs.
 
-## Enable or repair Intelligence
+## Enable or repair Intelligence [#enable-or-repair-intelligence]
 
-Intelligence unlocks real Threads and Learning. When it is not connected, open
+Intelligence provides real Threads and Learning. When it is not connected, open
 **Home** and choose **Copy setup prompt**. Give that prompt to your coding agent,
 then return to Inspector to follow setup through the first eligible Thread. The
 [Intelligence quickstart](/vue/openai-agents-python/intelligence/quickstart) explains the project,
 credentials, and Runtime routes that prompt configures.
 
-If Threads remains locked, Inspector shows one Rich Threads setup view with
+For cloud-hosted Intelligence, keep `CPK_INTELLIGENCE_API_KEY` on the runtime server.
+The runtime reports Intelligence access to the browser. Do not expose the project
+API key in a `NEXT_PUBLIC_` environment variable.
+
+If Threads remains locked, **Rich Threads** shows one setup view with
 **Copy setup prompt** and **Talk to an Engineer**. The view is based on Runtime
 Threads capability rather than license metadata. To configure incomplete
 routes, use the Runtime route guide.
-[Enable AG-UI Streams routes](/vue/openai-agents-python/backend/runtime-endpoints#enable-rich-threads-routes)
+[Enable AG-UI Streams routes](/vue/openai-agents-python/backend/runtime-endpoints#enable-ag-ui-streams-routes)
 explains how to configure application-user identity, mount every required HTTP
 method, and verify the capability response.
 
-## Review what Learning found
+## Review what Learning found [#review-what-learning-found]
 
 Open **Automatic Learning** to trace completed Threads into evidence-backed Insights and
 reviewed Skills. A configured pane shows:
@@ -249,7 +250,7 @@ If Learning is not configured, choose **Copy setup prompt**. If the Runtime
 cannot select one Learning Space for the active agent, Inspector sends you
 to the web app to choose it. See [Automatic Learning](/vue/openai-agents-python/learning) for the complete workflow.
 
-## Control when Inspector appears
+## Control when Inspector appears [#control-when-inspector-appears]
 
 Use the option that matches what you are trying to do:
 
@@ -291,22 +292,18 @@ To disable Inspector in a React development build:
 </CopilotKit>
 ```
 
-For cloud-hosted Intelligence, keep `CPK_INTELLIGENCE_API_KEY` on the runtime server.
-The runtime reports Intelligence access to the browser. Do not expose the project
-API key in a `NEXT_PUBLIC_` environment variable.
-
 Vue uses the template prop `:enable-inspector="false"`. Angular uses
 `provideCopilotKit({ enableInspector: false })`. An explicit `true` keeps
-Inspector enabled in development but cannot override production or
-server-rendering guards. Legacy `showDevConsole` props no longer control it.
+Inspector enabled in development but cannot override the production,
+server-rendering, or (in React) host checks. The `showDevConsole` props do not control it.
 
-See the [`CopilotKit` provider reference](/reference/vue) for
+See the [`CopilotKit` provider reference](/reference/components/CopilotKit) for
 the complete React provider API.
 
 Inspector is never loaded or rendered in a production build or during
 server-side rendering.
 
-## Understand project and usage information
+## Understand project and usage information [#understand-project-and-usage-information]
 
 An Intelligence-backed Runtime can send trusted organization, project, plan,
 Thread usage, retention, and action metadata. Home shows valid project context;
@@ -335,7 +332,7 @@ synchronized deployment. Newer components feature-detect optional metadata;
 older components ignore fields they do not understand. Explicit
 `threadEndpoints` remain authoritative, and metadata never enables Thread work.
 
-## Where Inspector runs
+## Where Inspector runs [#where-inspector-runs]
 
 Inspector is a browser overlay: it mounts a custom element into the page's DOM.
 It runs on React, Next.js, React SPA, Vue, and Angular.
@@ -348,7 +345,7 @@ Use these alternatives for React Native:
 
 | What you need to debug      | Use                                                                                                      |
 | --------------------------- | -------------------------------------------------------------------------------------------------------- |
-| Whether the Runtime answers | `npx copilotkit verify --round-trip`. See [Proving it works](/vue/openai-agents-python/react-native#proving-it-works).            |
+| Whether the Runtime answers | `npx copilotkit verify --round-trip`. See [Proving it works](/react-native#proving-it-works).            |
 | Errors and tool calls       | Runtime [Debug Mode](/vue/openai-agents-python/troubleshooting/debug-mode) beside the device log, such as `adb logcat` on Android |
 | Saved Threads               | The Thread view in [CopilotKit Intelligence](/vue/openai-agents-python/intelligence/overview)                                     |
 

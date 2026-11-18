@@ -23,7 +23,6 @@ export const ACTION_MAP: Record<string, PageActionHandler> = {
 
 const READY_SELECTOR: Record<string, string> = {
   'headless-ui': 'input[aria-label="Message"], input, textarea',
-  'programmatic-control': 'button',
   slots: 'button, textarea',
 };
 

@@ -2,42 +2,38 @@
 
 > Build a custom thread UI with useThreads while CopilotKit handles persistence, replay, synchronization, and lifecycle infrastructure.
 
-## What is this?
+## What is this? [#what-is-this]
 
 CopilotKit Rich Threads enable persistent, resumable multi-turn conversations. The `useThreads` composable lists, creates, renames, archives, and deletes CopilotKit Intelligence threads with realtime synchronization. Threads work with any agent framework because CopilotKit Intelligence stores conversation history server-side, so users can close their browser and pick up where they left off. It does not list or mutate native LangGraph, ADK, or other framework stores unless your backend explicitly bridges those systems.
 
 <IntelligenceOnboardingPrompt feature="threads" surface="docs_threads" />
 
 <Callout type="info" title="Prebuilt thread UI: Threads Drawer">
-  If your app came from a CopilotKit CLI starter, it may already include the prebuilt **[Threads Drawer](/vue/openai-agents-python/vue/prebuilt-components/copilot-threads-drawer)**. Keep it for the shortest path to a production thread switcher. Use the `useThreads` steps below when adding custom thread UI or replacing the Drawer with your own layout and interactions, including thread rename.
+  If your app came from a CopilotKit CLI starter, it may already include the prebuilt **[Threads Drawer](/vue/prebuilt-components/copilot-threads-drawer)**. Keep it for the shortest path to a production thread switcher. Use the `useThreads` steps below when adding custom thread UI or replacing the Drawer with your own layout and interactions, including thread rename.
 </Callout>
 
-## When should I use this?
+## When should I use this? [#when-should-i-use-this]
 
 - Your app needs multiple saved conversations per user, like a chat-history sidebar.
 - Users should be able to resume a prior conversation across sessions or devices.
 - You want realtime sync so threads created on one tab appear on another.
 - You need to let users organize conversations by renaming or archiving them.
 
-## Prerequisites
+## Prerequisites [#prerequisites]
 
-- A CopilotKit application connected to CopilotKit Intelligence
+- A CopilotKit application connected to CopilotKit Intelligence, cloud-hosted or [self-hosted](/vue/openai-agents-python/intelligence/self-hosting)
 - The current `@copilotkit/vue` v2 package
 - A model provider key supported by your runtime
 
-For multi-user applications, configure the runtime to [scope Rich Threads to the signed-in user](/vue/openai-agents-python/vue/threads-lifecycle#scope-rich-threads-to-the-signed-in-user) before exposing thread lists or lifecycle actions.
+For multi-user applications, configure the runtime to [scope Rich Threads to the signed-in user](/vue/threads-lifecycle#scope-rich-threads-to-the-signed-in-user) before exposing thread lists or lifecycle actions.
 
-## Implementation
-
-<Callout type="info" title="Migrating existing history?">
-  Threads capture new CopilotKit conversations once your app is connected to CopilotKit Intelligence. To move historical Google ADK or LangGraph conversations into the same store, start with [Import & Synchronize Thread History](/vue/openai-agents-python/threads-import), or the framework-specific synchronization guide.
-</Callout>
+## Implementation [#implementation]
 
 <Steps>
   <Step>
-    ### Configure your Runtime with CopilotKit Intelligence
+    ### Configure your Runtime with CopilotKit Intelligence [#configure-your-runtime-with-copilotkit-intelligence]
 
-    Your `CopilotRuntime` must be connected to CopilotKit Intelligence before the thread UI can list and resume conversations. CLI-created starters generate this setup; otherwise follow [Connect your runtime to Intelligence](/intelligence/connect-your-runtime).
+    Your `CopilotRuntime` must be connected to CopilotKit Intelligence before the thread UI can list and resume conversations. CLI-created starters generate this setup; otherwise follow [Connect your runtime to Intelligence](/vue/openai-agents-python/intelligence/quickstart).
 
     ```typescript title="server.ts"
     import {
@@ -55,6 +51,9 @@ For multi-user applications, configure the runtime to [scope Rich Threads to the
         if (!session?.user) throw new Error("Unauthorized");
         return { id: session.user.id, name: session.user.name };
       },
+      // Each new thread is named from its first user message.
+      // For a short title from a model, pass { model: "openai/gpt-5-mini" }.
+      // Set to false to disable:
       // generateThreadNames: false,
       // lockTtlSeconds: 20,
       // lockHeartbeatIntervalSeconds: 15,
@@ -68,13 +67,13 @@ For multi-user applications, configure the runtime to [scope Rich Threads to the
     | --- | --- | --- | --- |
     | `lockTtlSeconds` | `20` | `3600` | How long a run lock is held before it expires. |
     | `lockHeartbeatIntervalSeconds` | `15` | `3000` | How often the runtime renews the lock. |
-    | `lockKeyPrefix` | — | — | Optional Redis prefix when several apps share one instance. |
+    | `lockKeyPrefix` | None | None | Optional Redis prefix when several apps share one instance. |
   </Step>
 
   <Step>
-    ### List and manage threads with useThreads
+    ### List and manage threads with useThreads [#list-and-manage-threads-with-usethreads]
 
-    `useThreads` returns reactive refs for the thread list and loading state, plus mutation methods.
+    `useThreads` returns reactive refs for the thread list and loading state, plus mutation methods. The [`useThreads` reference](/reference/vue/hooks/useThreads) lists every parameter and return value.
 
     ```vue title="src/components/ThreadSidebar.vue"
     <script setup lang="ts">
@@ -110,13 +109,17 @@ For multi-user applications, configure the runtime to [scope Rich Threads to the
     </template>
     ```
 
-    The array is sorted by recent activity and stays synchronized in realtime. `archiveThread` is a soft delete hidden from the default list; pass `includeArchived: true` to include archived threads. `deleteThread` is permanent and irreversible. Neither method shows a confirmation dialog, so add one where appropriate.
+    - `threads` is sorted by recent activity and stays synchronized in realtime.
+    - `archiveThread` hides a thread from the default list. Pass `includeArchived: true` to list archived threads.
+    - `deleteThread` removes a thread permanently.
+
+    Neither method asks the user to confirm, so add a confirmation dialog where you need one.
   </Step>
 
   <Step>
-    ### Switch between threads
+    ### Switch between threads [#switch-between-threads]
 
-    Keep the list and chat inside one `CopilotChatConfigurationProvider`. Selecting a row with `setActiveThreadId(..., { explicit: true })` clears the current view, connects the chat to the selected thread, and replays its history. If a run is still active, the chat rejoins its stream.
+    Keep the list and chat inside one `CopilotChatConfigurationProvider`. Selecting a row with `setActiveThreadId(..., { explicit: true })` clears the current view, connects the chat to the selected thread, and replays its history. If a run is still active, the chat rejoins its stream. For how replay and sync work, see [Threads & Persistence Architecture](/vue/openai-agents-python/intelligence/threads-explained).
 
     ```vue title="src/App.vue"
     <script setup lang="ts">
@@ -140,13 +143,11 @@ For multi-user applications, configure the runtime to [scope Rich Threads to the
     </template>
     ```
 
-    
-
-    
+    Click a thread in the sidebar. The chat clears and shows the messages of that thread.
   </Step>
 
   <Step>
-    ### Add pagination for large thread lists
+    ### Add pagination for large thread lists [#add-pagination-for-large-thread-lists]
 
     Pass `limit` for cursor-based pagination and render `fetchMoreThreads` while more pages remain:
 
@@ -173,9 +174,6 @@ For multi-user applications, configure the runtime to [scope Rich Threads to the
   </Step>
 </Steps>
 
-## Next steps
-
-- **Prebuilt UI:** [Threads Drawer](/vue/openai-agents-python/vue/prebuilt-components/copilot-threads-drawer) — the drop-in Vue thread switcher.
-- **Thread architecture:** [Threads & Persistence Architecture](/vue/openai-agents-python/intelligence/threads-explained) — event replay and realtime sync.
-- **Production self-hosting:** [Self-host CopilotKit Intelligence](/vue/openai-agents-python/intelligence/self-hosting).
-- **API reference:** [`useThreads`](/reference/vue/hooks/useThreads) — parameters, return values, and types.
+<Callout type="info" title="Migrating existing history?">
+  Threads capture new CopilotKit conversations once your app is connected to CopilotKit Intelligence. To move historical Google ADK or LangGraph conversations into the same store, start with [Import & Synchronize Thread History](/vue/openai-agents-python/threads-import), or the framework-specific synchronization guide.
+</Callout>

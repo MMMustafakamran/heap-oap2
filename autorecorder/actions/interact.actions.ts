@@ -8,10 +8,6 @@ import { glideClick, glideTo } from './glide-click';
 
 /** Texts checked against the rendered pages (2026-11-17). */
 export const FINDING_EVIDENCE: Record<string, DocEvidence[]> = {
-  hitl: [
-    { text: 'import TimePickerCard from "./TimePickerCard.vue";', caption: 'MeetingApproval.vue imports TimePickerCard.vue, never shown' },
-    { text: 'from demo_agents._common import MODEL, chat_settings', caption: 'hitl.py imports demo_agents._common, never shown' },
-  ],
   webmcp: [
     { text: 'const orders = await searchOrders(status);', caption: 'searchOrders() is never defined or imported' },
   ],
@@ -25,14 +21,6 @@ export const FINDING_EVIDENCE: Record<string, DocEvidence[]> = {
 registerDocEvidence(FINDING_EVIDENCE);
 
 const NOTES: Record<string, string> = {
-  hitl: [
-    'hitl page says the agent calls a frontend tool and a time picker card shows in chat',
-    'the card does show but only after i wrote the picker myself',
-    'meetingapproval.vue imports ./timepickercard.vue,page never shows that file',
-    'and hitl.py imports demo_agents._common for model and chat_settings,also not shown anywhere',
-    'agent prompt even says book_call while the vue tool is schedule_meeting',
-    'so u cant build this page as written,had to guess the card and the common file',
-  ].join('\n'),
   webmcp: [
     'webmcp page says add webmcp to useFrontendTool and the same handler works for the agent',
     'asked the agent to use searchOrders,no reply at all,chat just sits there',
@@ -76,7 +64,7 @@ const clickThrough = (button: RegExp | string, settleMs: number): PageActionHand
   };
 
 export const ACTIONS_INTERACT: Record<string, PageActionHandler> = {
-  hitl: withNote('hitl', clickThrough(/Tomorrow 10:00 AM/, 12_000)),
+  hitl: clickThrough(/Tomorrow at 09:00/, 12_000),
   'governed-actions': clickThrough('Approve and run', 12_000),
   webmcp: withNote('webmcp'),
   subagents: withNote('subagents'),

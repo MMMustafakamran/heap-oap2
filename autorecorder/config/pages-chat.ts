@@ -14,8 +14,9 @@ export const PAGES_CHAT: PageDefinition[] = [
     route: '/prebuilt-components',
     ideFile: 'my-copilot-app/src/pages/PrebuiltComponentsApp.vue',
     startLine: 1,
-    endLine: 11,
-    extraTabs: [{ filePath: RT, startLine: 22, endLine: 31, addedText: '"/chat": new CopilotRuntime({ agents: { default: http(Q), "my-agent": http(Q) } }),' }],
+    endLine: 14,
+    extraTabs: [
+      { filePath: 'my-copilot-app/src/components/chat/StarterSuggestions.vue', startLine: 1, endLine: 11 },{ filePath: RT, startLine: 22, endLine: 31, addedText: '"/chat": new CopilotRuntime({ agents: { default: http(Q), "my-agent": http(Q) } }),' }],
     prompt: 'Tell me in one sentence what you can help with.',
   },
   {
@@ -30,7 +31,7 @@ export const PAGES_CHAT: PageDefinition[] = [
     endLine: 16,
     extraTabs: [
       { filePath: 'my-copilot-app/src/components/chat/SupportChat.vue', startLine: 1, endLine: 27 },
-      { filePath: 'my-copilot-app/src/components/chat/SupportChatDisclaimer.vue', startLine: 1, endLine: 16 },
+      { filePath: 'my-copilot-app/src/components/chat/SupportChatDisclaimer.vue', startLine: 1, endLine: 21 },
     ],
     prompt: 'Show my open tickets',
   },
@@ -46,22 +47,6 @@ export const PAGES_CHAT: PageDefinition[] = [
     endLine: 37,
     extraTabs: [{ filePath: 'my-copilot-app/src/pages/HeadlessUiApp.vue', startLine: 1, endLine: 14 }],
     prompt: 'Say hello in one short sentence.',
-  },
-  {
-    id: 'programmatic-control',
-    name: 'Programmatic Control (Vue)',
-    videoName: 'ProgrammaticControl',
-    videoFile: '05-ProgrammaticControl',
-    docPath: 'programmatic-control',
-    route: '/programmatic-control',
-    ideFile: 'my-copilot-app/src/components/chat/AgentTrigger.vue',
-    startLine: 1,
-    endLine: 35,
-    extraTabs: [
-      { filePath: 'my-copilot-app/src/pages/ProgrammaticControlApp.vue', startLine: 1, endLine: 11 },
-      { filePath: PY, startLine: 67, endLine: 84, addedText: 'AGENTS = {  # HARNESS: undefined on the page; "sales" is the frontend\'s agentId' },
-    ],
-    prompt: 'Summarize the latest sales data',
   },
   {
     id: 'threads-drawer',
@@ -88,27 +73,9 @@ export const PAGES_CHAT: PageDefinition[] = [
     endLine: 31,
     extraTabs: [
       { filePath: 'my-copilot-app/src/pages/HeadlessThreadsApp.vue', startLine: 1, endLine: 20 },
-      { filePath: RT, startLine: 33, endLine: 61 },
+      { filePath: RT, startLine: 33, endLine: 64 },
     ],
     prompt: 'Hi, start a new thread about tide pools.',
-  },
-  {
-    id: 'agentic-chat-ui',
-    name: 'Agentic Chat UI (Vue)',
-    videoName: 'AgenticChatUi',
-    videoFile: '08-AgenticChatUi',
-    docPath: 'agentic-chat-ui',
-    route: '/agentic-chat-ui',
-    ideFile: 'my-copilot-app/src/components/chat/agentic-chat/page.tsx.txt',
-    startLine: 1,
-    endLine: 4,
-    extraTabs: [
-      { filePath: 'my-copilot-app/src/components/chat/agentic-chat/suggestions.ts', startLine: 1, endLine: 20 },
-      { filePath: 'my-copilot-app/src/pages/AgenticChatUiApp.vue', startLine: 1, endLine: 16, addedText: '<CopilotKitProvider runtime-url="http://localhost:8130/agentic-chat-ui/api/copilotkit">' },
-      { filePath: PY, startLine: 13, endLine: 30 },
-    ],
-    prompt: 'Write a short sonnet about AI.',
-    waitAfterPromptMs: 3000,
   },
   {
     id: 'agent-config',

@@ -2,9 +2,9 @@
 
 > Read agent.state with useAgent and render it in your main view or canvas.
 
-[Shared state](/vue/openai-agents-python/vue/shared-state) is most powerful when the agent's state shows up in your application UI, such as a dashboard, document canvas, map, or table. Because `agent.state` is plain data exposed through a Vue ref, you can subscribe from any descendant component and render it however you like.
+[Shared state](/vue/shared-state) is most useful when the agent's state shows up in your main view, such as a dashboard, document canvas, map, or table. Because `agent.state` is plain data exposed through a Vue ref, you can subscribe from any descendant component and render it however you like.
 
-## The pattern
+## The pattern [#the-pattern]
 
 `useAgent` works in any component under `CopilotKitProvider`; it does not have to be near the chat. Call it in your main-view component, read `agent.value.state`, and render:
 
@@ -66,11 +66,11 @@ watchEffect(() => {
 
 The `initialState` value is UI-owned initial state for this example. It makes the canvas visible before the agent writes state. The effect sets only `undefined` fields and preserves all other state. If the backend owns the initial state, define it in the shared-state setup for that framework.
 
-Every time the agent mutates its state, whether from a tool call, node transition, or [streamed update](/vue/openai-agents-python/vue/shared-state/streaming), `useAgent` updates the ref and Vue re-renders this component. The chat can be in a sidebar, a popup, or absent entirely; your canvas updates the same way.
+Every time the agent mutates its state, whether from a tool call, node transition, or [streamed update](/vue/shared-state/streaming), `useAgent` updates the ref and Vue re-renders this component. The chat can be in a sidebar, a popup, or absent entirely; your canvas updates the same way.
 
-## Put it anywhere in your layout
+## Put it anywhere in your layout [#put-it-anywhere-in-your-layout]
 
-The agent lives on `CopilotKitProvider`, so the chat surface and your main-view components are two consumers of the same agent. A typical layout renders the canvas as the primary content and the chat alongside it:
+The agent lives on `CopilotKitProvider`, so the chat surface and your main-view components are two consumers of the same agent. A typical layout renders the canvas as the main view and the chat beside it:
 
 ```vue title="src/App.vue"
 <script setup lang="ts">
@@ -92,7 +92,7 @@ import Canvas from "./components/Canvas.vue";
   `<Canvas>` and `<CopilotChat>` resolve the same default agent, so they share one agent instance and one state object. There is nothing chat-specific about reading `agent.state`; the chat is just another consumer.
 </Callout>
 
-## Writing back from the main view
+## Writing back from the main view [#writing-back-from-the-main-view]
 
 The same agent exposes `setState`, so your canvas can be interactive rather than a read-only mirror. A click handler can push a new value that the agent reads on its next turn:
 
@@ -111,17 +111,12 @@ function toggleItem(id: string) {
 }
 ```
 
-This is the same two-way channel described in [Shared State](/vue/openai-agents-python/vue/shared-state). The only difference is that the reads and writes happen in your application's main surface rather than in the chat.
+This is the same two-way channel described in [Shared State](/vue/shared-state). The only difference is that the reads and writes happen in your main view rather than in the chat. To push UI values to the agent without letting it write back, see [Agent read-only context](/vue/shared-state/agent-readonly).
 
-## Tips
+Ask the agent to mark the prototype item as done. The item's `data-done` changes to `true` on the canvas without a page reload.
 
-- **Target a specific agent** with `useAgent({ agentId: "research-agent" })` when you have more than one. The default is the agent named `"default"`.
+## Tips [#tips]
+
+- **Target a specific agent** with `useAgent({ agentId: "research-agent" })` when you have more than one. The default is the agent named `"default"`. See the [`useAgent` reference](/reference/vue/hooks/useAgent) for every option.
 - **Throttle high-frequency updates** with `useAgent({ throttleMs })` if a streaming run re-renders a heavy canvas too often.
 - **Treat `agent.state` as possibly partial** while a run is in progress. Guard with defaults so half-streamed state does not crash your render.
-
-## Related
-
-- [Shared State](/vue/openai-agents-python/vue/shared-state): the full read/write model and the underlying `useAgent` subscription.
-- [State streaming](/vue/openai-agents-python/vue/shared-state/streaming): stream a tool argument into a state key so the canvas fills in token-by-token.
-- [Agent read-only context](/vue/openai-agents-python/vue/shared-state/agent-readonly): push UI values *to* the agent without letting it write back.
-- [`useAgent` reference](/reference/vue/hooks/useAgent): full composable signature and options.

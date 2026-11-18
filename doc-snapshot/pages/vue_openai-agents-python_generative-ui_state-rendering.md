@@ -2,15 +2,11 @@
 
 > Render your agent's state with custom UI components in real-time.
 
-## What is this?
+## What is this? [#what-is-this]
 
 State rendering lets you build UI that reflects your agent's state in real-time. As your agent progresses through nodes and emits state updates, your frontend renders those changes, showing progress, drafts, or intermediate results.
 
-<Callout type="info">
-  **Free course:** See this pattern built end-to-end in [Build Interactive Agents with Generative UI](https://www.deeplearning.ai/short-courses/build-interactive-agents-with-generative-ui/) — a free DeepLearning.AI short course taught by CopilotKit's CEO covering the full Generative UI spectrum (Controlled, Declarative, and Open-Ended).
-</Callout>
-
-## When should I use this?
+## When should I use this? [#when-should-i-use-this]
 
 Use state rendering when you want to:
 
@@ -19,7 +15,7 @@ Use state rendering when you want to:
 - Build dashboards that reflect agent state
 - Render structured output outside of the chat
 
-## How it works in code
+## How it works in code [#how-it-works-in-code]
 
 On the frontend, subscribe to the agent's state. Each time the backend forwards a fresh value, your component re-renders with the latest partial output. `useAgent` returns an `agent` ref; read `agent.value?.state` in script or let templates unwrap the ref. Keep the provider in an ancestor SFC.
 
@@ -61,12 +57,11 @@ import ResearchProgress from "./components/ResearchProgress.vue";
 </template>
 ```
 
-On the backend, a state-streaming mapping forwards a specific tool argument straight into a state key *as it's being generated*. Some frameworks provide that as middleware; direct SDK adapters can emit `STATE_SNAPSHOT` events from their streaming loop. Either way, the UI can watch the answer assemble token-by-token rather than appearing in one burst between checkpoints.
+On the backend, a state-streaming mapping forwards a tool argument into a state key while the model writes it. Some frameworks provide that as middleware. Direct SDK adapters can emit `STATE_SNAPSHOT` events from their streaming loop. Either way, the UI can watch the answer assemble token-by-token rather than appearing in one burst between checkpoints.
 
 The adapter streams a tool call's arguments as `TOOL_CALL_ARGS` events while
 the model writes them, but it does not copy them into state. The tool writes
 the finished value to state when it runs:
-
 
 ~~~~python title="shared_state_streaming.py"
 @function_tool
@@ -82,13 +77,11 @@ def write_document(document: str) -> str:
 
 ~~~~
 
-
 To fill the state while the model is still writing the argument, subclass
 `OpenAIAgentsAgent` and turn those argument chunks into `STATE_DELTA` events.
 The arguments are unfinished JSON until the call ends, so parse them with
 `pydantic_core.from_json(..., allow_partial="trailing-strings")`, which keeps
 a string that is cut off mid-way:
-
 
 ~~~~python title="shared_state_streaming.py"
 def _document_so_far(arguments: str) -> str | None:
@@ -132,14 +125,12 @@ class DocumentStreamingAgent(OpenAIAgentsAgent):
 
 ~~~~
 
-
 Mount the agent wrapped in that subclass,
 `DocumentStreamingAgent(shared_state_streaming_agent)`, instead of a plain
 `OpenAIAgentsAgent`. The page then sees the document grow token by token, and
 the tool's own `STATE_SNAPSHOT` settles it once the call runs.
 
-```python
-# src/demo_agents/shared_state_streaming.py
+```python title="src/demo_agents/shared_state_streaming.py"
 def _document_so_far(arguments: str) -> str | None:
     """The ``document`` argument as far as the model has written it."""
     try:
@@ -178,8 +169,9 @@ class DocumentStreamingAgent(OpenAIAgentsAgent):
                             ],
                         )
 
-
 ```
+
+Ask the researcher agent to write a report. The status line and the progress bar change while the agent runs, and the draft text grows as the tokens arrive.
 
 Treat agent state as untrusted external data. Validate it before using it for privileged actions, and avoid putting secrets in state that is streamed to the browser.
 

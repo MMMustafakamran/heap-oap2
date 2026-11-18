@@ -2,19 +2,25 @@
 
 > Drop-in Vue chat components with a customization path from CSS to headless composition.
 
-## Prebuilt components for agentic chat
+## Prebuilt components for agentic chat [#prebuilt-components-for-agentic-chat]
 
-`@copilotkit/vue/v2` ships three chat surfaces: [**CopilotChat**](/vue/openai-agents-python/vue/prebuilt-components/chat),
-[**CopilotSidebar**](/vue/openai-agents-python/vue/prebuilt-components/sidebar), and
-[**CopilotPopup**](/vue/openai-agents-python/vue/prebuilt-components/popup). They share the same chat
-primitives while choosing different layouts. Pick the surface that fits the
+`@copilotkit/vue/v2` ships three chat surfaces:
+
+- **CopilotChat**: an inline pane that fills
+  the container you give it.
+- **CopilotSidebar**: a collapsible,
+  docked surface.
+- **CopilotPopup**: a floating launcher and
+  overlay chat.
+
+They share the same chat primitives while choosing different layouts. Pick the surface that fits the
 product; each handles streaming messages, tool rendering, suggestions, and
 Vue slot customization.
 
 Use `CopilotThreadsDrawer` beside a supported surface when you need a
 conversation-history drawer, or use `useThreads` to build your own switcher.
 
-## The customization ladder
+## The customization ladder [#the-customization-ladder]
 
 1. **Drop in a surface.** Render `CopilotChat`, `CopilotSidebar`, or
    `CopilotPopup` below `CopilotKitProvider`.
@@ -29,7 +35,7 @@ These layers are incremental. A custom welcome-screen slot and CSS token
 overrides can coexist; moving to a custom surface does not require copying the
 runtime connection logic.
 
-## Drop-in chat
+## Drop-in chat [#drop-in-chat]
 
 Import the Vue CSS once, wrap the application in `CopilotKitProvider`, and put
 the chat surface in the provider's default slot:
@@ -47,23 +53,14 @@ import "@copilotkit/vue/styles.css";
 </template>
 ```
 
-The Vue Showcase currently exposes this `agentic-chat` surface. Other
-prebuilt-component variations do not have a runnable Vue Showcase route yet.
+## Starter suggestions [#starter-suggestions]
 
-## Starter suggestions
+Call [`useConfigureSuggestions`](/reference/vue/hooks/useConfigureSuggestions)
+inside a child component of `CopilotKitProvider`. Its reactive configuration is
+then available to the nearest chat surface:
 
-Call `useConfigureSuggestions` inside a child component of
-`CopilotKitProvider`. Its reactive configuration is then available to the
-nearest chat surface.
-
-## Pick a surface
-
-- [`<CopilotChat>`](/vue/openai-agents-python/vue/prebuilt-components/chat): an inline pane that fills
-  the container you give it.
-- [`<CopilotSidebar>`](/vue/openai-agents-python/vue/prebuilt-components/sidebar): a collapsible,
-  docked surface.
-- [`<CopilotPopup>`](/vue/openai-agents-python/vue/prebuilt-components/popup): a floating launcher and
-  overlay chat.
-
-For controlling a popup or sidebar from your own UI, and for feedback actions,
-see [Open, close, and feedback](/vue/openai-agents-python/vue/prebuilt-components/chat-controls).
+```ts
+useConfigureSuggestions({
+  suggestions: [{ title: "Summarize", message: "Summarize this page" }],
+});
+```

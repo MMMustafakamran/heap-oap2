@@ -1,16 +1,16 @@
 # Programmatic Control
 
-> Drive agent runs directly from code — no chat UI required.
+> Drive agent runs directly from code, with no chat UI.
 
-## What is this?
+## What is this? [#what-is-this]
 
 Programmatic control is what you reach for when you want to drive an agent run from code rather than from a chat composer: a button, a form, a cron job, a keyboard shortcut, or a graph callback. CopilotKit exposes three primitives that cover every triggering pattern:
 
-- `agent.addMessage(...)` — append a message to the conversation without running the agent. Pair it with `copilotkit.runAgent({ agent })` when the message should kick off a turn.
-- `copilotkit.runAgent({ agent })` — the same entry point `<CopilotChat />` calls under the hood. It orchestrates frontend tools, follow-up runs, and the subscriber lifecycle.
-- `agent.subscribe(subscriber)` — low-level AG-UI event subscription (`onCustomEvent`, `onRunStartedEvent`, `onRunFinalized`, `onRunFailed`, and streaming deltas).
+- `agent.addMessage(...)`: append a message to the conversation without running the agent. Pair it with `copilotkit.runAgent({ agent })` when the message starts a turn.
+- `copilotkit.runAgent({ agent })`: the same entry point that `<CopilotChat />` calls internally. It orchestrates frontend tools, follow-up runs, and the subscriber lifecycle. To build your own chat surface on it, see [Headless UI](/vue/custom-look-and-feel/headless-ui).
+- `agent.subscribe(subscriber)`: low-level AG-UI event subscription (`onCustomEvent`, `onRunStartedEvent`, `onRunFinalized`, `onRunFailed`, and streaming deltas).
 
-## When should I use this?
+## When should I use this? [#when-should-i-use-this]
 
 Use programmatic control when you want to:
 
@@ -20,7 +20,7 @@ Use programmatic control when you want to:
 - Access agent state and results programmatically
 - Create fully custom agent-driven workflows
 
-## Sending a message from code
+## Sending a message from code [#sending-a-message-from-code]
 
 <Steps>
   <Step>
@@ -40,13 +40,11 @@ Use programmatic control when you want to:
     demo does, and every entry point sees the same model, tools and
     instructions.
 
-    
 ~~~~python title="agent_server.py"
 app = FastAPI(title="OpenAI Agents SDK Agent Server", lifespan=lifespan)
 for name, agent in AGENTS.items():
     add_openai_agents_fastapi_endpoint(app, agent, f"/{name}", include_health=False)
 ~~~~
-
 
     The server keeps no sessions. Every run carries the thread's messages
     from the client, so a headless run on the same agent continues its
@@ -107,25 +105,28 @@ function stop() {
 
 ```vue title="src/App.vue"
 <script setup lang="ts">
-import { CopilotKitProvider } from "@copilotkit/vue/v2";
+import { CopilotChat, CopilotKitProvider } from "@copilotkit/vue/v2";
 import AgentTrigger from "./components/AgentTrigger.vue";
 </script>
 
 <template>
   <CopilotKitProvider runtime-url="/api/copilotkit">
     <AgentTrigger />
+    <CopilotChat agent-id="sales" />
   </CopilotKitProvider>
 </template>
 ```
 
-### `copilotkit.runAgent()` vs `agent.runAgent()`
+Click **Run agent**. The message and the agent's reply appear in the chat, and **Stop** is enabled while the run is in progress.
+
+### `copilotkit.runAgent()` vs `agent.runAgent()` [#copilotkitrunagent-vs-agentrunagent]
 
 Both methods trigger the agent, but they operate at different levels:
 
-- **`copilotkit.runAgent({ agent })`** — the recommended default. It orchestrates the full lifecycle, executes frontend tools, handles follow-up runs, and routes errors through the subscriber system.
-- **`agent.runAgent(options)`** — a low-level method on the agent instance. It sends the request to the runtime but does **not** execute frontend tools or chain follow-ups. Reach for it only when you need direct control.
+- **`copilotkit.runAgent({ agent })`**: the recommended default. It orchestrates the full lifecycle, executes frontend tools, handles follow-up runs, and routes errors through the subscriber system.
+- **`agent.runAgent(options)`**: a low-level method on the agent instance. It sends the request to the runtime but does **not** execute frontend tools or chain follow-ups. Reach for it only when you need direct control.
 
-## Subscribing to agent events
+## Subscribing to agent events [#subscribing-to-agent-events]
 
 `agent.subscribe(subscriber)` returns `{ unsubscribe }`. The subscriber accepts every AG-UI lifecycle callback: `onCustomEvent`, `onRunStartedEvent`, `onRunFinalized`, `onRunFailed`, and the streaming deltas. Use it to drive progress UI, forward events to analytics, or inspect framework pause/resume events.
 
@@ -147,21 +148,8 @@ watch(
 );
 ```
 
-
-
-
-
-
-
-## Resolving a pause from a button
+## Resolving a pause from a button [#resolving-a-pause-from-a-button]
 
 > **Interrupt-style pause/resume isn't available on this framework.** The interrupt path requires either a native runtime interrupt or a Promise-resolving frontend-tool path. Use [`useHumanInTheLoop`](./human-in-the-loop) for tool-call-based pause/resume. The `agent.addMessage`, `copilotkit.runAgent`, and `agent.subscribe` primitives above still apply; only interrupt resolution is framework-specific.
-
-
-
-## See also
-
-- [Headless UI](/vue/openai-agents-python/vue/custom-look-and-feel/headless-ui) — build your own chat surface from lower-level components.
-- [Human-in-the-Loop](./human-in-the-loop) — compare `useHumanInTheLoop` and `useInterrupt` for paused runs.
 
 <IntegrationGrid path="programmatic-control" />

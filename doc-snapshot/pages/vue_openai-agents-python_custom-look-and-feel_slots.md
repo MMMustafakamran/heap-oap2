@@ -2,7 +2,7 @@
 
 > Customize Vue chat surfaces with named and scoped slots.
 
-## What is this?
+## What is this? [#what-is-this]
 
 Every CopilotKit Vue chat component is composed from named slots. Use them to
 replace one visible piece while retaining the runtime connection, reactive
@@ -10,24 +10,25 @@ message state, streaming behavior, and the rest of the prebuilt surface.
 
 Vue offers three practical levels of slot customization:
 
-1. **Classes and attributes on public leaves** — compose a leaf such as
-   `CopilotChatMessageView` and pass `class` or other attributes to it.
-2. **Scoped-slot composition** — consume the slot's data and actions while
+1. **Classes and attributes on the chat components**: compose one of the
+   chat components (`CopilotChatMessageView`, `CopilotChatAssistantMessage`,
+   `CopilotChatUserMessage`, `CopilotChatInput`) and pass `class` or other
+   attributes to it.
+2. **Scoped-slot composition**: consume the slot's data and actions while
    replacing only that part of the template.
-3. **Custom components** — render your own Vue component inside the slot.
+3. **Custom components**: render your own Vue component inside the slot.
 
-Slots are recursive: a root `message-view` slot can render the public message
-view, whose `assistant-message` slot can render the public assistant leaf,
-whose `copy-button` slot can replace one toolbar control. This is Vue's native
-equivalent of the React slot-object hierarchy; React-style component or
-props-override objects are not Vue APIs.
+Slots are recursive: a root `message-view` slot can render
+`CopilotChatMessageView`, whose `assistant-message` slot can render
+`CopilotChatAssistantMessage`, whose `copy-button` slot can replace one toolbar
+control.
 
-## What it looks like in code
+## What it looks like in code [#what-it-looks-like-in-code]
 
-The examples below replace the same three surfaces as the root guide: the
-welcome screen, assistant message card, and input disclaimer.
+The examples below replace the welcome screen, the assistant message card, and
+the input disclaimer.
 
-### Welcome screen slot
+### Welcome screen slot [#welcome-screen-slot]
 
 The `welcome-screen` slot replaces the empty state shown before the first
 message. Its scoped props include the input and suggestion actions, so a custom
@@ -52,9 +53,9 @@ import { CopilotChat } from "@copilotkit/vue/v2";
 </template>
 ```
 
-### Assistant message slot
+### Assistant message slot [#assistant-message-slot]
 
-Use the `message-view` slot to compose the public message leaf components,
+Use the `message-view` slot to compose the chat components,
 then customize their own slots or events. This keeps the component hierarchy
 and provider ancestry intact:
 
@@ -93,7 +94,7 @@ toolbars and buttons, tool calls, reasoning messages, and activity messages.
 For activity rendering, `CopilotChatMessageView` first looks for
 `activity-<activityType>`, then `activity-message`.
 
-### Disclaimer slot
+### Disclaimer slot [#disclaimer-slot]
 
 The input's `disclaimer` slot replaces the text below the composer while
 leaving the textarea, send button, attachments, and transcription controls
@@ -102,7 +103,12 @@ alone:
 ```vue
 <CopilotChat>
   <template #input="inputProps">
-    <CopilotChatInput v-bind="inputProps">
+    <CopilotChatInput
+      v-bind="inputProps"
+      :mode="inputProps.inputMode"
+      :tools-menu="inputProps.inputToolsMenu"
+      :show-disclaimer="true"
+    >
       <template #disclaimer>
         <p class="support-disclaimer">Responses may be inaccurate.</p>
       </template>
@@ -111,11 +117,10 @@ alone:
 </CopilotChat>
 ```
 
-## Tailwind Classes
+## Tailwind Classes [#tailwind-classes]
 
-Vue does not accept a Tailwind string in place of a slot. Add `class` to the
-public leaf you compose inside the scoped slot, or add classes to your own
-markup:
+Add `class` to the chat component you compose inside the scoped slot, or add
+classes to your own markup:
 
 ```vue
 <CopilotChat>
@@ -129,10 +134,10 @@ markup:
 </CopilotChat>
 ```
 
-## Props Override
+## Props Override [#props-override]
 
-React's slot-object props override has no direct Vue equivalent. Bind props,
-listeners, and attributes to the public Vue leaf rendered inside the slot:
+Bind props, listeners, and attributes to the chat component rendered inside
+the slot:
 
 ```vue
 <CopilotChat>
@@ -146,7 +151,7 @@ listeners, and attributes to the public Vue leaf rendered inside the slot:
 </CopilotChat>
 ```
 
-## Custom Components
+## Custom Components [#custom-components]
 
 For full control, render your own component. It receives the scoped data you
 choose to pass through:
@@ -160,14 +165,14 @@ choose to pass through:
 ```
 
 Once you replace a complete slot, your component owns that part's rendering.
-Compose public leaves when you want to preserve CopilotKit's default behavior.
+Compose the chat components when you want to preserve CopilotKit's default
+behavior.
 
-## Nested Slots (Drill-Down)
+## Nested Slots (Drill-Down) [#nested-slots-drill-down]
 
-Named slots nest through public Vue leaves instead of nested configuration
-objects.
+Named slots nest through the chat components.
 
-### Two levels deep
+### Two levels deep [#two-levels-deep]
 
 Override the assistant toolbar while keeping the default message renderer:
 
@@ -187,7 +192,7 @@ Override the assistant toolbar while keeping the default message renderer:
 </CopilotChat>
 ```
 
-### Three levels deep
+### Three levels deep [#three-levels-deep]
 
 Replace a specific toolbar button and keep its imperative action attached:
 
@@ -199,7 +204,7 @@ Replace a specific toolbar button and keep its imperative action attached:
 </CopilotChatAssistantMessage>
 ```
 
-## Labels
+## Labels [#labels]
 
 Use the `labels` prop on a prebuilt surface for text-only changes:
 
@@ -216,9 +221,9 @@ Use the `labels` prop on a prebuilt surface for text-only changes:
 Use slots for structure and behavior, and labels for the existing user-facing
 copy.
 
-## Available Slots
+## Available Slots [#available-slots]
 
-### `CopilotChat` / `CopilotSidebar` / `CopilotPopup`
+### `CopilotChat` / `CopilotSidebar` / `CopilotPopup` [#copilotchat--copilotsidebar--copilotpopup]
 
 The chat surfaces expose these root slots. Most are scoped with the state and
 actions needed to preserve the default behavior:
@@ -234,6 +239,9 @@ actions needed to preserve the default behavior:
 | `welcome-message` | Only the default welcome copy area. |
 | `interrupt` | A pending interrupt and its resolver. |
 
+Every slot above works the same on `CopilotChat`, `CopilotSidebar`, and
+`CopilotPopup`.
+
 `CopilotSidebar` and `CopilotPopup` additionally expose:
 
 | Slot | Description |
@@ -241,7 +249,7 @@ actions needed to preserve the default behavior:
 | `header` | Modal header with open state and close actions. |
 | `toggle-button` | Launcher with `isOpen`, `toggle`, `open`, and `close`. |
 
-### `CopilotChatMessageView`
+### `CopilotChatMessageView` [#copilotchatmessageview]
 
 | Slot | Description |
 | --- | --- |
@@ -255,7 +263,7 @@ actions needed to preserve the default behavior:
 | `message-before` / `message-after` | Metadata-aware content around each message. |
 | `cursor` | Streaming cursor. |
 
-### Public message and input leaves
+### Message and input chat components [#message-and-input-chat-components]
 
 - `CopilotChatAssistantMessage` exposes `layout`, `message-renderer`,
   `tool-calls-view`, `toolbar`, `toolbar-items`, and individual copy,

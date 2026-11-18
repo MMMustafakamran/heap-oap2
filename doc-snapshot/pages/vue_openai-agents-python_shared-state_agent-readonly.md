@@ -2,13 +2,13 @@
 
 > Publish UI values to the agent as a one-way read-only channel via useAgentContext.
 
-## What is this?
+## What is this? [#what-is-this]
 
 Sometimes you want the agent to *know* something about the current UI, like the logged-in user, the current page, or a recent activity log, but you don't want the agent to be able to modify it. That's what `useAgentContext` is for: a one-way **UI → agent** channel for read-only context.
 
 Unlike full shared state, where the UI and agent can both mutate the same state contract, `useAgentContext` values are pure inputs. The agent sees them on every turn through the runtime's context injection, but the context API exposes no setter or mutation tool.
 
-## When should I use this?
+## When should I use this? [#when-should-i-use-this]
 
 Reach for `useAgentContext` instead of full shared state when:
 
@@ -18,13 +18,13 @@ Reach for `useAgentContext` instead of full shared state when:
 
 Think of it as "props for the agent."
 
-## How it works in code
+## How it works in code [#how-it-works-in-code]
 
 Call `useAgentContext({ description, value })` once per value you want to publish. Each call registers a reactive context entry with the runtime that is:
 
 - Refreshed whenever the supplied ref or getter changes.
 - Automatically removed when the component unmounts.
-- Surfaced to the agent through the backend's CopilotKit middleware on every turn.
+- Sent to the agent with every run. The Built-in Agent adds each entry to its system prompt. A Python LangGraph agent adds the entries through `CopilotKitMiddleware`.
 
 ```vue title="src/components/WorkspaceContext.vue"
 <script setup lang="ts">
@@ -46,7 +46,7 @@ useAgentContext({
 
 The `description` is important: it is the human-readable label the agent sees alongside the value, so it knows what to do with it. Treat it like a parameter docstring. Keep secrets out of this channel; anything published here is intended for the agent to read.
 
-## Wire it to your own state
+## Wire it to your own state [#wire-it-to-your-own-state]
 
 `useAgentContext` does not care where the value comes from: a local ref, a computed value, a router getter, Pinia, or another domain store. Pass a ref or getter and Vue re-registers the serialized context when the value changes.
 
@@ -64,13 +64,8 @@ import WorkspaceContext from "./components/WorkspaceContext.vue";
 </template>
 ```
 
-## Read-only, by design
+Ask the agent which workspace is active. It answers `northstar`.
 
-Because the agent never sees a setter or mutation tool for these values, the context registration itself cannot update them. That makes `useAgentContext` the right tool whenever the value is an input rather than a shared workspace both sides edit.
+## Read-only, by design [#read-only-by-design]
 
-When you need both reads *and* writes, use full **[Shared State](/vue/openai-agents-python/vue/shared-state)**: `useAgent()` exposes `agent.state` and the same agent's `setState(...)` mutation path when the runtime supports shared state.
-
-## Related
-
-- **[Shared State (overview)](/vue/openai-agents-python/vue/shared-state)** — bidirectional reads and writes.
-- **[State streaming](/vue/openai-agents-python/vue/shared-state/streaming)** — stream agent-written state back to the UI during a run.
+When you need both reads *and* writes, use full **[Shared State](/vue/shared-state)**: `useAgent()` exposes `agent.state` and the same agent's `setState(...)` mutation path when the runtime supports shared state. To stream agent-written state back to the UI during a run, see [State streaming](/vue/shared-state/streaming).

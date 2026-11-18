@@ -8,6 +8,6 @@
   {"at": "+", "text": "This part, the common file and the chat setup, wasn't on the page, so I added it myself."},
   {"at": "demo", "text": "Moving on to the demo. The agent does answer, but there should be a live delegation log, and uh, nothing like that shows up."},
   {"at": "notepad", "text": "So basically, the page promises a live delegation log but gives no Vue code to render it, so the main part of the page is missing."},
-  {"at": "+", "text": "Alright, that's the issue, kindly sort it out."}
+  {"at": "+", "text": "That's it for this one, kindly look into this issue."}
  ]
 }

@@ -4,12 +4,12 @@
   "repo": "OpenAIAgents-Vue",
   "docBase": "https://docs.copilotkit.ai/vue/openai-agents-python/",
   "versions": {
-    "@copilotkit/vue": "1.88.0",
-    "@copilotkit/runtime": "1.88.0",
-    "@ag-ui/client": "1.0.4",
+    "@copilotkit/vue": "1.89.0",
+    "@copilotkit/runtime": "1.89.0",
+    "@ag-ui/client": "1.0.5",
     "vue": "3.5.45",
     "vite": "8.3.8",
-    "openai-agents": "0.24.0",
+    "openai-agents": "0.25.0",
     "ag-ui-openai-agents": "0.1.0"
   },
   "testedContext": {
@@ -128,7 +128,7 @@
       ]
     }
   ],
-  "quickstartBlocked": "the Vue quickstart is the OpenAI Agents SDK landing page; its only runtime code is a Next.js route handler, with no Vue steps and no Python agent, so a reader has no working Vue app to build on",
+  "quickstartBlocked": "the Vue quickstart only sets up CopilotKit's own BuiltInAgent; no step connects an OpenAI Agents SDK agent (no HttpAgent, no Python agent), and its \"use your framework's quickstart\" callout points back at this page",
   "pages": [
     {
       "id": "quickstart",
@@ -143,7 +143,7 @@
         1
       ],
       "notes": [
-        "Issue: the Vue quickstart shows the OpenAI Agents SDK landing page; the only code is a Next.js route handler, no Vue steps and no Python agent."
+        "Issue: the Vue quickstart only sets up CopilotKit's own BuiltInAgent; it never connects an OpenAI Agents SDK agent (no HttpAgent, no Python agent), and its \"use your framework's quickstart\" callout points back at this same page."
       ],
       "block": null,
       "links": [
@@ -160,31 +160,27 @@
               },
               {
                 "at": "evidence",
-                "text": "This is the problem, umm, the page is just the landing page for this framework."
+                "text": "This is the problem, umm, the page only sets up BuiltInAgent, and says not to use it if you already have an agent."
               },
               {
                 "at": "evidence#2",
-                "text": "And the only code on it is this, uh, Next.js route handler."
+                "text": "And it says to use your framework's quickstart for the wiring, but, uh, this is that quickstart."
               },
               {
                 "at": "ide",
-                "text": "So this is my project, and the route handler here is the exact code from the doc."
-              },
-              {
-                "at": "+",
-                "text": "The runtime and the Python agent weren't on the page, so I added them myself."
+                "text": "This is my project, I've implemented the exact code from the doc."
               },
               {
                 "at": "demo",
-                "text": "Moving on to the demo. After sending a message the chat replies, but only because I wired it up myself."
+                "text": "Moving on to the demo. The chat does reply, but it's CopilotKit's built-in agent, not an OpenAI Agents agent."
               },
               {
                 "at": "notepad",
-                "text": "So basically, the page should give Vue setup steps and an agent, but there's no Vue code and no Python agent at all."
+                "text": "So basically, the page should connect a Vue app to an OpenAI Agents SDK agent, but there's no agent wiring and no Python agent at all."
               },
               {
                 "at": "+",
-                "text": "So yeah, please take a look and fix this."
+                "text": "So this needs a fix, kindly check it."
               }
             ]
           },
@@ -242,7 +238,7 @@
         13
       ],
       "notes": [
-        "Note: the disclaimer slot example renders nothing."
+        "Note: two different snippets are both titled SupportChat.vue."
       ],
       "block": null,
       "links": [
@@ -294,54 +290,17 @@
       "group": "Chat​",
       "child": true,
       "docPath": "programmatic-control",
-      "reachable": "sidebar",
+      "reachable": "none",
       "status": "❌",
-      "findings": [
-        3
-      ],
-      "notes": [
-        "Issue: agent_server.py uses lifespan and AGENTS that are never defined, and no agent is given for agentId \"sales\", so the backend won't start as written."
-      ],
+      "findings": [],
+      "notes": [],
       "block": null,
       "links": [
         {
           "text": "Issue",
           "clip": "OAI-vue-05-ProgrammaticControl",
           "loom": "https://www.loom.com/share/e11f45d4d14e4690a5cbe2cfafdd8e9c",
-          "filmed": "2026-11-17",
-          "narration": {
-            "clip": "OAI-vue-05-ProgrammaticControl",
-            "segments": [
-              {
-                "at": "doc",
-                "text": "Ok so this is the programmatic control page for Vue with OpenAI Agents, and I'm reporting a problem on this page."
-              },
-              {
-                "at": "evidence",
-                "text": "This is the problem, umm, lifespan and AGENTS are never defined on the page."
-              },
-              {
-                "at": "ide",
-                "text": "This is my project, I've implemented the exact code from the doc."
-              },
-              {
-                "at": "+",
-                "text": "This part, the agents dictionary and the lifespan, wasn't on the page, so I added it myself."
-              },
-              {
-                "at": "demo",
-                "text": "Moving on to the demo. The run button only works because of that, uh, added backend code."
-              },
-              {
-                "at": "notepad",
-                "text": "So basically, as written the server crashes on start with a name error, and there's no sales agent anywhere."
-              },
-              {
-                "at": "+",
-                "text": "So kindly look into it."
-              }
-            ]
-          }
+          "filmed": "2026-11-17"
         }
       ],
       "review": {
@@ -349,7 +308,8 @@
         "approvedAt": null,
         "by": null
       },
-      "added": "2026-11-13"
+      "added": "2026-11-13",
+      "removed": "2026-11-18: no longer in the sidebar or linked from any page (reachable none); finding #3 closed"
     },
     {
       "id": "threads-drawer",
@@ -603,7 +563,8 @@
       "reachable": "sidebar",
       "status": "✅",
       "findings": [
-        20
+        20,
+        24
       ],
       "notes": [
         "Note: the agent snippets leave out imports and MODEL/chat_settings, easy to fill in."
@@ -661,7 +622,8 @@
       "reachable": "sidebar",
       "status": "✅",
       "findings": [
-        21
+        21,
+        24
       ],
       "notes": [
         "Note: the agent wrapped by DocumentStreamingAgent is never shown, a plain Agent with write_document works."
@@ -717,57 +679,20 @@
       "child": true,
       "docPath": "human-in-the-loop",
       "reachable": "sidebar",
-      "status": "❌",
+      "status": "✅",
       "findings": [
         9
       ],
       "notes": [
-        "Issue: MeetingApproval imports TimePickerCard.vue and hitl.py imports demo_agents._common, neither is shown on the page."
+        "Note: hitl.py imports demo_agents._common, never shown, and its prompt names book_call while the Vue tool is schedule_meeting; the picker still renders and booking completes."
       ],
       "block": null,
       "links": [
         {
-          "text": "Issue",
+          "text": "HITL Overview - Vue",
           "clip": "OAI-vue-26-HumanInTheLoop",
           "loom": "https://www.loom.com/share/037bc034cd4c40e9992a82f3f0de92d5",
-          "filmed": "2026-11-17",
-          "narration": {
-            "clip": "OAI-vue-26-HumanInTheLoop",
-            "segments": [
-              {
-                "at": "doc",
-                "text": "Ok so this is the HITL overview page for OpenAI Agents with Vue, and I'm reporting a problem on this page."
-              },
-              {
-                "at": "evidence",
-                "text": "This is the problem, umm, it imports this TimePickerCard component, but the page never shows it."
-              },
-              {
-                "at": "evidence#2",
-                "text": "And the agent imports this common file for the model, which isn't shown anywhere either."
-              },
-              {
-                "at": "ide",
-                "text": "This is my project, I've implemented the exact code from the doc."
-              },
-              {
-                "at": "+",
-                "text": "This part, the time picker card and the common file, wasn't on the page, so I had to add it myself."
-              },
-              {
-                "at": "demo",
-                "text": "Moving on to the demo. After asking to book a call, the picker shows up and the booking goes through, but only with the parts I wrote."
-              },
-              {
-                "at": "notepad",
-                "text": "So basically, the page says a time picker shows in the chat, but it never gives you the picker or the common agent file, so uh, you can't build it as written."
-              },
-              {
-                "at": "+",
-                "text": "That's the problem here, please have a look."
-              }
-            ]
-          }
+          "filmed": "2026-11-17"
         }
       ],
       "review": {
@@ -786,7 +711,9 @@
       "docPath": "human-in-the-loop/useInterrupt",
       "reachable": "sidebar",
       "status": "N/A",
-      "findings": [],
+      "findings": [
+        25
+      ],
       "notes": [
         "Note: Not available for OpenAI Agents SDK (the page says \"Not available on this framework.\")"
       ],
@@ -808,7 +735,9 @@
       "docPath": "human-in-the-loop/headless",
       "reachable": "sidebar",
       "status": "N/A",
-      "findings": [],
+      "findings": [
+        25
+      ],
       "notes": [
         "Note: Not available for OpenAI Agents SDK (the page says \"Not available on this framework.\")"
       ],
@@ -971,7 +900,7 @@
               },
               {
                 "at": "+",
-                "text": "Alright, that's the issue, kindly sort it out."
+                "text": "That's it for this one, kindly look into this issue."
               }
             ]
           }
@@ -1012,61 +941,27 @@
       "added": "2026-11-13"
     },
     {
-      "id": "agentic-chat-ui",
-      "label": "Chat Components",
+      "id": "vs-code-extension",
+      "label": "VS Code Extension",
       "kind": "guide",
-      "group": null,
-      "child": false,
-      "docPath": "agentic-chat-ui",
-      "reachable": "in-content",
-      "linkedFrom": "(quickstart)",
-      "status": "❌",
+      "group": "Debugging",
+      "child": true,
+      "docPath": "vs-code-extension",
+      "reachable": "sidebar",
+      "status": "✅",
       "findings": [
-        4
+        15
       ],
       "notes": [
-        "Issue: the only code is React/Next (page.tsx with <CopilotKit>), no Vue version."
+        "Note: install command uses extension id copilotkit.copilotkit, which isn't on the Marketplace (real id copilotkit.copilotkit-vscode-extension)."
       ],
       "block": null,
       "links": [
         {
-          "text": "Issue",
-          "clip": "OAI-vue-08-AgenticChatUi",
-          "loom": "https://www.loom.com/share/122aa47bfb3b4657ae1bb21b9ef059eb",
-          "filmed": "2026-11-17",
-          "narration": {
-            "clip": "OAI-vue-08-AgenticChatUi",
-            "segments": [
-              {
-                "at": "doc",
-                "text": "Ok so this is the chat components page for Vue with OpenAI Agents, and I'm reporting a problem on this page."
-              },
-              {
-                "at": "evidence",
-                "text": "This is the problem, umm, this code is React, a page dot tsx with the CopilotKit component, not Vue."
-              },
-              {
-                "at": "ide",
-                "text": "This is my project, I've implemented the exact code from the doc."
-              },
-              {
-                "at": "+",
-                "text": "This part, the Vue provider, wasn't on the page, so I had to write it myself."
-              },
-              {
-                "at": "demo",
-                "text": "Moving on to the demo. The chat replies, but only with my own Vue version of the code."
-              },
-              {
-                "at": "notepad",
-                "text": "So basically, a Vue page should show Vue code, but everything here is React and Next, so none of it runs as written."
-              },
-              {
-                "at": "+",
-                "text": "That's the problem here, please have a look."
-              }
-            ]
-          }
+          "text": "VS Code Extension - Vue",
+          "clip": "OAI-vue-11-VsCodeExtension",
+          "loom": "https://www.loom.com/share/19929840be124fa69454919cf637e867",
+          "filmed": "2026-11-17"
         }
       ],
       "review": {
@@ -1133,264 +1028,6 @@
               {
                 "at": "+",
                 "text": "Alright, that's the issue, kindly sort it out."
-              }
-            ]
-          }
-        }
-      ],
-      "review": {
-        "verdict": null,
-        "approvedAt": null,
-        "by": null
-      },
-      "added": "2026-11-13"
-    },
-    {
-      "id": "generative-ui-components",
-      "label": "Components and surfaces",
-      "kind": "guide",
-      "group": null,
-      "child": false,
-      "docPath": "generative-ui/components",
-      "reachable": "in-content",
-      "linkedFrom": "inspector",
-      "status": "❌",
-      "findings": [
-        7
-      ],
-      "notes": [
-        "Issue: the Vue server.ts calls chat() without a threadId; today's @tanstack/ai rejects it, so every run fails and nothing renders."
-      ],
-      "block": null,
-      "links": [
-        {
-          "text": "Issue",
-          "clip": "OAI-vue-17-GenerativeUiComponents",
-          "loom": "https://www.loom.com/share/f463b2a6229643ccbe21edc37dc2d607",
-          "filmed": "2026-11-17",
-          "narration": {
-            "clip": "OAI-vue-17-GenerativeUiComponents",
-            "segments": [
-              {
-                "at": "doc",
-                "text": "Ok so this is the Components and surfaces page for OpenAI Agents with Vue, and I'm reporting a problem on this page."
-              },
-              {
-                "at": "evidence",
-                "text": "This is the problem, umm, the Vue server code calls the TanStack chat function without a thread ID, and the current package needs one."
-              },
-              {
-                "at": "ide",
-                "text": "This is my project, I've implemented the exact code from the doc."
-              },
-              {
-                "at": "demo",
-                "text": "Moving on to the demo. I asked for the plans table, it should render a table in the chat, but nothing comes back, the run fails with a chat needs a thread ID error."
-              },
-              {
-                "at": "notepad",
-                "text": "So basically, the page's own Vue server breaks on every run with today's install, and uh, there's no OpenAI Agents agent on the page either."
-              },
-              {
-                "at": "+",
-                "text": "So this needs a fix, kindly check it."
-              }
-            ]
-          }
-        }
-      ],
-      "review": {
-        "verdict": null,
-        "approvedAt": null,
-        "by": null
-      },
-      "added": "2026-11-13"
-    },
-    {
-      "id": "vs-code-extension",
-      "label": "VS Code Extension",
-      "kind": "guide",
-      "group": null,
-      "child": false,
-      "docPath": "vs-code-extension",
-      "reachable": "in-content",
-      "linkedFrom": "inspector",
-      "status": "✅",
-      "findings": [
-        15
-      ],
-      "notes": [
-        "Note: install command uses extension id copilotkit.copilotkit, which isn't on the Marketplace (real id copilotkit.copilotkit-vscode-extension)."
-      ],
-      "block": null,
-      "links": [
-        {
-          "text": "VS Code Extension - Vue",
-          "clip": "OAI-vue-11-VsCodeExtension",
-          "loom": "https://www.loom.com/share/19929840be124fa69454919cf637e867",
-          "filmed": "2026-11-17"
-        }
-      ],
-      "review": {
-        "verdict": null,
-        "approvedAt": null,
-        "by": null
-      },
-      "added": "2026-11-13"
-    },
-    {
-      "id": "reasoning",
-      "label": "Reasoning",
-      "kind": "guide",
-      "group": null,
-      "child": false,
-      "docPath": "generative-ui/reasoning",
-      "reachable": "in-content",
-      "linkedFrom": "concepts/generative-ui-overview",
-      "status": "✅",
-      "findings": [
-        18
-      ],
-      "notes": [
-        "Note: the page shows no agent; the reasoning card only appears with a reasoning model and reasoning summaries turned on."
-      ],
-      "block": null,
-      "links": [
-        {
-          "text": "Reasoning - Vue",
-          "clip": "OAI-vue-18-Reasoning",
-          "loom": "https://www.loom.com/share/9b5735fdbd5244229e6d1b8c83af0c7f",
-          "filmed": "2026-11-17"
-        }
-      ],
-      "review": {
-        "verdict": null,
-        "approvedAt": null,
-        "by": null
-      },
-      "added": "2026-11-13"
-    },
-    {
-      "id": "a2ui",
-      "label": "A2UI",
-      "kind": "guide",
-      "group": null,
-      "child": false,
-      "docPath": "generative-ui/a2ui",
-      "reachable": "in-content",
-      "linkedFrom": "concepts/generative-ui-overview",
-      "status": "✅",
-      "findings": [
-        19
-      ],
-      "notes": [
-        "Note: the provider snippet is React; the runtime-only injectA2UITool path works in Vue."
-      ],
-      "block": null,
-      "links": [
-        {
-          "text": "A2UI - Vue",
-          "clip": "OAI-vue-19-A2ui",
-          "loom": "https://www.loom.com/share/6fff0236ee8743a1b0bee720d99933f3",
-          "filmed": "2026-11-17"
-        }
-      ],
-      "review": {
-        "verdict": null,
-        "approvedAt": null,
-        "by": null
-      },
-      "added": "2026-11-13"
-    },
-    {
-      "id": "a2ui-dynamic",
-      "label": "Dynamic Schema A2UI",
-      "kind": "guide",
-      "group": null,
-      "child": false,
-      "docPath": "generative-ui/a2ui/dynamic-schema",
-      "reachable": "in-content",
-      "linkedFrom": "concepts/generative-ui-overview",
-      "status": "✅",
-      "findings": [
-        19
-      ],
-      "notes": [
-        "Note: catalog steps are React only; only the runtime fallback works in Vue."
-      ],
-      "block": null,
-      "links": [
-        {
-          "text": "Dynamic Schema A2UI - Vue",
-          "clip": "OAI-vue-20-A2uiDynamic",
-          "loom": "https://www.loom.com/share/5a97602a32ba4be8bce193be151852a2",
-          "filmed": "2026-11-17"
-        }
-      ],
-      "review": {
-        "verdict": null,
-        "approvedAt": null,
-        "by": null
-      },
-      "added": "2026-11-13"
-    },
-    {
-      "id": "a2ui-fixed",
-      "label": "Fixed Schema A2UI",
-      "kind": "guide",
-      "group": null,
-      "child": false,
-      "docPath": "generative-ui/a2ui/fixed-schema",
-      "reachable": "in-content",
-      "linkedFrom": "concepts/generative-ui-overview",
-      "status": "❌",
-      "findings": [
-        8
-      ],
-      "notes": [
-        "Issue: catalog/renderers/provider code is React only; in Vue the flight card fails with \"Catalog not found\"."
-      ],
-      "block": null,
-      "links": [
-        {
-          "text": "Issue",
-          "clip": "OAI-vue-21-A2uiFixed",
-          "loom": "https://www.loom.com/share/ed5eff783b8a4aa58c6ea518e4fcb274",
-          "filmed": "2026-11-17",
-          "narration": {
-            "clip": "OAI-vue-21-A2uiFixed",
-            "segments": [
-              {
-                "at": "doc",
-                "text": "Ok so this is the Fixed Schema A2UI page for OpenAI Agents with Vue, and I'm reporting a problem on this page."
-              },
-              {
-                "at": "evidence",
-                "text": "This is the problem, umm, the catalog renderers are only given in React."
-              },
-              {
-                "at": "evidence#2",
-                "text": "And the catalog is registered on the React provider, there's no Vue version of this anywhere."
-              },
-              {
-                "at": "ide",
-                "text": "This is my project, I've implemented the exact code from the doc."
-              },
-              {
-                "at": "+",
-                "text": "This part, the common model file, wasn't on the page, so I had to add it myself."
-              },
-              {
-                "at": "demo",
-                "text": "Moving on to the demo. I asked for a flight, it should show the flight card, but I just get a red error saying the flight catalog was not found."
-              },
-              {
-                "at": "notepad",
-                "text": "So basically, the agent sends the flight surface fine, but the page only shows how to register the catalog in React, so in Vue, ahh, the card can't render."
-              },
-              {
-                "at": "+",
-                "text": "So umm, this one needs fixing, please look into it."
               }
             ]
           }
