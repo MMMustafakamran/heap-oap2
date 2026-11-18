@@ -128,7 +128,6 @@
       ]
     }
   ],
-  "quickstartBlocked": "the Vue quickstart only sets up CopilotKit's own BuiltInAgent; no step connects an OpenAI Agents SDK agent (no HttpAgent, no Python agent), and its \"use your framework's quickstart\" callout points back at this page",
   "pages": [
     {
       "id": "quickstart",
@@ -715,7 +714,7 @@
         25
       ],
       "notes": [
-        "Note: Not available for OpenAI Agents SDK (the page says \"Not available on this framework.\")"
+        "Note: Not available for OpenAI Agents SDK (the page says \"Use useHumanInTheLoop on this framework.\")"
       ],
       "block": null,
       "links": [],
@@ -739,7 +738,7 @@
         25
       ],
       "notes": [
-        "Note: Not available for OpenAI Agents SDK (the page says \"Not available on this framework.\")"
+        "Note: Not available for OpenAI Agents SDK (the page says \"Use useHumanInTheLoop on this framework.\")"
       ],
       "block": null,
       "links": [],

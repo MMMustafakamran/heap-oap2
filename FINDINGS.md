@@ -7,7 +7,7 @@ Stack: @copilotkit/vue 1.89.0, @copilotkit/runtime 1.89.0 (npm latest), @ag-ui/c
 
 ### [Quickstart](https://docs.copilotkit.ai/vue/openai-agents-python)
 **#1 The Vue quickstart never connects an OpenAI Agents SDK agent.**
-- **Doc:** the page (`/vue/openai-agents-python`) is the generic Vue quickstart: `server.ts` registers `default: new BuiltInAgent({ model: "openai:gpt-6-luna", ... })`. Its callout says "Already have an agent? Do not use BuiltInAgent ... use your framework's quickstart for the runtime wiring so it registers your agent instead", but this is the OpenAI Agents SDK framework's quickstart. No `HttpAgent`, no Python `Agent` / `ag_ui_openai_agents` endpoint anywhere on the page.
+- **Doc:** the page (`/vue/openai-agents-python`) is the generic Vue quickstart: `server.ts` registers `default: new BuiltInAgent({ model: "openai:gpt-6-luna", ... })`. Its callout says "Already have an agent? Do not use BuiltInAgent ... use your framework's quickstart for the runtime wiring so it registers your agent instead" (no link), but this page is the sidebar's Quickstart for OpenAI Agents SDK in the Vue docs. No `HttpAgent`, no Python `Agent` / `ag_ui_openai_agents` endpoint anywhere on the page.
 - **Result:** following the page gives a Vue chat that talks to CopilotKit's own BuiltInAgent (it replies), never to an OpenAI Agents SDK agent. **Confirmed by harness:** every other page runs on `my-copilot-app/server.openai.ts` (`HttpAgent` to the React quickstart's `main.py`: `OpenAIAgentsAgent` + `add_openai_agents_fastapi_endpoint`), which the reader would have to work out alone.
 
 ### [Agent Config](https://docs.copilotkit.ai/vue/openai-agents-python/agent-config)
@@ -33,7 +33,7 @@ Stack: @copilotkit/vue 1.89.0, @copilotkit/runtime 1.89.0 (npm latest), @ag-ui/c
 ## Minor notes
 
 - **#9** HITL Overview: `hitl.py` imports `demo_agents._common` (never shown), and its prompt names a `book_call` tool while the Vue tool is `schedule_meeting`. The page's `TimePickerCard.vue` now renders and booking completes.
-- **#12** Prebuilt Components / Threads Drawer: `agent-id` "my-agent" / "support" that nothing registers. Prebuilt Components' new `useConfigureSuggestions` snippet shows no suggestion in the chat (probe 2026-11-18).
+- **#12** Prebuilt Components / Threads Drawer: `agent-id` "my-agent" / "support" that nothing registers. Prebuilt Components' new `useConfigureSuggestions` snippet showed no suggestion in the chat in one local probe (unconfirmed).
 - **#13** Slots: two different snippets are both titled `SupportChat.vue`.
 - **#14** Headless Threads: `server.ts` uses `agent` and `verifyAppSession` without defining them.
 - **#15** VS Code Extension: `code --install-extension copilotkit.copilotkit` names an id not on the Marketplace (real: `copilotkit.copilotkit-vscode-extension`); "three sidebars" but two listed.
