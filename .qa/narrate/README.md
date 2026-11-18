@@ -58,6 +58,7 @@ python $N mix     script.json clip.webm clip.timeline.json out.mp4
 python $N rewrite script.json clip.timeline.json --fit clip.fit.json [--out S] [--in-place] [--model sonnet|opus]
 python $N all     script.json clip.webm clip.timeline.json out.mp4 [--model sonnet] [--no-rewrite] [--in-place] [--strict]
 python $N import-cache narration/scripts/*.json --from OLD_CACHE_DIR   (one-off; legacy cache already imported)
+python $N tag-pages <repo-root>
 python $N voice-id [--write narration/voice.json]
 ```
 
@@ -65,10 +66,15 @@ All take `--audio-dir D` (except `rewrite`).
 
 - **fit**: per line: slot start/end, spoken length (from cached audio, else words / 2.5), overlap
   into the next slot and silence left after it. Writes `<script dir>/<clip>.fit.json` (or `--out`)
-  and prints a table. Flags: `overlap` (> 0.3 s), `gap` (> 15 s), `past-end` (mark is after the clip
+  and prints a table. Flags: `overlap` (> 0.3 s; the recorder waits for each line, so it means that wait failed: the
+  row gets `"note": "overlap (recorder wait failed)"` and the table prints that text), `gap` (> 15 s), `past-end` (mark is after the clip
   end: the timeline is for another recording). Exit 1 if anything is flagged, 2 if a script label is
   missing from the timeline. Fit never writes audio. Clip length comes from `durationS`, else
   ffprobe on `--clip` or `<clip>.webm` next to the timeline / under `*/autorecorder/videos/`.
+- **tag-pages**: for each `narration/scripts/*.json` without a top-level `"page"`, finds the page in
+  `<repo-root>/assignment.json` whose `links[].clip` or `links[].narration` matches the script's clip
+  and writes `"page": <page id>`, so scripts can be looked up by page id. `tts`, `rewrite` and `all`
+  take `--page <id>` to set it; an existing `"page"` is kept.
 - **tts**: generates only lines missing from the cache (Fish returns wav; it is encoded to
   `<key>.mp3` and the wav is dropped). Retries on 429/5xx.
 - **mix**: same output as the old `voice/narrate.py`: lines at mark + 0.6 s, voice loudnorm

@@ -36,14 +36,14 @@ Agents may (owner, 2026-11-13): create both repos above, set the main repo's CI 
 
 ## B. Testing day (existing framework)
 
-1. **Trigger CI** for each assigned repo: `gh workflow run daily.yml -R MMMustafakamran/<repo>` (default `scope=auto`, drift on, latest versions). Never `ignore_drift` or `use_lockfile` for a normal day ([DRIFT.md](DRIFT.md) §1).
+1. **Probe first, in CI (owner, 2026-11-18):** `gh workflow run daily.yml -R MMMustafakamran/<repo> -f mode=probe` for every assigned repo at once (every page, 3 runs each, held pages too). Read `probe-summary.md` (run summary / `probe-<date>` artifact) and decide statuses and findings from the 3/3 results (flaky = probe again). Then **trigger the record run** per repo: `gh workflow run daily.yml -R MMMustafakamran/<repo>` (default `mode=record`, `scope=auto`, drift on, latest versions): it films ❌/⚠️ pages, pages whose status changed (`-f pages=<ids>` if `auto` misses them) and ✅ pages older than 4 days. Never `ignore_drift` or `use_lockfile` for a normal day ([DRIFT.md](DRIFT.md) §1).
 2. **What CI films (`scope=auto`):**
    | Situation | Filmed |
    |---|---|
    | CopilotKit version changed since the committed lockfile | **every page** (✅ ⚠️ ❌) |
    | No version change | ❌ and ⚠️ pages, **plus every ✅ page whose last clip (`links[].filmed`) is 4 or more days old**: working pages never go more than 4–5 days without a new clip |
    | Any page with doc drift | **held** (not filmed) until step 3 |
-   | `quickstartBlocked` repo | only the quickstart ([QA-RULES.md](QA-RULES.md) §8b) |
+   | `quickstartBlocked` repo | every page, same as any repo (owner, 2026-11-18; [QA-RULES.md](QA-RULES.md) §8b) |
    CI installs npm `latest` CopilotKit / AG-UI and shows it in `VERSIONS.md` in the Quickstart IDE segment.
 3. **Apply drift first.** Read `drift/drift.md` and `versions.md` from the run. For every held page, working pages too: apply the doc change to the harness verbatim ([DRIFT.md](DRIFT.md) §3), probe, update status/finding if the result changed, `drift.mjs --sync=<docPath>`, commit, push, then film just those pages: `-f pages=<ids>`.
 4. **Download** that day's run(s) only, never an older run.

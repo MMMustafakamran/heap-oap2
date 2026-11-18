@@ -42,6 +42,17 @@ on:
         required: false
         type: boolean
         default: false
+      mode:
+        description: 'record = film clips (normal run); probe = headless probe of every page, 3 runs each, no clips (owner, 2026-11-18)'
+        required: false
+        type: choice
+        options: [record, probe]
+        default: record
+      probe_shards:
+        description: 'mode=probe: parallel runners'
+        required: false
+        type: number
+        default: 3
 
 concurrency:
   group: daily-${{ github.ref }}
@@ -99,10 +110,17 @@ jobs:
           SCOPE: ${{ inputs.scope || 'auto' }}
           USE_LOCKFILE: ${{ inputs.use_lockfile || false }}
           SHARDS: ${{ inputs.shards || 5 }}
+          MODE: ${{ inputs.mode || 'record' }}
+          PROBE_SHARDS: ${{ inputs.probe_shards || 3 }}
           IGNORE_DRIFT: ${{ inputs.ignore_drift || false }}
           FILM_BLOCKED: ${{ inputs.film_blocked || false }}
         run: |
           set -euo pipefail
+          # mode=probe: every page (scope auto -> all), probe_shards runners, held pages probed too.
+          if [ "$MODE" = "probe" ]; then
+            SHARDS=$PROBE_SHARDS
+            if [ "$SCOPE" = "auto" ]; then SCOPE=all; fi
+          fi
           (cd autorecorder && npx tsx -e "import('./config/pages.config.ts').then(m=>{const s=m.SKIP_RECORDING||{};console.log(JSON.stringify(m.PAGES.filter(p=>!s[p.id]).map(p=>({id:p.id,docPath:p.docPath??null}))))})" | tail -1) > recorder-pages.json
           if [ -z "${PAGES// /}" ]; then
             # Scope (QA-RULES section 9): only pages a reader reaches by clicking through the docs.
@@ -202,7 +220,7 @@ jobs:
           # Owner, 2026-11-18: every page is filmed even when the quickstart is blocked (QA-RULES 8b).
           # Doc drift (DRIFT.md): pages whose doc changed since doc-snapshot/ are held, not recorded.
           mkdir -p plan-out
-          if [ "$IGNORE_DRIFT" = "true" ]; then
+          if [ "$IGNORE_DRIFT" = "true" ] || [ "$MODE" = "probe" ]; then
             node .qa/tools/drift.mjs --out=plan-out/drift --recorder=recorder-pages.json > plan-out-drift.log 2>&1 || true
             echo "ignore_drift: held pages are recorded too"
           elif node .qa/tools/drift.mjs --out=plan-out/drift --recorder=recorder-pages.json --pages="$PAGES" > plan-out-drift.log 2>&1 && [ -f plan-out/drift/keep.txt ]; then
@@ -252,7 +270,7 @@ jobs:
   record:
     name: Record ${{ matrix.shard }}
     needs: plan
-    if: contains(needs.plan.outputs.matrix, '"pages"')
+    if: (inputs.mode || 'record') == 'record' && contains(needs.plan.outputs.matrix, '"pages"')
     runs-on: ubuntu-latest
     timeout-minutes: 150
     strategy:
@@ -412,10 +430,183 @@ jobs:
           if-no-files-found: ignore
           retention-days: 1
 
+  probe:
+    name: Probe ${{ matrix.shard }}
+    needs: plan
+    if: inputs.mode == 'probe' && contains(needs.plan.outputs.matrix, '"pages"')
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      # Intelligence pages: the runtime (server.openai.ts on 8130) reads it from the environment.
+      CPK_INTELLIGENCE_API_KEY: ${{ secrets.CPK_INTELLIGENCE_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Today's lockfiles from the plan job
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: plan
+          path: plan-out
+      - name: Use today's lockfiles (absent = the committed ones)
+        run: |
+          if [ -d plan-out/resolved ]; then cp -rv plan-out/resolved/. . ; else echo "no resolved lockfiles: installing the committed ones"; fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            my-copilot-app/package-lock.json
+            autorecorder/package-lock.json
+      # uv from PyPI: astral-sh/setup-uv kept failing on runners (504 on the release lookup,
+      # 300 s cache-lock timeouts). pip + PyPI is one plain download, retried.
+      - name: Install uv (PyPI)
+        run: |
+          for i in 1 2 3; do python3 -m pip install --user --quiet "uv==0.9.*" && break; echo "uv install attempt $i failed; retrying"; sleep 10; done
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          "$HOME/.local/bin/uv" --version
+      # Python from the runner's tool cache (actions/setup-python), never downloaded by uv:
+      # uv's own Python download (github.com release assets) kept failing on runners.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Sync backend (uv, runner Python 3.13; doc requires >=3.13)
+        env:
+          UV_PYTHON_DOWNLOADS: never
+        run: cd backend && uv sync --python "$(command -v python3.13 || command -v python3)"
+
+      - name: Cache node_modules + Playwright browser
+        id: nm-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            my-copilot-app/node_modules
+            autorecorder/node_modules
+            ~/.cache/ms-playwright
+          key: nm-${{ runner.os }}-node22-v1-${{ hashFiles('my-copilot-app/package-lock.json', 'autorecorder/package-lock.json') }}
+      - name: Install dependencies
+        timeout-minutes: 20
+        run: |
+          set -euo pipefail
+          for d in my-copilot-app autorecorder; do
+            if [ "${{ steps.nm-cache.outputs.cache-hit }}" = "true" ] && [ -d "$d/node_modules" ]; then echo "$d: node_modules from cache"; continue; fi
+            if [ -f "$d/package-lock.json" ]; then npm ci --prefix "$d" --no-audit --no-fund
+            else npm install --prefix "$d" --no-audit --no-fund; fi
+          done
+          # apt mirrors sometimes stall on runners: fail fast and retry instead of hanging.
+          echo 'Acquire::Retries "3"; Acquire::http::Timeout "30"; Acquire::https::Timeout "30";' | sudo tee /etc/apt/apt.conf.d/99net-timeouts > /dev/null
+          # --with-deps installs xvfb and the browser libraries.
+          for i in 1 2 3; do
+            (cd autorecorder && timeout 300 npx playwright install --with-deps chromium) && break
+            echo "playwright install attempt $i failed or stalled; retrying"; sleep 10
+          done
+          for i in 1 2 3; do
+            (cd autorecorder && timeout 300 npx playwright install chromium) && break
+            echo "chromium download attempt $i failed; retrying"; sleep 10
+          done
+          (cd autorecorder && node -e "const {chromium}=require('playwright'); require('fs').accessSync(chromium.executablePath()); console.log('chromium ok:', chromium.executablePath())")
+          command -v xvfb-run
+          # The failure terminal is a real shell (node-pty; no Linux prebuild, so npm builds it).
+          (cd autorecorder && node -e "require('node-pty'); console.log('node-pty ok')")
+
+      - name: Write env files (secret from repo settings, never logged)
+        run: |
+          set -eu
+          [ -n "${OPENAI_API_KEY:-}" ] || echo "::warning::secret OPENAI_API_KEY is not set; the doc agents will fail"
+          printf 'OPENAI_API_KEY=%s\n' "$OPENAI_API_KEY" > backend/.env
+
+      - name: Start servers (start-all.sh)
+        run: |
+          set -euo pipefail
+          mkdir -p logs
+          nohup bash start-all.sh > logs/start-all.log 2>&1 &
+          # "localhost", not 127.0.0.1: the LangGraph JS server binds IPv6 ::1 only.
+          for hp in 8131/agent/health 8132/ 8134/ 8135/ 8136/ 8130/api/copilotkit/info 5130/; do  # HARNESS: OpenAIAgents-Vue ports (8132 chat, 8134/8135 genui, 8136 interact)
+            port=${hp%%/*}; path=/${hp#*/}
+            ok=
+            tries=120; case "$port" in 8???) tries=48 ;; esac   # a dead backend costs 4 min, not 10
+            for i in $(seq 1 $tries); do
+              if [ "$path" = "/" ]; then curl -s -o /dev/null "http://localhost:$port/" && ok=1 && break
+              else curl -sf -o /dev/null "http://localhost:$port$path" && ok=1 && break; fi
+              sleep 5
+            done
+            if [ -z "$ok" ]; then
+              # The frontend is needed by every page; a backend only by its own pages (their clips
+              # then show the real error, e.g. a doc import that no longer installs).
+              case "$port" in 3???|5???) echo "::error::frontend :$port did not come up"; tail -n 40 logs/*.log; exit 1 ;; esac
+              echo "::warning::server on :$port did not come up; pages that use it will show the error"; tail -n 40 logs/*.log
+              continue
+            fi
+            echo "up: :$port$path"
+          done
+
+      - name: Probe (headless, page checks, 3 runs each)
+        env:
+          PAGES: ${{ matrix.pages }}
+        run: |
+          set +e
+          cd autorecorder
+          npx tsx ../.qa/tools/probe.mts ${PAGES//,/ } --health --warm --repeat 3 --parallel 3 2>&1 | tee ../logs/probe.log
+          exit 0
+
+      - name: Upload probe-${{ matrix.shard }}
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: probe-${{ matrix.shard }}
+          path: |
+            autorecorder/videos/probe/
+            logs/
+          if-no-files-found: ignore
+          retention-days: 1
+
+  probe-report:
+    name: Probe report
+    needs: [plan, probe]
+    if: always() && needs.plan.result == 'success' && inputs.mode == 'probe'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: probe-*
+          path: probes
+      - name: Summary
+        run: |
+          mkdir -p out/probe
+          python .qa/tools/probe_summary.py probes --assignment assignment.json --out out/probe/probe-summary.md
+          cat out/probe/probe-summary.md >> "$GITHUB_STEP_SUMMARY"
+          [ -d probes ] && cp -r probes/. out/probe/ || true
+      - name: Delete temporary probe artifacts
+        if: always()
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: |
+            probe-*
+            plan
+          failOnError: false
+      - name: Upload probe-${{ needs.plan.outputs.date }}
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: probe-${{ needs.plan.outputs.date }}
+          path: out/probe/
+          if-no-files-found: warn
+          retention-days: 14
+
   report:
     name: Report
     needs: [plan, record]
-    if: always() && needs.plan.result == 'success'
+    if: always() && needs.plan.result == 'success' && (inputs.mode || 'record') == 'record'
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:

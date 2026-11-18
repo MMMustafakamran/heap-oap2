@@ -1,12 +1,34 @@
 {
  "clip": "OAI-vue-01-Quickstart",
  "segments": [
-  {"at": "doc", "text": "Ok so this is the quickstart page for Vue with OpenAI Agents, and I'm reporting a problem on this page."},
-  {"at": "evidence", "text": "This is the problem, umm, the page only sets up BuiltInAgent, and says not to use it if you already have an agent."},
-  {"at": "evidence#2", "text": "And it says to use your framework's quickstart for the wiring, but, uh, this is that quickstart."},
-  {"at": "ide", "text": "This is my project, I've implemented the exact code from the doc."},
-  {"at": "demo", "text": "Moving on to the demo. The chat does reply, but it's CopilotKit's built-in agent, not an OpenAI Agents agent."},
-  {"at": "notepad", "text": "So basically, the page should connect a Vue app to an OpenAI Agents SDK agent, but there's no agent wiring and no Python agent at all."},
-  {"at": "+", "text": "So this needs a fix, kindly check it."}
- ]
+  {
+   "at": "doc",
+   "text": "Ok so this is the quickstart page for Vue with OpenAI Agents, and I'm reporting a problem on this page."
+  },
+  {
+   "at": "evidence",
+   "text": "This is the problem, umm, the page only sets up BuiltInAgent, and says not to use it if you already have an agent."
+  },
+  {
+   "at": "evidence#2",
+   "text": "And it says to use your framework's quickstart for the wiring, but, uh, this is that quickstart."
+  },
+  {
+   "at": "ide",
+   "text": "This is my project, I've implemented the exact code from the doc."
+  },
+  {
+   "at": "demo",
+   "text": "Moving on to the demo. The chat does reply, but it's CopilotKit's built-in agent, not an OpenAI Agents agent."
+  },
+  {
+   "at": "notepad",
+   "text": "So basically, the page should connect a Vue app to an OpenAI Agents SDK agent, but there's no agent wiring and no Python agent at all."
+  },
+  {
+   "at": "+",
+   "text": "So this needs a fix, kindly check it."
+  }
+ ],
+ "page": "quickstart"
 }

@@ -1,12 +1,34 @@
 {
  "clip": "OAI-vue-28-WebMcp",
  "segments": [
-  {"at": "doc", "text": "Ok so this is the WebMCP page for OpenAI Agents with Vue, and I'm reporting a problem on this page."},
-  {"at": "evidence", "text": "This is the problem, umm, the handler calls searchOrders, but that function is never defined or imported."},
-  {"at": "ide", "text": "This is my project, I've implemented the exact code from the doc."},
-  {"at": "+", "text": "The provider and the chat weren't on this page, so I added them from the quickstart."},
-  {"at": "demo", "text": "Moving on to the demo. I asked the agent to search my open orders, it should run the tool and answer, but uh, no reply comes back at all."},
-  {"at": "notepad", "text": "So basically, the tool handler throws because searchOrders doesn't exist, and the run just dies without any message."},
-  {"at": "+", "text": "So kindly look into it."}
- ]
+  {
+   "at": "doc",
+   "text": "Ok so this is the WebMCP page for OpenAI Agents with Vue, and I'm reporting a problem on this page."
+  },
+  {
+   "at": "evidence",
+   "text": "This is the problem, umm, the handler calls searchOrders, but that function is never defined or imported."
+  },
+  {
+   "at": "ide",
+   "text": "This is my project, I've implemented the exact code from the doc."
+  },
+  {
+   "at": "+",
+   "text": "The provider and the chat weren't on this page, so I added them from the quickstart."
+  },
+  {
+   "at": "demo",
+   "text": "Moving on to the demo. I asked the agent to search my open orders, it should run the tool and answer, but uh, no reply comes back at all."
+  },
+  {
+   "at": "notepad",
+   "text": "So basically, the tool handler throws because searchOrders doesn't exist, and the run just dies without any message."
+  },
+  {
+   "at": "+",
+   "text": "So kindly look into it."
+  }
+ ],
+ "page": "webmcp"
 }

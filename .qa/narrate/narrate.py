@@ -26,6 +26,7 @@ LEAD = 0.6                # a line starts this long after its mark (a person rea
 MAX_OVERLAP = 0.3         # fit fails above this
 MAX_GAP = float("inf")    # silences are fine (owner, 2026-11-08): gaps are reported, never flagged
 REWRITABLE = ("overlap", "gap")
+OVERLAP_NOTE = "overlap (recorder wait failed)"
 FISH_URL = "https://api.fish.audio/v1/tts"
 
 
@@ -308,6 +309,8 @@ def compute_fit(script_p, timeline_p, audio_dir, clip_p=None, max_overlap=MAX_OV
                      "overlap": round(overlap, 2), "gap": round(gap, 2),
                      "flag": ("past-end" if total is not None and t >= total else
                               "overlap" if overlap > max_overlap else ("gap" if gap > max_gap else None))})
+        if rows[-1]["flag"] == "overlap":  # the recorder waits for each line, so an overlap means that wait failed
+            rows[-1]["note"] = OVERLAP_NOTE
     ok = not any(r["flag"] for r in rows)
     return {"clip": clip, "script": os.path.abspath(script_p), "timeline": os.path.abspath(timeline_p),
             "clipDuration": total, "clipDurationSource": total_src if total is not None else None,
@@ -319,7 +322,7 @@ def print_fit(fit):
     for r in fit["lines"]:
         print(f"  {r['i']:>2} {r['at']:<16} {r['slotStart']:6.1f}-{r['slotEnd']:<6.1f} {r['slot']:6.1f} "
               f"{r['duration']:6.1f} {r['durationSource']:<9} {r['overlap']:5.1f} {r['gap']:5.1f}"
-              f"{'  <-- ' + r['flag'].upper() if r['flag'] else ''}")
+              f"{'  <-- ' + (r.get('note') or r['flag']).upper() if r['flag'] else ''}")
 
 def cmd_fit(a):
     fit = compute_fit(a.script, a.timeline, a.audio_dir, a.clip, a.max_overlap, a.max_gap)
@@ -332,8 +335,15 @@ def cmd_fit(a):
 
 # ---------------------------------------------------------------- tts
 
+def set_page(script_p, script, page):
+    """Write a top-level "page" (page id in assignment.json) into the script when given."""
+    if page and script.get("page") != page:
+        script["page"] = page
+        save_json(script_p, script)
+
 def cmd_tts(a):
     script = load_json(a.script)
+    set_page(a.script, script, getattr(a, "page", None))
     if not ref_sha():
         sys.exit("error: reference voice missing (VOICE_REF_WAV) - needed for cache keys")
     wav, txt = ref_paths()
@@ -571,8 +581,10 @@ stated as results, never "now I'm clicking". NEVER invent actions, checks, error
 Don't touch other lines. Reply with ONLY a JSON object, no prose:
 {{"lines": [{{"i": <index>, "text": "<new line>"}}]}}"""
 
-def rewrite_once(script_p, fit, out_p, model, in_place=False):
+def rewrite_once(script_p, fit, out_p, model, in_place=False, page=None):
     script = load_json(script_p)
+    if page:
+        script["page"] = page  # existing "page" is kept as loaded otherwise
     if not any(r["flag"] in REWRITABLE for r in fit["lines"]):
         print("rewrite: nothing to rewrite (past-end marks need a new timeline, not new text)"); return script_p, False
     rows = {r["i"]: r for r in fit["lines"] if r["flag"] in REWRITABLE}
@@ -625,7 +637,7 @@ def default_rewrite_out(script_p):
 def cmd_rewrite(a):
     fit = load_json(a.fit)
     out = a.out or default_rewrite_out(a.script)
-    _, changed = rewrite_once(a.script, fit, out, a.model, a.in_place)
+    _, changed = rewrite_once(a.script, fit, out, a.model, a.in_place, a.page)
     return 0 if changed or not any(r["flag"] in REWRITABLE for r in fit["lines"]) else 1
 
 
@@ -641,7 +653,7 @@ def cmd_all(a):
         if fit["ok"] or rnd == 2 or a.no_rewrite:
             break
         print(f"\n== rewrite round {rnd + 1} ==")
-        script_p, changed = rewrite_once(script_p, fit, work, a.model, in_place=(script_p == work))
+        script_p, changed = rewrite_once(script_p, fit, work, a.model, in_place=(script_p == work), page=a.page)
         if not changed:
             break
     a.script = script_p
@@ -653,6 +665,41 @@ def cmd_all(a):
     if not fit["ok"]:
         print("warning: final fit still has flagged lines (see " + fit_p + ")", file=sys.stderr)
         return 1 if a.strict else 0
+    return 0
+
+
+# ---------------------------------------------------------------- tag-pages
+
+def cmd_tag_pages(a):
+    """Add "page" to each narration/scripts/*.json that lacks it, from assignment.json links."""
+    root = a.repo
+    pages = load_json(os.path.join(root, "assignment.json")).get("pages", [])
+    by_clip = {}
+    for pg in pages:
+        for l in pg.get("links") or []:
+            for v in (l.get("clip"), l.get("narration")):
+                if v:
+                    key = os.path.splitext(os.path.basename(str(v)))[0]
+                    by_clip.setdefault(key, pg.get("id"))
+    sdir = os.path.join(root, "narration", "scripts")
+    tagged = had = 0; untagged = []
+    for fn in sorted(os.listdir(sdir)) if os.path.isdir(sdir) else []:
+        if not fn.endswith(".json") or fn.endswith(".fit.json"):
+            continue
+        sp = os.path.join(sdir, fn); s = load_json(sp)
+        if not isinstance(s, dict) or "segments" not in s:
+            continue
+        if s.get("page"):
+            had += 1; continue
+        clip = s.get("clip") or os.path.splitext(fn)[0]
+        pid = by_clip.get(clip) or by_clip.get(os.path.splitext(fn)[0])
+        if pid:
+            set_page(sp, s, pid); tagged += 1
+        else:
+            untagged.append(fn)
+    print(f"tag-pages {root}: tagged {tagged}, already {had}, untagged {len(untagged)}")
+    for fn in untagged:
+        print(f"  untagged: {fn}")
     return 0
 
 
@@ -705,7 +752,8 @@ def main(argv=None):
     p = common(sub.add_parser("fit"), True); p.add_argument("script"); p.add_argument("timeline")
     p.add_argument("--out", help="fit json path (default <script dir>/<clip>.fit.json)"); p.set_defaults(fn=cmd_fit)
 
-    p = common(sub.add_parser("tts")); p.add_argument("script"); p.set_defaults(fn=cmd_tts)
+    p = common(sub.add_parser("tts")); p.add_argument("script")
+    p.add_argument("--page", help="page id (assignment.json) to store as the script's \"page\""); p.set_defaults(fn=cmd_tts)
 
     p = common(sub.add_parser("mix")); p.add_argument("script"); p.add_argument("clip")
     p.add_argument("timeline"); p.add_argument("out")
@@ -718,6 +766,7 @@ def main(argv=None):
 
     p = sub.add_parser("rewrite"); p.add_argument("script"); p.add_argument("timeline")
     p.add_argument("--fit", required=True); p.add_argument("--out"); p.add_argument("--in-place", action="store_true")
+    p.add_argument("--page", help="page id to store as the script's \"page\"")
     p.add_argument("--model", default=os.environ.get("NARRATE_LLM_MODEL", "sonnet")); p.set_defaults(fn=cmd_rewrite)
 
     p = common(sub.add_parser("all"), True, clipopt=False); p.add_argument("script"); p.add_argument("clip")
@@ -725,11 +774,15 @@ def main(argv=None):
     p.add_argument("--model", default=os.environ.get("NARRATE_LLM_MODEL", "sonnet"))
     p.add_argument("--out-script", help="where rewritten script goes (default <script>.rewritten.json)")
     p.add_argument("--in-place", action="store_true"); p.add_argument("--no-rewrite", action="store_true")
+    p.add_argument("--page", help="page id to store as the script's \"page\"")
     p.add_argument("--strict", action="store_true", help="exit 1 if the final fit is still flagged")
     p.set_defaults(fn=cmd_all)
 
     p = common(sub.add_parser("import-cache")); p.add_argument("scripts", nargs="+")
     p.add_argument("--from", dest="src", required=True); p.set_defaults(fn=cmd_import)
+
+    p = sub.add_parser("tag-pages"); p.add_argument("repo", help="repo root with assignment.json")
+    p.set_defaults(fn=cmd_tag_pages)
 
     p = sub.add_parser("voice-id"); p.add_argument("--write", metavar="narration/voice.json")
     p.set_defaults(fn=cmd_voice_id)

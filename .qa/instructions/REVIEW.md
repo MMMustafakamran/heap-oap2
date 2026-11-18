@@ -77,7 +77,7 @@ available…", blue/purple "Not supported…"), blue drag-selection.
 | injected overlay | Anything drawn onto the page by the recorder: red boxes/outlines, caption pills with explanatory text, arrows, "FINDING" banners. Check every `checks.look_at` red run frame. |
 | missing segment | Full ❌/⚠️ finding clip (level 1) missing one of: doc with evidence (drag-select) → ide → demo → Notepad. **Added code check (owner, 2026-11-13):** when the finding or note says code was missing or not shown on the page (a HARNESS addition), the `ide` segment must show that added line drag-selected, and the voice must say it wasn't on the page; if either is absent, flag it. Level-2 pages (`KNOWN_ISSUE`: doc opening line → ide → demo, end after the demo on purpose: not missing); ✅ clip with a Notepad (except the temperature-only case, [QA-RULES.md](QA-RULES.md) §7). |
 | formal Notepad | Headings, numbered/bulleted lists, ALL-CAPS title, long `https://` URLs. Casual lowercase with small typos is correct. |
-| audio-fit | CI's fit flagged a narration line (`overlap`, `gap`, `past-end`): the saved line no longer fits the new marks. Report the line and the flag; never rewrite it (rewrites are local only). |
+| audio-fit | CI's fit flagged a narration line (`overlap`, `gap`, `past-end`): the saved line no longer fits the new marks. Report the line and the flag; never rewrite it (rewrites are local only). An `overlap` now means the recorder's wait for the line failed: verdict `rerecord` (owner, 2026-11-18). |
 | status honesty | ⚠️ is only for "main feature works, minor defect". If the main feature fails, the right status is ❌: flag it. If in doubt whether the main feature works, it is ❌. |
 
 ## 6. Verdict per clip (first match wins)
@@ -91,7 +91,7 @@ available…", blue/purple "Not supported…"), blue drag-selection.
 | `status_mismatch` | The clip is valid, but the expected status is wrong for what it shows (e.g. ⚠️ where the main feature fails; ❌ where the page works as published and no doc defect shows). |
 | `pass` | Valid clip, consistent with the expected status and finding text. |
 
-Audio-fit flags don't change the verdict on their own: report them in `audio_fit`.
+Audio-fit flags don't change the verdict on their own (except `overlap` → `rerecord`, §5): report them in `audio_fit`.
 
 ## 7. Output
 

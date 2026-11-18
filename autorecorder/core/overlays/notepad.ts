@@ -1,9 +1,9 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { type Page } from 'playwright';
+import { isFast } from '../fast';
 import { humanClick, humanGlide, sleep } from './cursor';
 import { keystrokeDelay, type TypeRhythm } from './human';
 import { keyframe, logAction, logInput } from '../timeline';
+import { loadVoicePlan, notepadVoiceMs } from '../voice';
 
 /**
  * A Windows 11 Notepad window, drawn inside the page.
@@ -24,6 +24,7 @@ export async function openNotepad(
   page: Page,
   fileName = 'Untitled',
 ): Promise<void> {
+  if (isFast()) return; // probe: no Notepad
   openedAt = Date.now(); // the `notepad` mark is set just before this; the voice-over starts there
   const coords = await page.evaluate(() => {
     const el = document.getElementById('win11-taskbar-notepad');
@@ -140,48 +141,17 @@ export type TypeOptions = TypeRhythm & {
 
 // ---------------------------------------------------------------------------------------------
 // How long Notepad stays up: until the clip's Notepad voice-over has finished (owner, 2026-11-09).
-// The engine names the clip at the start of each take; the hold is read from that clip's narration
-// script (`narration/scripts/<clip>.json`: the `notepad` line plus the `+` lines after it) and the
-// saved audio's real durations (`narration/audio/*.json`), else ~2.5 words/s.
+// The engine loads the take's voice plan (core/voice.ts); the hold is the `notepad` line plus
+// the `+` lines after it.
 // ---------------------------------------------------------------------------------------------
-let clipCtx: { root: string; clip: string } | null = null;
 let openedAt = 0;
 
-/** Called by the engine when a take starts. */
-export function setNotepadClip(root: string, clip: string): void {
-  clipCtx = { root, clip };
+/** Back-compat: repos may still call this. Loads the take's voice plan (see core/voice.ts). */
+export function setNotepadClip(root: string, clip: string, pageId = clip): void {
+  loadVoicePlan(root, pageId, clip);
 }
 
-/** Milliseconds the Notepad voice-over runs, measured from the `notepad` mark; 0 when unknown. */
-export function notepadVoiceMs(): number {
-  if (!clipCtx) return 0;
-  try {
-    const script = JSON.parse(
-      readFileSync(join(clipCtx.root, 'narration', 'scripts', `${clipCtx.clip}.json`), 'utf8'),
-    ) as { segments?: { at: string; text: string }[] };
-    const segs = script.segments ?? [];
-    const i = segs.findIndex((s) => s.at === 'notepad');
-    if (i < 0) return 0;
-    const lines = [segs[i]];
-    for (let k = i + 1; k < segs.length && segs[k].at === '+'; k++) lines.push(segs[k]);
-    const dur = new Map<string, number>();
-    const audioDir = join(clipCtx.root, 'narration', 'audio');
-    if (existsSync(audioDir)) {
-      for (const f of readdirSync(audioDir)) {
-        if (!f.endsWith('.json')) continue;
-        try {
-          const a = JSON.parse(readFileSync(join(audioDir, f), 'utf8')) as { text?: string; duration?: number };
-          if (a.text && a.duration) dur.set(a.text, a.duration);
-        } catch {}
-      }
-    }
-    let s = 0.6; // the mix places a line 0.6 s after its mark
-    for (const l of lines) s += (dur.get(l.text) ?? l.text.split(/\s+/).length / 2.5) + 0.3;
-    return Math.round((s + 1.2) * 1000); // a beat after the last word before the window closes
-  } catch {
-    return 0;
-  }
-}
+export { notepadVoiceMs };
 
 /**
  * Puts the note into the Notepad window: pasted in one go by default (owner, 2026-11-09), or typed
@@ -193,6 +163,7 @@ export async function typeInNotepad(
   text: string,
   opts: TypeOptions = {},
 ): Promise<void> {
+  if (isFast()) return; // probe: no Notepad
   await page.evaluate(
     (ids: { textId: string; caretId: string }) => {
       const el = document.getElementById(ids.textId);
@@ -292,6 +263,7 @@ export async function typeInNotepad(
  * finished (counted from when the window opened), then closes it.
  */
 export async function closeNotepad(page: Page, dwellMs = 2600): Promise<void> {
+  if (isFast()) return; // probe: no Notepad
   const voiceLeft = openedAt ? notepadVoiceMs() - (Date.now() - openedAt) : 0;
   await sleep(Math.max(dwellMs, voiceLeft));
   openedAt = 0;
