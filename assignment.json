@@ -149,7 +149,7 @@
         {
           "text": null,
           "clip": "OAI-vue-01-Quickstart",
-          "loom": "https://www.loom.com/share/41698cc95c884c82a595069ca3cc2f17",
+          "loom": "https://www.loom.com/share/5796f088768d40788afb76d5f5130fec",
           "narration": {
             "clip": "OAI-vue-01-Quickstart",
             "segments": [
@@ -183,7 +183,7 @@
               }
             ]
           },
-          "filmed": "2026-11-17"
+          "filmed": "2026-11-18"
         }
       ],
       "review": {
@@ -213,8 +213,8 @@
         {
           "text": "Prebuilt Components - Vue",
           "clip": "OAI-vue-02-PrebuiltComponents",
-          "loom": "https://www.loom.com/share/da2fe3a32ae74893ac7d0ba0d8e4bf2a",
-          "filmed": "2026-11-17"
+          "loom": "https://www.loom.com/share/cd911265d81649249783f393247ef691",
+          "filmed": "2026-11-18"
         }
       ],
       "review": {
@@ -244,8 +244,8 @@
         {
           "text": "Slots - Vue",
           "clip": "OAI-vue-03-Slots",
-          "loom": "https://www.loom.com/share/7e4b0d64627f4ddb8615f688f49505f1",
-          "filmed": "2026-11-17"
+          "loom": "https://www.loom.com/share/e7c95cad58a94d9b8486ceaa031d8bcd",
+          "filmed": "2026-11-18"
         }
       ],
       "review": {
@@ -271,8 +271,8 @@
         {
           "text": "Headless UI - Vue",
           "clip": "OAI-vue-04-HeadlessUi",
-          "loom": "https://www.loom.com/share/125f40548d5445ff8bad157a6cf8bf63",
-          "filmed": "2026-11-17"
+          "loom": "https://www.loom.com/share/1389496590c646f4875d10f7e833402a",
+          "filmed": "2026-11-18"
         }
       ],
       "review": {
@@ -328,8 +328,8 @@
         {
           "text": "Threads Drawer - Vue",
           "clip": "OAI-vue-06-ThreadsDrawer",
-          "loom": "https://www.loom.com/share/bac74c3f92f14821a05c4b03fb817474",
-          "filmed": "2026-11-17"
+          "loom": "https://www.loom.com/share/08548cc106d247dbb7a5d496aab7738b",
+          "filmed": "2026-11-18"
         }
       ],
       "review": {
@@ -357,8 +357,8 @@
         {
           "text": "Headless Threads - Vue",
           "clip": "OAI-vue-07-HeadlessThreads",
-          "loom": "https://www.loom.com/share/5fd01a588a924dffb54b4d9c7221d193",
-          "filmed": "2026-11-17"
+          "loom": "https://www.loom.com/share/94bd859dcdc74e919979b923bc11592e",
+          "filmed": "2026-11-18"
         }
       ],
       "review": {
@@ -384,8 +384,8 @@
         {
           "text": "Frontend-tools - Vue",
           "clip": "OAI-vue-12-FrontendTools",
-          "loom": "https://www.loom.com/share/6ff6b801a16842b4a77b2fa9ed8644e2",
-          "filmed": "2026-11-17"
+          "loom": "https://www.loom.com/share/cd8c51d3d1d24d46996c163125a1a22c",
+          "filmed": "2026-11-18"
         }
       ],
       "review": {
@@ -411,8 +411,8 @@
         {
           "text": "Components as Tools - Vue",
           "clip": "OAI-vue-13-ToolBased",
-          "loom": "https://www.loom.com/share/45585806aaa74086b04a7f39ff78f6b8",
-          "filmed": "2026-11-17"
+          "loom": "https://www.loom.com/share/9fab3392369144689fe697c03e09e52b",
+          "filmed": "2026-11-18"
         }
       ],
       "review": {
@@ -442,8 +442,8 @@
         {
           "text": "Tool Call Rendering - Vue",
           "clip": "OAI-vue-14-ToolRendering",
-          "loom": "https://www.loom.com/share/bce5544c2853448a8529e347f7dc8947",
-          "filmed": "2026-11-17"
+          "loom": "https://www.loom.com/share/9bad72ef96df43679308570d3dfa1ccf",
+          "filmed": "2026-11-18"
         }
       ],
       "review": {
@@ -473,8 +473,8 @@
         {
           "text": "Issue",
           "clip": "OAI-vue-15-StateRendering",
-          "loom": "https://www.loom.com/share/d77f78a034114608910459988b39fc54",
-          "filmed": "2026-11-17",
+          "loom": "https://www.loom.com/share/be0ddc541c8e4c18ab3edf6bd2242575",
+          "filmed": "2026-11-18",
           "narration": {
             "clip": "OAI-vue-15-StateRendering",
             "segments": [
@@ -541,8 +541,8 @@
         {
           "text": "MCP Apps - Vue",
           "clip": "OAI-vue-16-McpApps",
-          "loom": "https://www.loom.com/share/90fa3f5f7c1a41e69792d7d1e40f7118",
-          "filmed": "2026-11-17"
+          "loom": "https://www.loom.com/share/885264ef938141729ae28b1834b20bcd",
+          "filmed": "2026-11-18"
         }
       ],
       "review": {
@@ -573,8 +573,8 @@
         {
           "text": "Shared State - Vue",
           "clip": "OAI-vue-22-SharedState",
-          "loom": "https://www.loom.com/share/30f09dc410b1453185bf138170857e11",
-          "filmed": "2026-11-17"
+          "loom": "https://www.loom.com/share/56f24bd57dc84fb19c323a304ddf00b2",
+          "filmed": "2026-11-18"
         }
       ],
       "review": {
@@ -600,8 +600,8 @@
         {
           "text": "Render agent state in your app - Vue",
           "clip": "OAI-vue-23-SharedStateRendering",
-          "loom": "https://www.loom.com/share/3a8a997210ab44e8895b9a28ff4e0da7",
-          "filmed": "2026-11-17"
+          "loom": "https://www.loom.com/share/f9e6e6443d1548ecb0dfd0c0b101d7ed",
+          "filmed": "2026-11-18"
         }
       ],
       "review": {
@@ -632,8 +632,8 @@
         {
           "text": "State Streaming - Vue",
           "clip": "OAI-vue-24-SharedStateStreaming",
-          "loom": "https://www.loom.com/share/581523769b2f4b3083c1a70349897c86",
-          "filmed": "2026-11-17"
+          "loom": "https://www.loom.com/share/a652a35b630947cbbd97a90d83b8ebe7",
+          "filmed": "2026-11-18"
         }
       ],
       "review": {
@@ -659,8 +659,8 @@
         {
           "text": "Agent Read-Only Context - Vue",
           "clip": "OAI-vue-25-SharedStateReadonly",
-          "loom": "https://www.loom.com/share/ca18966407ef44ed99981f8160fa7a42",
-          "filmed": "2026-11-17"
+          "loom": "https://www.loom.com/share/8351b1164f9c41bbbf4e39513a8e9ffd",
+          "filmed": "2026-11-18"
         }
       ],
       "review": {
@@ -690,8 +690,8 @@
         {
           "text": "HITL Overview - Vue",
           "clip": "OAI-vue-26-HumanInTheLoop",
-          "loom": "https://www.loom.com/share/037bc034cd4c40e9992a82f3f0de92d5",
-          "filmed": "2026-11-17"
+          "loom": "https://www.loom.com/share/783458baf534419f99c6a18719ed3eaa",
+          "filmed": "2026-11-18"
         }
       ],
       "review": {
@@ -769,8 +769,8 @@
         {
           "text": "Governed Action Approval UI - Vue",
           "clip": "OAI-vue-27-GovernedActions",
-          "loom": "https://www.loom.com/share/988ffd6ce8c74d8882c2fa9954938537",
-          "filmed": "2026-11-17"
+          "loom": "https://www.loom.com/share/3d3d33979d394000bc7bfecb6d499d79",
+          "filmed": "2026-11-18"
         }
       ],
       "review": {
@@ -800,8 +800,8 @@
         {
           "text": "Issue",
           "clip": "OAI-vue-28-WebMcp",
-          "loom": "https://www.loom.com/share/95c8cc0bea1f4ab5b6abe87679367242",
-          "filmed": "2026-11-17",
+          "loom": "https://www.loom.com/share/8056cd576f75496489f79dc5c21e1f76",
+          "filmed": "2026-11-18",
           "narration": {
             "clip": "OAI-vue-28-WebMcp",
             "segments": [
@@ -864,8 +864,8 @@
         {
           "text": "Issue",
           "clip": "OAI-vue-29-SubAgents",
-          "loom": "https://www.loom.com/share/ba09ca0aafbd42beb58d70b910f9fe7a",
-          "filmed": "2026-11-17",
+          "loom": "https://www.loom.com/share/43bb05c1a1334eb28df071eb0e245191",
+          "filmed": "2026-11-18",
           "narration": {
             "clip": "OAI-vue-29-SubAgents",
             "segments": [
@@ -928,8 +928,8 @@
         {
           "text": "Inspector - Vue",
           "clip": "OAI-vue-10-Inspector",
-          "loom": "https://www.loom.com/share/93f754a90ef14820b0386fd58e833877",
-          "filmed": "2026-11-17"
+          "loom": "https://www.loom.com/share/366945958bfb4399986d2d577a4b3bbc",
+          "filmed": "2026-11-18"
         }
       ],
       "review": {
@@ -959,8 +959,8 @@
         {
           "text": "VS Code Extension - Vue",
           "clip": "OAI-vue-11-VsCodeExtension",
-          "loom": "https://www.loom.com/share/19929840be124fa69454919cf637e867",
-          "filmed": "2026-11-17"
+          "loom": "https://www.loom.com/share/4e46ea5348d749e38a5b730048f56626",
+          "filmed": "2026-11-18"
         }
       ],
       "review": {
@@ -991,8 +991,8 @@
         {
           "text": "Issue",
           "clip": "OAI-vue-09-AgentConfig",
-          "loom": "https://www.loom.com/share/c000a6e59cf248628a6c07ea9699461e",
-          "filmed": "2026-11-17",
+          "loom": "https://www.loom.com/share/92a00a798ac24fbab22f375f76990ebf",
+          "filmed": "2026-11-18",
           "narration": {
             "clip": "OAI-vue-09-AgentConfig",
             "segments": [
