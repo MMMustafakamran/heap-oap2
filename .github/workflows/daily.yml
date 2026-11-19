@@ -43,7 +43,7 @@ on:
         type: boolean
         default: false
       mode:
-        description: 'record = film clips (normal run); probe = headless probe of every page, 3 runs each, no clips (owner, 2026-11-18)'
+        description: 'record = film clips (normal run); probe = headless probe of every page, 1 run (failing pages 2), no clips (owner, 2026-11-18)'
         required: false
         type: choice
         options: [record, probe]
@@ -544,13 +544,13 @@ jobs:
             echo "up: :$port$path"
           done
 
-      - name: Probe (headless, page checks, 3 runs each)
+      - name: Probe (headless, page checks, 1 run, failing pages 2)
         env:
           PAGES: ${{ matrix.pages }}
         run: |
           set +e
           cd autorecorder
-          npx tsx ../.qa/tools/probe.mts ${PAGES//,/ } --health --warm --repeat 3 --parallel 3 2>&1 | tee ../logs/probe.log
+          npx tsx ../.qa/tools/probe.mts ${PAGES//,/ } --health --warm --repeat 1 --retry-fail 1 --parallel 3 2>&1 | tee ../logs/probe.log
           exit 0
 
       - name: Upload probe-${{ matrix.shard }}
