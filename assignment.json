@@ -142,7 +142,7 @@
         1
       ],
       "notes": [
-        "Issue: the Vue quickstart only sets up CopilotKit's own BuiltInAgent; it never connects an OpenAI Agents SDK agent (no HttpAgent, no Python agent), and its \"use your framework's quickstart\" callout points back at this same page."
+        "Issue: only sets up BuiltInAgent, never connects an OpenAI Agents agent; callout links back to itself."
       ],
       "block": null,
       "links": [
@@ -206,7 +206,7 @@
         12
       ],
       "notes": [
-        "Note: uses agent-id my-agent, which nothing registers."
+        "Note: agent id my-agent is never registered."
       ],
       "block": null,
       "links": [
@@ -237,7 +237,7 @@
         13
       ],
       "notes": [
-        "Note: two different snippets are both titled SupportChat.vue."
+        "Note: two different snippets both titled SupportChat.vue."
       ],
       "block": null,
       "links": [
@@ -435,7 +435,7 @@
         16
       ],
       "notes": [
-        "Note: WeatherToolCard reads parameters.city but the tool argument is location, so the card heading is empty."
+        "Note: card reads city but the tool arg is location, heading empty."
       ],
       "block": null,
       "links": [
@@ -466,7 +466,7 @@
         6
       ],
       "notes": [
-        "Issue: the UI reads status/draft/completed/total but the agent only writes document, so the panel stays Idle."
+        "Issue: UI reads status/draft/progress, agent only writes document, panel stays Idle."
       ],
       "block": null,
       "links": [
@@ -534,7 +534,7 @@
         17
       ],
       "notes": [
-        "Note: agents: { default: agent } uses an agent that is never defined; the MCP URL is a placeholder."
+        "Note: agent never defined, MCP URL is a placeholder."
       ],
       "block": null,
       "links": [
@@ -566,7 +566,7 @@
         24
       ],
       "notes": [
-        "Note: the agent snippets leave out imports and MODEL/chat_settings, easy to fill in."
+        "Note: agent snippets miss imports and MODEL/chat_settings."
       ],
       "block": null,
       "links": [
@@ -625,7 +625,7 @@
         24
       ],
       "notes": [
-        "Note: the agent wrapped by DocumentStreamingAgent is never shown, a plain Agent with write_document works."
+        "Note: wrapped agent never shown, a plain Agent works."
       ],
       "block": null,
       "links": [
@@ -683,7 +683,7 @@
         9
       ],
       "notes": [
-        "Note: hitl.py imports demo_agents._common, never shown, and its prompt names book_call while the Vue tool is schedule_meeting; the picker still renders and booking completes."
+        "Note: _common not shown, prompt says book_call but tool is schedule_meeting."
       ],
       "block": null,
       "links": [
@@ -762,7 +762,7 @@
         22
       ],
       "notes": [
-        "Note: no agent or executeSideEffect shown; the approval card works with the quickstart agent."
+        "Note: no agent or executeSideEffect shown, works with quickstart agent."
       ],
       "block": null,
       "links": [
@@ -791,7 +791,7 @@
       "status": "✅",
       "findings": [],
       "notes": [
-        "Note: searchOrders() is your app's own function and is never defined; stubbed."
+        "Note: searchOrders() not defined (your own function)."
       ],
       "block": null,
       "links": [
@@ -821,7 +821,7 @@
       "status": "✅",
       "findings": [],
       "notes": [
-        "Note: demo_agents._common is never shown; the delegation-log section has no frontend code."
+        "Note: _common not shown, delegation log has no Vue code."
       ],
       "block": null,
       "links": [
@@ -880,7 +880,7 @@
         15
       ],
       "notes": [
-        "Note: install command uses extension id copilotkit.copilotkit, which isn't on the Marketplace (real id copilotkit.copilotkit-vscode-extension)."
+        "Note: extension id copilotkit.copilotkit not on Marketplace."
       ],
       "block": null,
       "links": [
@@ -912,7 +912,7 @@
         5
       ],
       "notes": [
-        "Issue: no Vue frontend at all (Code tab is React only), and agent_config.py needs MODEL / chat_settings from a _common module that's never shown."
+        "Issue: no Vue frontend (Code tab is React only), _common not shown."
       ],
       "block": null,
       "links": [
