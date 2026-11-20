@@ -20,7 +20,7 @@ Applies to every clip that reports a broken doc page: level 1 (blocker, full scr
 
 ## 3. Video
 
-- **No cuts.** The video stays exactly as recorded; the narration fits the real timing.
+- **Cuts only to remove a contradiction (owner, 2026-11-20).** Normally the video stays as recorded and the narration fits the real timing. When a clip's error differs from its note/narration, it may be trimmed or cut so the clip and the voice report the same, real error, only if it stays natural (few cuts) and the demo still shows the real error. Otherwise refilm ([WORKFLOW.md](WORKFLOW.md) A8).
 - **Silences are fine** (owner, 2026-11-08): no need to fill agent waits with talk. During a silence the room tone keeps playing, so it never sounds dead.
 - **No click or typing sounds** (owner, 2026-11-09): voice + room tone only (`narrate.py mix` adds clicks only with `--foley`).
 - **Background:** constant room tone (low fan hum + faint hiss), **steady at one fixed level for the whole clip** (no fades or ducking), slightly audible: ~20–24 dB below the voice. Gaps never sound digital.

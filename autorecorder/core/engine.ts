@@ -27,7 +27,7 @@ import { loadVoicePlan, voiceGate, voiceTail } from './voice';
 import { setFast } from './fast';
 import { humanClick, humanGlide, humanScrollDown, restCursorSomewhere, sleep } from './overlays/cursor';
 import { between, jitter, pause, seedTake } from './overlays/human';
-import { clickTaskbarApp, ensureOverlays, waitForHydration } from './overlays/taskbar';
+import { clickTaskbarApp, ensureOverlays } from './overlays/taskbar';
 import { timeoutsFor } from './timeouts';
 import { docEvidenceFor, highlightDocEvidence, type DocEvidenceItem } from './doc-evidence';
 import { type ActionContext, type PageRecordConfig, type RecorderTimeouts } from './types';
@@ -80,6 +80,25 @@ async function humanScrollCodeViewport(
 }
 
 /** Current scroll offset of the doc page's scroller (or the window). */
+async function waitForDocSettled(page: Page, timeoutMs: number): Promise<boolean> {
+  return page
+    .evaluate(async (timeout) => {
+      // (No named inner functions here: tsx adds a __name helper the page doesn't have.)
+      const sel = 'main, article, #fd-spacious-layout, #nd-docs-layout';
+      const started = Date.now();
+      let last = -1, stableSince = Date.now();
+      while (Date.now() - started < timeout) {
+        await new Promise((r) => setTimeout(r, 200));
+        let now = document.documentElement.scrollHeight;
+        for (const e of Array.from(document.querySelectorAll(sel))) now = Math.max(now, (e as HTMLElement).scrollHeight);
+        if (now !== last) { last = now; stableSince = Date.now(); }
+        else if (Date.now() - stableSince >= 1000 && document.readyState !== 'loading') return true;
+      }
+      return false;
+    }, timeoutMs)
+    .catch(() => false);
+}
+
 async function docScrollTop(page: Page): Promise<number> {
   return page
     .evaluate(() => {
@@ -692,14 +711,17 @@ export class RecordingEngine {
       // Scrolling is the part that must wait: a hydration remount snaps the
       // page back to the top mid-scroll. Start the wait now and let the intro
       // play over it rather than stalling on a frozen frame.
-      const hydration = waitForHydration(page, 15000);
+      // The docs site no longer remounts <html> on hydration, so the old probe never fired and
+      // every take sat 15 s on a still cursor (2026-11-20). Wait instead until the page height
+      // stops changing (settled ~1 s), capped at 6 s.
+      const hydration = waitForDocSettled(page, 6000);
 
       // Crisp pause so viewer registers the doc title, then glide straight into reading
       await sleep(500);
       await humanGlide(page, 960, 380, 16);
 
       if (!(await hydration)) {
-        console.warn(`   ⚠️ Doc page hydration not observed within 15s; scrolling anyway.`);
+        console.warn(`   ⚠️ Doc page height still changing after 6s; scrolling anyway.`);
       }
 
       // Skim the whole page to the bottom in wheel bursts, so the clip shows

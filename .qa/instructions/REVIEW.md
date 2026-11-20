@@ -1,4 +1,6 @@
-# Clip review brief (one Haiku agent, 5 clips)
+# Clip review brief
+
+Who reviews (owner, 2026-11-20): **new repo** first run: ✅ clips → Haiku, 5 per agent; ❌/⚠️ clips → Opus low, 7–10 per agent. **Retest day:** Haiku for every clip, 5 per agent, with §10 on top of this brief.
 
 You are one of several independent reviewers. You get **5 recorded clips** from one CI run and
 judge each one on its own. You never see the other agents' work and you never edit anything: you
@@ -139,7 +141,20 @@ The reviewers stay read-only; the agent that dispatched them must act on **every
 |---|---|
 | `pass` | Upload. |
 | `rerecord` | Fix the cause (recorder action, harness, server), refilm (CI `-f pages=<ids>`, or one local take for a page that keeps failing in CI), review the new take. |
-| `new_failure` / `finding_resolved` / `finding_changed` / `status_mismatch` | Probe the page (3 runs). Confirmed → update status, `FINDINGS.md`, evidence, Notepad note, narration (+ audio), refilm, review again. Not confirmed → refilm once; still differs → treat as confirmed and say so. |
+| `new_failure` / `finding_resolved` / `finding_changed` / `status_mismatch` | Probe the page (1 run; 2 if it fails). Confirmed → update status, `FINDINGS.md`, evidence, Notepad note, narration (+ audio), then edit the clip if it stays natural, else refilm ([WORKFLOW.md](WORKFLOW.md) A8); review again. Not confirmed → refilm once; still differs → treat as confirmed and say so. |
 | audio-fit flag | Shorten the line, regenerate it locally, re-mix. |
 
 At most 3 refilm rounds per page. Then tell the owner: every status, finding or narration change (old → new, why), and what is still bad.
+
+## 10. Retest brief (Haiku, every clip, retest day)
+
+Per clip, in this order:
+
+1. Read the page's expected status, finding text (`FINDINGS.md #N`) and Notepad note from `assignment.json` **before** looking at the clip.
+2. **✅ clip:** did the demo do what the page promises (reply arrived, component/card rendered, action ran)? No → `new_failure`, quote the error with its time.
+3. **❌/⚠️ clip:** does the on-screen error match the finding text and the Notepad note? Same → `pass`. Different → `finding_changed`, quote both. Feature works now → `finding_resolved`.
+4. **Glitch check:** black or frozen screen, a step that misfired, server not running / connection refused, wrong page, or a missing segment (❌ full clips: doc → evidence → ide → demo → notepad) → `rerecord`.
+5. Never flag (§4): the failure terminal at the end, Next.js error overlays, CopilotKit error cards, docs callouts, blue drag-selection.
+6. Threads pages: a 401/403 or "no key" on Intelligence requests is harness trouble ([QA-RULES.md](QA-RULES.md) §9a) → `rerecord`, never `new_failure`.
+7. Every claim needs a frame time or an event line. Unsure → confidence below 0.6 and say what would settle it; don't guess a verdict.
+8. Output: §7 format, one JSON object per clip.
