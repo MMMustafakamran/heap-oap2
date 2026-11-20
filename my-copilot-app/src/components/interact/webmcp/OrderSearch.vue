@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { z } from "zod";
 import { useFrontendTool } from "@copilotkit/vue/v2";
+// HARNESS: searchOrders() is the reader's own app function (doc placeholder, never defined); trivial stub.
+const searchOrders = async (status: string) => [{ id: "A-1001", status, item: "Desk lamp" }];
 
 useFrontendTool({
   name: "searchOrders",

@@ -8,32 +8,12 @@ import { glideClick, glideTo } from './glide-click';
 
 /** Texts checked against the rendered pages (2026-11-17). */
 export const FINDING_EVIDENCE: Record<string, DocEvidence[]> = {
-  webmcp: [
-    { text: 'const orders = await searchOrders(status);', caption: 'searchOrders() is never defined or imported' },
-  ],
-  subagents: [
-    { text: 'the delegation log is a reactive render of the', caption: 'The delegation-log section has no code' },
-    { text: 'from demo_agents._common import MODEL, chat_settings', caption: 'subagents.py imports demo_agents._common, never shown' },
-  ],
 };
 
 // Evidence is highlighted by the engine inside the doc step, before the IDE (AUTORECORDER §2).
 registerDocEvidence(FINDING_EVIDENCE);
 
 const NOTES: Record<string, string> = {
-  webmcp: [
-    'webmcp page says add webmcp to useFrontendTool and the same handler works for the agent',
-    'asked the agent to use searchOrders,no reply at all,chat just sits there',
-    'handler calls searchOrders(status) but that function is never defined or imported on the page',
-    'so the tool throws inside the handler and the run dies silently',
-  ].join('\n'),
-  subagents: [
-    'subagents page says supervisor delegates and the ui shows a live delegation log',
-    'agent does reply but theres no log on screen,nothing to render it with',
-    'rendering a live delegation log section is just text,no vue code at all',
-    'also subagents.py imports demo_agents._common model and chat_settings,never shown',
-    'so the main part of the page,the log,cant be built from the doc',
-  ].join('\n'),
 };
 
 const withNote = (id: string, inner: PageActionHandler = runStandardAction): PageActionHandler =>
@@ -66,6 +46,5 @@ const clickThrough = (button: RegExp | string, settleMs: number): PageActionHand
 export const ACTIONS_INTERACT: Record<string, PageActionHandler> = {
   hitl: clickThrough(/Tomorrow at 09:00/, 12_000),
   'governed-actions': clickThrough('Approve and run', 12_000),
-  webmcp: withNote('webmcp'),
-  subagents: withNote('subagents'),
+  // webmcp, subagents: ✅ since 2026-11-20 (minor notes), standard take, no Notepad.
 };

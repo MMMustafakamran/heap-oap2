@@ -20,18 +20,10 @@ Stack: @copilotkit/vue 1.89.0, @copilotkit/runtime 1.89.0 (npm latest), @ag-ui/c
 - **Doc:** `type ResearchState = { status?: string; draft?: string; completed?: number; total?: number };` vs the agent's `shared_state().update(document=document)`; the wrapped `shared_state_streaming_agent` is never shown.
 - **Result:** the agent streams `document`, the panel stays `Idle` with an empty bar and no text reply (3/3 probes).
 
-### [WebMCP](https://docs.copilotkit.ai/vue/openai-agents-python/webmcp)
-**#10 `searchOrders` is never defined.**
-- **Doc:** `const orders = await searchOrders(status);` (Vue and core snippets), never defined or imported.
-- **Result:** asking the agent to search orders gives no reply at all (3/3 probes), no visible error.
-
-### [Sub-agents](https://docs.copilotkit.ai/vue/openai-agents-python/multi-agent/subagents)
-**#11 No frontend code for the delegation log; `_common` never shown.**
-- **Doc:** "On the frontend, the delegation log is a reactive render of the `delegations` slot." (no code follows); `from demo_agents._common import MODEL, chat_settings`.
-- **Result:** the supervisor replies in chat, but no delegation log can be built from the page.
-
 ## Minor notes
 
+- **#10** WebMCP: `searchOrders()` (the reader's own app function) is never defined; stubbed in the harness.
+- **#11** Sub-agents: `demo_agents._common` is never shown; the delegation-log section ("the delegation log is a reactive render of the `delegations` slot") has no frontend code.
 - **#9** HITL Overview: `hitl.py` imports `demo_agents._common` (never shown), and its prompt names a `book_call` tool while the Vue tool is `schedule_meeting`. The page's `TimePickerCard.vue` now renders and booking completes.
 - **#12** Prebuilt Components / Threads Drawer: `agent-id` "my-agent" / "support" that nothing registers. Prebuilt Components' new `useConfigureSuggestions` snippet showed no suggestion in the chat in one local probe (unconfirmed).
 - **#13** Slots: two different snippets are both titled `SupportChat.vue`.
