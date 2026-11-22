@@ -4,8 +4,8 @@
   "repo": "OpenAIAgents-Vue",
   "docBase": "https://docs.copilotkit.ai/vue/openai-agents-python/",
   "versions": {
-    "@copilotkit/vue": "1.89.0",
-    "@copilotkit/runtime": "1.89.0",
+    "@copilotkit/vue": "1.90.0",
+    "@copilotkit/runtime": "1.90.0",
     "@ag-ui/client": "1.0.5",
     "vue": "3.5.45",
     "vite": "8.3.8",

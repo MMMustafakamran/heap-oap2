@@ -12,8 +12,8 @@
   },
   "dependencies": {
     "@ag-ui/client": "1.0.5",
-    "@copilotkit/runtime": "1.89.0",
-    "@copilotkit/vue": "1.89.0",
+    "@copilotkit/runtime": "1.90.0",
+    "@copilotkit/vue": "1.90.0",
     "@tanstack/ai": "^1.4.0",
     "@tanstack/ai-openai": "^1.1.1",
     "vue": "^3.5.42"
