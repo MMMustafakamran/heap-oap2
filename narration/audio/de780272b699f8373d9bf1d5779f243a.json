@@ -1,0 +1,9 @@
+{
+ "text": "Moving on to the demo. The supervisor should delegate and show a live log of the sub-agents, but, uh, it just replies in chat and no log shows up.",
+ "model": "s2.1-pro-free",
+ "refSha256": "2c9d0ecf4608feacc07c88e869cd4dec601481306a939b7be92fc1bff521a727",
+ "duration": 10.031,
+ "file": "de780272b699f8373d9bf1d5779f243a.mp3",
+ "clip": "OAI-vue-29-SubAgents",
+ "at": "demo"
+}

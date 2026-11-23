@@ -8,12 +8,23 @@ import { glideClick, glideTo } from './glide-click';
 
 /** Texts checked against the rendered pages (2026-11-17). */
 export const FINDING_EVIDENCE: Record<string, DocEvidence[]> = {
+  // FINDINGS.md #11 (owner 2026-11-23: the delegation log is the page's main feature)
+  subagents: [
+    { text: 'On the frontend, the delegation log is a reactive render of the', caption: 'The delegation-log section has no frontend code' },
+  ],
 };
 
 // Evidence is highlighted by the engine inside the doc step, before the IDE (AUTORECORDER §2).
 registerDocEvidence(FINDING_EVIDENCE);
 
 const NOTES: Record<string, string> = {
+  subagents: [
+    'subagents page says supervisor delegates with a visible delegation log',
+    'agent does reply in chat but no log shows up anywhere',
+    'rendering a live delegation log is one line of text,no vue code at all',
+    'so the main part of the page,the log,cant be built from the doc',
+  ].join('
+'),
 };
 
 const withNote = (id: string, inner: PageActionHandler = runStandardAction): PageActionHandler =>
@@ -46,5 +57,6 @@ const clickThrough = (button: RegExp | string, settleMs: number): PageActionHand
 export const ACTIONS_INTERACT: Record<string, PageActionHandler> = {
   hitl: clickThrough(/Tomorrow at 09:00/, 12_000),
   'governed-actions': clickThrough('Approve and run', 12_000),
-  // webmcp, subagents: ✅ since 2026-11-20 (minor notes), standard take, no Notepad.
+  // webmcp: ✅ since 2026-11-20 (minor note), standard take, no Notepad.
+  subagents: withNote('subagents'),
 };

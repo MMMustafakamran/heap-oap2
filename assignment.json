@@ -818,10 +818,12 @@
    "child": false,
    "docPath": "multi-agent/subagents",
    "reachable": "sidebar",
-   "status": "✅",
-   "findings": [],
+   "status": "❌",
+   "findings": [
+    11
+   ],
    "notes": [
-    "Note: _common not shown, delegation log has no Vue code."
+    "Issue: delegation log is the main feature, but the page gives no Vue code for it."
    ],
    "block": null,
    "links": [
@@ -830,7 +832,7 @@
      "clip": "OAI-vue-29-SubAgents",
      "loom": "https://www.loom.com/share/ab150282ed464e4898ae36bd9ddd1b98",
      "filmed": "2026-11-23",
-     "narration": null
+     "narration": "narration/scripts/OAI-vue-29-SubAgents.json"
     }
    ],
    "review": {

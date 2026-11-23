@@ -20,10 +20,15 @@ Stack: @copilotkit/vue 1.90.0, @copilotkit/runtime 1.90.0 (npm latest), @ag-ui/c
 - **Doc:** `type ResearchState = { status?: string; draft?: string; completed?: number; total?: number };` vs the agent's `shared_state().update(document=document)`; the wrapped `shared_state_streaming_agent` is never shown.
 - **Result:** the agent streams `document`, the panel stays `Idle` with an empty bar and no text reply (3/3 probes).
 
+### [Sub-agents](https://docs.copilotkit.ai/vue/openai-agents-python/multi-agent/subagents)
+**#11 The delegation log, the page's main feature, has no frontend code.**
+- **Doc:** subtitle "Decompose work across multiple specialized agents with a visible delegation log."; under "Rendering a live delegation log": "On the frontend, the delegation log is a reactive render of the `delegations` slot." (no code follows, no Vue snippet anywhere on the page).
+- **Result:** the supervisor replies in chat, but no delegation log shows; a Vue reader has nothing to render it with (owner 2026-11-23: main feature, ❌).
+
 ## Minor notes
 
 - **#10** WebMCP: `searchOrders()` (the reader's own app function) is never defined; stubbed in the harness.
-- **#11** Sub-agents: `demo_agents._common` is never shown; the delegation-log section ("the delegation log is a reactive render of the `delegations` slot") has no frontend code.
+- **#11** Sub-agents (minor part): `demo_agents._common` (`MODEL`, `chat_settings`) is never shown.
 - **#9** HITL Overview: `hitl.py` imports `demo_agents._common` (never shown), and its prompt names a `book_call` tool while the Vue tool is `schedule_meeting`. The page's `TimePickerCard.vue` now renders and booking completes.
 - **#12** Prebuilt Components / Threads Drawer: `agent-id` "my-agent" / "support" that nothing registers. Prebuilt Components' new `useConfigureSuggestions` snippet showed no suggestion in the chat in one local probe (unconfirmed).
 - **#13** Slots: two different snippets are both titled `SupportChat.vue`.
