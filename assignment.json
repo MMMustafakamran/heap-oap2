@@ -205,9 +205,7 @@
    "findings": [
     12
    ],
-   "notes": [
-    "Note: agent id my-agent is never registered."
-   ],
+   "notes": [],
    "block": null,
    "links": [
     {
@@ -236,9 +234,7 @@
    "findings": [
     13
    ],
-   "notes": [
-    "Note: two different snippets both titled SupportChat.vue."
-   ],
+   "notes": [],
    "block": null,
    "links": [
     {
@@ -533,9 +529,7 @@
    "findings": [
     17
    ],
-   "notes": [
-    "Note: agent never defined, MCP URL is a placeholder."
-   ],
+   "notes": [],
    "block": null,
    "links": [
     {
@@ -565,9 +559,7 @@
     20,
     24
    ],
-   "notes": [
-    "Note: agent snippets miss imports and MODEL/chat_settings."
-   ],
+   "notes": [],
    "block": null,
    "links": [
     {
@@ -624,9 +616,7 @@
     21,
     24
    ],
-   "notes": [
-    "Note: wrapped agent never shown, a plain Agent works."
-   ],
+   "notes": [],
    "block": null,
    "links": [
     {
@@ -790,9 +780,7 @@
    "reachable": "sidebar",
    "status": "✅",
    "findings": [],
-   "notes": [
-    "Note: searchOrders() not defined (your own function)."
-   ],
+   "notes": [],
    "block": null,
    "links": [
     {
