@@ -23,8 +23,7 @@ const NOTES: Record<string, string> = {
     'agent does reply in chat but no log shows up anywhere',
     'rendering a live delegation log is one line of text,no vue code at all',
     'so the main part of the page,the log,cant be built from the doc',
-  ].join('
-'),
+  ].join('\n'),
 };
 
 const withNote = (id: string, inner: PageActionHandler = runStandardAction): PageActionHandler =>
