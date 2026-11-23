@@ -855,7 +855,8 @@
     "approvedAt": null,
     "by": null
    },
-   "added": "2026-11-13"
+   "added": "2026-11-13",
+   "excluded": "Backend section of the docs sidebar (owner 2026-11-23: Backend pages out of scope)"
   },
   {
    "id": "vs-code-extension",
@@ -886,7 +887,8 @@
     "approvedAt": null,
     "by": null
    },
-   "added": "2026-11-13"
+   "added": "2026-11-13",
+   "excluded": "Backend section of the docs sidebar (owner 2026-11-23: Backend pages out of scope)"
   },
   {
    "id": "agent-config",
