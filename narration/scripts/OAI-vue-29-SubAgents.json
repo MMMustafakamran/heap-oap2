@@ -14,6 +14,10 @@
    "text": "This is my project, I've implemented the exact code from the doc."
   },
   {
+   "at": "+",
+   "text": "This part, umm, the common settings file and the Vue app around the chat, wasn't on the page, so I added it myself."
+  },
+  {
    "at": "demo",
    "text": "Moving on to the demo. The supervisor should delegate and show a live log of the sub-agents, but, uh, it just replies in chat and no log shows up."
   },
