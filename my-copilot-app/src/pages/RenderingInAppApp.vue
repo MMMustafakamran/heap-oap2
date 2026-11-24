@@ -4,8 +4,8 @@ import Canvas from "../components/interact/rendering/Canvas.vue"; // HARNESS: pa
 </script>
 
 <template>
-  <!-- HARNESS: runtime-url -> harness runtime 8130 (doc: /api/copilotkit). The page shows no backend: "default" = the quickstart agent on 8131 -->
-  <CopilotKitProvider runtime-url="http://localhost:8130/api/copilotkit">
+  <!-- HARNESS: runtime-url -> harness runtime 8130 /shared-state (doc: /api/copilotkit). The page shows no backend and says "the same agent" as Shared State (linked), so this uses the Shared State page agent on 8136 -->
+  <CopilotKitProvider runtime-url="http://localhost:8130/shared-state/api/copilotkit">
     <div class="app-shell">
       <Canvas />
       <CopilotChat />

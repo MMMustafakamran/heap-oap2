@@ -1,0 +1,9 @@
+{
+ "text": "This is the problem, umm, the page says to ask the agent to mark the prototype item as done, and the canvas should update, but it never gives an agent that can do that.",
+ "model": "s2.1-pro-free",
+ "refSha256": "2c9d0ecf4608feacc07c88e869cd4dec601481306a939b7be92fc1bff521a727",
+ "duration": 11.331,
+ "file": "ae475a2507437536d4cb72d8093f0bcc.mp3",
+ "clip": "OAI-vue-23-SharedStateRendering",
+ "at": "evidence"
+}

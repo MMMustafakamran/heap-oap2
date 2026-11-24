@@ -12,6 +12,10 @@ export const FINDING_EVIDENCE: Record<string, DocEvidence[]> = {
   subagents: [
     { text: 'On the frontend, the delegation log is a reactive render of the', caption: 'The delegation-log section has no frontend code' },
   ],
+  // FINDINGS.md #26 (2026-11-24): the doc's check step never happens
+  'shared-state-rendering': [
+    { text: 'Ask the agent to mark the prototype item as done.', caption: 'The canvas never changes; no agent writes items' },
+  ],
 };
 
 // Evidence is highlighted by the engine inside the doc step, before the IDE (AUTORECORDER §2).
@@ -23,6 +27,12 @@ const NOTES: Record<string, string> = {
     'agent does reply in chat but no log shows up anywhere',
     'rendering a live delegation log is one line of text,no vue code at all',
     'so the main part of the page,the log,cant be built from the doc',
+  ].join('\n'),
+  'shared-state-rendering': [
+    'page says ask the agent to mark the prototype item done and data-done flips to true on the canvas',
+    'agent replies it marked build a prototype as done but the canvas never changes,data-done stays false',
+    'page only shows the vue canvas,for the agent it just says the same agent and links shared state',
+    'that agent only has set_notes,nothing writes items so the canvas cant update',
   ].join('\n'),
 };
 
@@ -58,4 +68,10 @@ export const ACTIONS_INTERACT: Record<string, PageActionHandler> = {
   'governed-actions': clickThrough('Approve and run', 12_000),
   // webmcp: ✅ since 2026-11-20 (minor note), standard take, no Notepad.
   subagents: withNote('subagents'),
+  // FINDINGS.md #26: send the doc's step, then read data-done on the prototype item.
+  'shared-state-rendering': withNote('shared-state-rendering', async (page, config, root, ctx) => {
+    await runStandardAction(page, config, root, ctx);
+    const done = await page.locator('[data-done]').filter({ hasText: 'Build a prototype' }).first().getAttribute('data-done').catch(() => null);
+    if (done !== 'true') ctx.fail(`"Build a prototype" data-done is ${done} after the agent was asked to mark it done.`);
+  }),
 };

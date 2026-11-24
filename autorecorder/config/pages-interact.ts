@@ -24,8 +24,8 @@ export const PAGES_INTERACT: PageDefinition[] = [
     docPath: 'shared-state/rendering-in-app', route: '/shared-state-rendering',
     ideFile: `${C}/rendering/Canvas.vue`, startLine: 1, endLine: 53,
     extraTabs: [{ filePath: `${P}/RenderingInAppApp.vue`, startLine: 1, endLine: 14 }],
-    prompt: 'Say hi in one short sentence.',
-    waitAfterPromptMs: 4000,
+    prompt: 'Mark the prototype item as done.', // the doc's own check step (FINDINGS.md #26)
+    waitAfterPromptMs: 8000,
   },
   {
     id: 'shared-state-streaming', name: 'State Streaming (Vue)', videoName: 'SharedStateStreaming', videoFile: '24-SharedStateStreaming',

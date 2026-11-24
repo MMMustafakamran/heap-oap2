@@ -584,16 +584,21 @@
    "child": true,
    "docPath": "shared-state/rendering-in-app",
    "reachable": "sidebar",
-   "status": "✅",
-   "findings": [],
-   "notes": [],
+   "status": "❌",
+   "findings": [
+    26
+   ],
+   "notes": [
+    "Issue: agent says the item is marked done, canvas never changes; no agent writes items."
+   ],
    "block": null,
    "links": [
     {
      "text": "Render agent state in your app - Vue",
      "clip": "OAI-vue-23-SharedStateRendering",
      "loom": "https://www.loom.com/share/8fc2545ae1764f11914e73c41c7936d2",
-     "filmed": "2026-11-23"
+     "filmed": "2026-11-23",
+     "narration": "narration/scripts/OAI-vue-23-SharedStateRendering.json"
     }
    ],
    "review": {

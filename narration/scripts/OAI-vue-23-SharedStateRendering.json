@@ -1,0 +1,12 @@
+{
+ "clip": "OAI-vue-23-SharedStateRendering",
+ "segments": [
+  {"at": "doc", "text": "Ok so this is the render agent state in your app page for Vue with OpenAI Agents, and I'm reporting a problem on this page."},
+  {"at": "evidence", "text": "This is the problem, umm, the page says to ask the agent to mark the prototype item as done, and the canvas should update, but it never gives an agent that can do that."},
+  {"at": "ide", "text": "This is my project, I've implemented the exact code from the doc."},
+  {"at": "demo", "text": "Moving on to the demo. I asked the agent to mark the prototype item as done, it says it did, but, uh, the canvas doesn't change at all."},
+  {"at": "notepad", "text": "So basically, the page promises the item flips to done, the agent just claims it, and the only linked agent writes notes, not the items, so nothing updates."},
+  {"at": "+", "text": "Alright, that's the issue, kindly sort it out."}
+ ],
+ "page": "shared-state-rendering"
+}

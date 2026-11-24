@@ -25,6 +25,11 @@ Stack: @copilotkit/vue 1.90.0, @copilotkit/runtime 1.90.0 (npm latest), @ag-ui/c
 - **Doc:** subtitle "Decompose work across multiple specialized agents with a visible delegation log."; under "Rendering a live delegation log": "On the frontend, the delegation log is a reactive render of the `delegations` slot." (no code follows, no Vue snippet anywhere on the page).
 - **Result:** the supervisor replies in chat, but no delegation log shows; a Vue reader has nothing to render it with (owner 2026-11-23: main feature, ❌).
 
+### [Render agent state in your app](https://docs.copilotkit.ai/vue/openai-agents-python/shared-state/rendering-in-app)
+**#26 Asking the agent to mark an item done never changes the canvas.**
+**Doc:** "Ask the agent to mark the prototype item as done. The item's `data-done` changes to `true` on the canvas without a page reload." The page shows only the Vue canvas; for the agent it says "the same agent" and links Shared State.
+**Result:** with the Shared State page's agent (HARNESS wiring, 8136), the agent replies "I have marked the "Build a prototype" item as done", but `data-done` on "Build a prototype" stays `false` (2 of 2 runs, 2026-11-24). The Shared State agent only has a `set_notes` tool writing `notes`; no agent on either page writes the canvas's `items`.
+
 ## Minor notes
 
 - **#10** WebMCP: `searchOrders()` (the reader's own app function) is never defined; stubbed in the harness.
