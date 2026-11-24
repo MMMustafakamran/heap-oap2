@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
-import { basename, join } from 'node:path';
+import { basename, isAbsolute, join } from 'node:path';
 import { chromium, type Browser, type BrowserContext, type Page } from 'playwright';
 import { executePageAction } from '../actions';
 import { endTimeline, mark, saveTimeline, setTimelinePage, startTimeline, timelineCheckpoints } from './timeline';
@@ -472,6 +472,8 @@ export class RecordingEngine {
    * unchanged. `shutdown()` closes it once the suite is done.
    */
   private browser?: Browser;
+  /** A page with `fakeMicWav` gets its own Chromium (fake mic flags); closed after that take. */
+  private micBrowser?: Browser;
 
   private readonly opts: EngineOptions;
 
@@ -489,6 +491,40 @@ export class RecordingEngine {
     }
   }
 
+  /** Chromium launch args + context permissions that feed `fakeMicWav` as the microphone. */
+  private micSetup(fakeMicWav?: string): { args: string[]; permissions: string[] } {
+    if (!fakeMicWav) return { args: [], permissions: [] };
+    const wav = isAbsolute(fakeMicWav) ? fakeMicWav : join(this.rootDir, 'autorecorder', fakeMicWav);
+    if (!existsSync(wav)) throw new Error(`fakeMicWav not found: ${wav}`);
+    return {
+      args: [
+        '--use-fake-ui-for-media-stream',
+        '--use-fake-device-for-media-stream',
+        `--use-file-for-fake-audio-capture=${wav.split('\\').join('/')}`,
+      ],
+      permissions: ['microphone'],
+    };
+  }
+
+  /** The shared browser, or a dedicated fake-mic one for a `fakeMicWav` page. */
+  private async browserFor(launchArgs: string[], headless: boolean, fakeMicWav?: string): Promise<Browser> {
+    await this.closeMicBrowser();
+    if (fakeMicWav) {
+      this.micBrowser = await chromium.launch({ headless, args: [...launchArgs, ...this.micSetup(fakeMicWav).args] });
+      return this.micBrowser;
+    }
+    if (!this.browser || !this.browser.isConnected()) {
+      this.browser = await chromium.launch({ headless, args: launchArgs });
+    }
+    return this.browser;
+  }
+
+  private async closeMicBrowser(): Promise<void> {
+    const b = this.micBrowser;
+    this.micBrowser = undefined;
+    if (b) await b.close().catch(() => {});
+  }
+
   /**
    * Launches the browser and opens a video-recording page.
    *
@@ -496,24 +532,19 @@ export class RecordingEngine {
    * identical launch flags, viewport and colour scheme — a terminal clip that
    * differed in any of those would cut against the rest of the suite.
    */
-  private async openStage(warmUrl?: string, docStorage?: Record<string, string>): Promise<{
+  private async openStage(warmUrl?: string, docStorage?: Record<string, string>, fakeMicWav?: string): Promise<{
     browser: Browser;
     context: BrowserContext;
     page: Page;
   }> {
-    if (!this.browser || !this.browser.isConnected()) {
-      this.browser = await chromium.launch({
-        headless: false,
-        args: [
-          '--start-maximized',
-          '--force-dark-mode',
-          '--background-color=#1e1e1e',
-        ],
-      });
-    }
-    const browser = this.browser;
+    const browser = await this.browserFor(
+      ['--start-maximized', '--force-dark-mode', '--background-color=#1e1e1e'],
+      false,
+      fakeMicWav,
+    );
 
     const context = await browser.newContext({
+      ...(fakeMicWav ? { permissions: this.micSetup(fakeMicWav).permissions } : {}),
       viewport: { width: 1920, height: 1080 },
       colorScheme: 'dark',
       recordVideo: {
@@ -672,6 +703,7 @@ export class RecordingEngine {
     const browser = this.browser;
     this.browser = undefined;
     if (browser) await browser.close().catch(() => {});
+    await this.closeMicBrowser();
   }
 
   /**
@@ -1158,10 +1190,12 @@ export class RecordingEngine {
       }
     }
 
-    if (!this.browser || !this.browser.isConnected()) {
-      this.browser = await chromium.launch({ headless: !this.opts.headed });
-    }
-    const context = await this.browser.newContext({ viewport: { width: 1920, height: 1080 }, colorScheme: 'dark' });
+    const probeBrowser = await this.browserFor([], !this.opts.headed, config.fakeMicWav);
+    const context = await probeBrowser.newContext({
+      ...(config.fakeMicWav ? { permissions: this.micSetup(config.fakeMicWav).permissions } : {}),
+      viewport: { width: 1920, height: 1080 },
+      colorScheme: 'dark',
+    });
     const page = await context.newPage();
     startTimeline(page);
     setTimelinePage(config.id, config.docUrl);
@@ -1318,7 +1352,7 @@ export class RecordingEngine {
       }
     }
 
-    const { browser, context, page } = await this.openStage(config.docUrl, config.docStorage);
+    const { browser, context, page } = await this.openStage(config.docUrl, config.docStorage, config.fakeMicWav);
     setTimelinePage(config.id, config.docUrl);
     loadVoicePlan(this.rootDir, config.id, config.filename ?? config.id); // Notepad stays up for its voice-over
 
