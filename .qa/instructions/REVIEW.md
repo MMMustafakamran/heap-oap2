@@ -146,15 +146,13 @@ The reviewers stay read-only; the agent that dispatched them must act on **every
 
 At most 3 refilm rounds per page. Then tell the owner: every status, finding or narration change (old → new, why), and what is still bad.
 
-## 10. Retest brief (Haiku, every clip, retest day)
+## 10. Packet review (Haiku, every clip; owner, 2026-11-24)
 
-Per clip, in this order:
+Supersedes the inputs of §2 and the output of §7 when packets are used (every retest day, and the ✅ clips of a new repo).
 
-1. Read the page's expected status, finding text (`FINDINGS.md #N`) and Notepad note from `assignment.json` **before** looking at the clip.
-2. **✅ clip:** did the demo do what the page promises (reply arrived, component/card rendered, action ran)? No → `new_failure`, quote the error with its time.
-3. **❌/⚠️ clip:** does the on-screen error match the finding text and the Notepad note? Same → `pass`. Different → `finding_changed`, quote both. Feature works now → `finding_resolved`.
-4. **Glitch check:** black or frozen screen, a step that misfired, server not running / connection refused, wrong page, or a missing segment (❌ full clips: doc → evidence → ide → demo → notepad) → `rerecord`.
-5. Never flag (§4): the failure terminal at the end, Next.js error overlays, CopilotKit error cards, docs callouts, blue drag-selection.
-6. Threads pages: a 401/403 or "no key" on Intelligence requests is harness trouble ([QA-RULES.md](QA-RULES.md) §9a) → `rerecord`, never `new_failure`.
-7. Every claim needs a frame time or an event line. Unsure → confidence below 0.6 and say what would settle it; don't guess a verdict.
-8. Output: §7 format, one JSON object per clip.
+1. **Supervisor:** `python 2-shared/qa-kit/review/day.py 3-output/<date>` builds per clip a contact sheet (`<clip>.sheet.jpg`, ~8 labelled tiles at the moments that matter) and a card (`<clip>.card.md`, ≤ 48 lines: expected status, finding, Notepad note, narration, checkpoints, errors, Recorder verdict, free-check flags), plus `review/packets/batches.json` (newest take per clip, 5 per batch). The supervisor hands each Haiku agent one batch and [qa-kit/review/HAIKU-BRIEF.md](../qa-kit/review/HAIKU-BRIEF.md); it never reads packets itself.
+2. **Reviewer gets 5 (sheet, card) pairs** and judges from those two files only: no exploring, no ffmpeg, except **at most 1–2 extra frames** per clip when the sheet can't settle the deciding point.
+3. **Describe the demo before reading the expected status** (`saw`), quoting the on-screen element used. A ✅ needs the promised **UI effect** in a tile, never only the agent's words.
+4. **Treat every card flag:** `[defect]` (claim-not-in-take, audio, evidence-not-selected, added-code, checks issues) → `rerecord` unless the sheet clearly disproves it; `[attention]` (reply-only, red runs, stale-link) → look at the tiles and say what was seen.
+5. §4 still applies (never flag the failure terminal, overlays, CopilotKit error cards, callouts, drag-selection); threads 401/403 → `rerecord` (§9a of QA-RULES); verdicts as §6.
+6. **Output:** one compact JSON line per clip: `{"clip","saw","verdict","observed_status","evidence" (tile label or frame time),"confidence","flags"}`.
