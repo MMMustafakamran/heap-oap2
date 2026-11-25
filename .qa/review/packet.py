@@ -18,6 +18,7 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 TILE_W, TILE_H, LABEL_H, COLS, MAX_TILES = 800, 450, 30, 2, 12
+PER_SHEET = 6  # 2x3 per image (~1600x1450): one 12-tile image got downscaled by the reviewer model and blurred (owner, 2026-11-25)
 CARD_LINES = 60
 DEFECT, ATTENTION = "defect", "attention"
 HEALTH_CP = {"evidence", "app-alive", "no-redbox"}
@@ -637,6 +638,10 @@ def esc_filter_path(p):
 
 
 def build_sheet(video, plan, out_jpg, tmp):
+    """Tiles in chunks of PER_SHEET: <clip>.sheet.jpg (tiles 1-6), <clip>.sheet-2.jpg (7-12). Returns the paths written."""
+    for old in [out_jpg] + [out_jpg[:-4] + f"-{k}.jpg" for k in range(2, 5)]:
+        if os.path.exists(old):
+            os.remove(old)
     paths = []
     for i, (t, label) in enumerate(plan):
         lf = os.path.join(tmp, f"l{i}.txt")
@@ -647,23 +652,33 @@ def build_sheet(video, plan, out_jpg, tmp):
         if FONT:
             vf += (f",drawtext=fontfile='{esc_filter_path(FONT)}':textfile='{esc_filter_path(lf)}':"
                    f"x=10:y=5:fontsize=20:fontcolor=0xFFE000")
-        subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", str(t), "-i", video, "-frames:v", "1", "-vf", vf, "-q:v", "3", tj],
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", str(t), "-i", video, "-frames:v", "1", "-vf", vf, "-q:v", "2", tj],
                        capture_output=True, timeout=120)
         if not os.path.exists(tj):
-            subprocess.run(["ffmpeg", "-v", "error", "-y", "-sseof", "-1", "-i", video, "-frames:v", "1", "-vf", vf, "-q:v", "3", tj],
+            subprocess.run(["ffmpeg", "-v", "error", "-y", "-sseof", "-1", "-i", video, "-frames:v", "1", "-vf", vf, "-q:v", "2", tj],
                            capture_output=True, timeout=120)
         paths.append(tj)
-    n = len(paths)
-    if n % COLS:
-        blank = os.path.join(tmp, f"t{n:02d}.jpg")
-        subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", f"color=c=0x202020:s={TILE_W}x{TILE_H + LABEL_H}",
-                        "-frames:v", "1", blank], capture_output=True, timeout=60)
-        n += 1
-    rows = (n + COLS - 1) // COLS
-    subprocess.run(["ffmpeg", "-v", "error", "-y", "-start_number", "0", "-i", os.path.join(tmp, "t%02d.jpg"),
-                    "-vf", f"tile={COLS}x{rows}:padding=4:color=0x000000", "-frames:v", "1", "-q:v", "5", out_jpg],
-                   capture_output=True, timeout=120)
-    return os.path.exists(out_jpg)
+    out = []
+    for k in range(0, len(paths), PER_SHEET):
+        chunk = paths[k:k + PER_SHEET]
+        d = os.path.join(tmp, f"s{k}")
+        os.makedirs(d, exist_ok=True)
+        for j, src in enumerate(chunk):
+            if os.path.exists(src):
+                shutil.copy(src, os.path.join(d, f"t{j:02d}.jpg"))
+        n = len(chunk)
+        if n % COLS:
+            subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", f"color=c=0x202020:s={TILE_W}x{TILE_H + LABEL_H}",
+                            "-frames:v", "1", os.path.join(d, f"t{n:02d}.jpg")], capture_output=True, timeout=60)
+            n += 1
+        rows = (n + COLS - 1) // COLS
+        dst = out_jpg if k == 0 else out_jpg[:-4] + f"-{k // PER_SHEET + 1}.jpg"
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-start_number", "0", "-i", os.path.join(d, "t%02d.jpg"),
+                        "-vf", f"tile={COLS}x{rows}:padding=4:color=0x000000", "-frames:v", "1", "-q:v", "3", dst],
+                       capture_output=True, timeout=120)
+        if os.path.exists(dst):
+            out.append(dst)
+    return out
 
 
 # ---------------------------------------------------------------- one clip
@@ -734,7 +749,8 @@ def build_clip(clip, run_dir, repo, sections, out_dir, post_upload, run_label):
     sheet = os.path.join(out_dir, clip + ".sheet.jpg")
     tmp = tempfile.mkdtemp(prefix="pkt-")
     try:
-        ok_sheet = build_sheet(webm, plan, sheet, tmp) if os.path.exists(webm) else False
+        sheets = build_sheet(webm, plan, sheet, tmp) if os.path.exists(webm) else []
+        ok_sheet = bool(sheets)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
@@ -757,7 +773,11 @@ def build_clip(clip, run_dir, repo, sections, out_dir, post_upload, run_label):
     if not flags:
         L.append("- none")
     L.append("## Sheet tiles")
-    L.append(" · ".join(f"{fmt_t(t)} {l}" for t, l in plan) + ("" if ok_sheet else "  (SHEET FAILED)"))
+    for k in range(0, len(plan), PER_SHEET):
+        nm = os.path.basename(sheet) if k == 0 else os.path.basename(sheet)[:-4] + f"-{k // PER_SHEET + 1}.jpg"
+        L.append(f"- {nm}: " + " · ".join(f"{fmt_t(t)} {l}" for t, l in plan[k:k + PER_SHEET]))
+    if not ok_sheet:
+        L.append("  (SHEET FAILED)")
     L.append("## Checkpoints")
     for c in cps[:8]:
         L.append(f"- {fmt_t(c.get('t', 0))} {c.get('label')} {'ok' if c.get('ok') else 'FAIL'}: "
@@ -799,8 +819,8 @@ def build_clip(clip, run_dir, repo, sections, out_dir, post_upload, run_label):
     with open(os.path.join(out_dir, clip + ".card.md"), "w", encoding="utf-8") as f:
         f.write("\n".join(L) + "\n")
     return {"clip": clip, "run": run_label, "status": status, "slug": slug,
-            "sheet": os.path.basename(sheet) if ok_sheet else None, "card": clip + ".card.md",
-            "sheet_kb": round(os.path.getsize(sheet) / 1024) if ok_sheet else 0, "tiles": len(plan),
+            "sheet": os.path.basename(sheet) if ok_sheet else None, "sheets": [os.path.basename(x) for x in sheets],
+            "card": clip + ".card.md", "sheet_kb": sum(round(os.path.getsize(x) / 1024) for x in sheets), "tiles": len(plan),
             "risk": [f for k, f in flags if k == DEFECT], "attention": [f for k, f in flags if k == ATTENTION],
             "seconds": round(time.time() - t0, 1), **({"audio": ainfo} if ainfo else {})}
 

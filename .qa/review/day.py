@@ -95,6 +95,7 @@ def main():
     for i, c in enumerate(items):  # round-robin: risky clips spread over the batches
         batches[i % n_b].append({"clip": c["clip"], "repo": c["repo"], "run": c["run"], "status": c.get("status"),
                                  "sheet": os.path.join(c["dir"], c["sheet"]) if c.get("sheet") else None,
+                                 "sheets": [os.path.join(c["dir"], x) for x in (c.get("sheets") or ([c["sheet"]] if c.get("sheet") else []))],
                                  "card": os.path.join(c["dir"], c["card"]) if c.get("card") else None,
                                  "risk": c.get("risk"), "attention": c.get("attention")})
     os.makedirs(pk_root, exist_ok=True)

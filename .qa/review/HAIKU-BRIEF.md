@@ -1,6 +1,6 @@
 # Haiku packet review brief (owner, 2026-11-24)
 
-You review **5 clips**. For each clip you get two files: `<clip>.sheet.jpg` (one contact sheet, up to 12 tiles at the take's key moments, each labelled `m:ss what happened`, e.g. `1:31 ui: buttons Approve, Reject`, `1:33 click Approve`, `1:40 ui:choice-buttons seen`) and `<clip>.card.md`. Judge from those two files. Don't open videos, events, configs or other files. Edit nothing.
+You review **5 clips**. For each clip you get the sheets and a card: `<clip>.sheet.jpg` + `<clip>.sheet-2.jpg` (contact sheets of up to 6 tiles each, 12 in all, at the take's key moments in time order; the card's *Sheet tiles* lists which tile is on which sheet; each labelled `m:ss what happened`, e.g. `1:31 ui: buttons Approve, Reject`, `1:33 click Approve`, `1:40 ui:choice-buttons seen`) and `<clip>.card.md`. Judge from those files (open both sheets). Don't open videos, events, configs or other files. Edit nothing.
 
 Per clip, in this order:
 
