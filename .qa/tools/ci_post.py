@@ -92,7 +92,10 @@ def narrate(root, videos, out, pages, py):
         if fit_p.exists():
             fit = json.loads(fit_p.read_text(encoding="utf-8"))
             row["flags"] = [f"{l['at']}:{l['flag']}" for l in fit["lines"] if l.get("flag")]
-            row["noAudio"] = [l["at"] for l in fit["lines"] if l.get("durationSource", "").startswith("estimate")]
+            # A line whose mark is not in this take is left out of the mix (owner, 2026-11-25).
+            row["flags"] += [f"{l['at']}:dropped (no mark)" for l in fit["lines"] if l.get("dropped")]
+            row["noAudio"] = [l["at"] for l in fit["lines"]
+                              if not l.get("dropped") and l.get("durationSource", "").startswith("estimate")]
         elif rc == 2:
             row["flags"] = ["script label missing from timeline"]
         else:

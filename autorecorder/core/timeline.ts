@@ -36,6 +36,8 @@ let pending: Promise<unknown>[] = [];
 let page: Page | undefined;
 let detach: (() => void)[] = [];
 let ended = 0;
+/** Label of the latest segment mark ('doc', 'ide', 'demo', ...); '' before the first. */
+let segment = '';
 /** Call order, so entries sharing a tenth of a second keep the order they were made in. */
 let seq = 0;
 
@@ -89,6 +91,7 @@ export function startTimeline(recordedPage?: Page): void {
   pending = [];
   ended = 0;
   seq = 0;
+  segment = '';
   page = recordedPage;
   if (recordedPage) listen(recordedPage);
 }
@@ -203,8 +206,8 @@ function frame(label: string, delayMs = 0): void {
 }
 
 /** An extra screenshot for the frames folder at a moment worth seeing (e.g. a finished note). */
-export function keyframe(label: string): void {
-  frame(label);
+export function keyframe(label: string, delayMs = 0): void {
+  frame(label, delayMs);
 }
 
 /** Record that a step starts now. Safe to call when no timeline is running. */
@@ -213,7 +216,32 @@ export function mark(label: string, detail?: string): void {
   const m: Mark = { t: now(), label, ...(detail ? { detail } : {}) };
   marks.push(m);
   push('mark', { label, ...(detail ? { detail } : {}) });
+  if (SEGMENT_LABELS.has(label)) segment = label;
   if (label !== 'end') frame(label, FRAME_DELAY_MS[label] ?? 0);
+}
+
+/** Marks that start a segment (an `added` / `evidence` mark stays inside its segment). */
+const SEGMENT_LABELS = new Set(['doc', 'ide', 'terminal', 'demo', 'notepad', 'notepad-closed', 'failure', 'end']);
+
+/** The segment the take is in now: 'demo' from the demo mark (its `action` / `click` marks included) to the next segment. */
+export function currentSegment(): string {
+  return segment;
+}
+
+/**
+ * A step of the take worth a reviewer's look (owner, 2026-11-25): an event `kind` ('step', 'ui',
+ * 'click', ...) with its fields, plus a keyframe labelled `<kind>-<label>` taken `delayMs` later
+ * (so it shows the settled screen). Not a mark: marks cut segments, and these sit inside the demo.
+ */
+export function logMoment(kind: string, fields: Record<string, unknown>, frameLabel?: string, delayMs = 0): void {
+  if (!t0) return;
+  push(kind, fields);
+  if (frameLabel) frame(`${kind}-${frameLabel}`, delayMs);
+}
+
+/** Events logged so far in this take (read-only view; probe puts the ui/step ones in result.json). */
+export function timelineEvents(): readonly { t: number; kind: string; [k: string]: unknown }[] {
+  return events;
 }
 
 /**
@@ -273,10 +301,10 @@ export function checkpoint(
   label: string,
   expect: string,
   probe: () => Promise<ProbeResult> | ProbeResult,
-  opts: { ok?: (observed: string | null) => boolean } = {},
+  opts: { ok?: (observed: string | null) => boolean; t?: number } = {},
 ): Promise<void> {
   if (!t0) return Promise.resolve();
-  const t = now();
+  const t = opts.t ?? now();
   const n = ++seq;
   const job = (async () => {
     let raw: ProbeResult = null;
@@ -395,12 +423,21 @@ export async function endTimeline(): Promise<void> {
  * Write the timeline, events and frames for a saved clip, and reset. `path` is the .timeline.json
  * path; the other two outputs go beside it with the same stem.
  */
-export function saveTimeline(path: string, clipId: string): void {
+export function saveTimeline(path: string, clipId: string, videoDurationS?: number): void {
   if (!t0) return;
   if (!ended) {
     mark('end');
     ended = now();
     stopListening();
+  }
+  // The timeline clock runs a little past the saved video (page close, encoder flush): nothing may
+  // sit past the file's real end (OAI-vue-23 had end@97.9 on a 97 s clip, 2026-11-25).
+  if (videoDurationS && videoDurationS > 0 && ended > videoDurationS) {
+    const cap = Math.floor(videoDurationS * 10) / 10;
+    for (const m of marks) if (m.t > cap) m.t = cap;
+    for (const f of frames) if (f.t > cap) f.t = cap;
+    for (const e of events) if (e.kind === 'mark' && e.t > cap) e.t = cap;
+    ended = cap;
   }
   const stem = path.replace(/[.]timeline[.]json$/, '');
   const dir = join(stem, '..');

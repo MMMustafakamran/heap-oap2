@@ -2,7 +2,10 @@ import { existsSync, mkdirSync, readFileSync, rmSync, unlinkSync, writeFileSync 
 import { basename, dirname, isAbsolute, join } from 'node:path';
 import { chromium, type Browser, type BrowserContext, type Page } from 'playwright';
 import { executePageAction } from '../actions';
-import { endTimeline, mark, saveTimeline, setTimelinePage, startTimeline, timelineCheckpoints } from './timeline';
+import { spawnSync } from 'node:child_process';
+import { endTimeline, mark, saveTimeline, setTimelinePage, startTimeline, timelineCheckpoints, timelineEvents } from './timeline';
+import { selectionsFor } from './code-tags';
+import { checkExpectUi, setExpectUi, startUiLog } from './ui-log';
 import { diagnoseError } from './diagnostics';
 import { PROJECT } from '../config/project.config';
 import { SELECTORS } from '../config/selectors.config';
@@ -23,7 +26,7 @@ import {
 import { pickShell, runFailureTerminal } from './failure-terminal';
 import { generateIdeHtml, type IdeTabConfig } from './ide/generator';
 import { closeNotepad, openNotepad, typeInNotepad } from './overlays/notepad';
-import { loadVoicePlan, voiceGate, voiceTail } from './voice';
+import { loadVoicePlan, voiceGate, voiceHoldMs, voiceTail } from './voice';
 import { setFast } from './fast';
 import { humanClick, humanGlide, humanScrollDown, restCursorSomewhere, sleep } from './overlays/cursor';
 import { between, jitter, pause, seedTake } from './overlays/human';
@@ -304,6 +307,23 @@ export interface CliRecordRequest {
   notepad?: { filename: string; body: string; charDelayMs?: number };
 }
 
+/**
+ * The saved video's real length (ffprobe), so no mark lands past its end; undefined when ffprobe is
+ * missing or the container has no duration. Best effort, bounded.
+ */
+function videoDurationS(file: string): number | undefined {
+  try {
+    const r = spawnSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', file], {
+      encoding: 'utf-8',
+      timeout: 15000,
+    });
+    const d = Number.parseFloat(String(r.stdout ?? '').trim());
+    return Number.isFinite(d) && d > 0 ? d : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /** Thrown to leave a docOnly take early; not an error. */
 class DocOnlyDone extends Error {}
 
@@ -340,6 +360,10 @@ export interface ProbeOutcome {
   warnings: string[];
   /** The run stopped at the first failed checkpoint instead of finishing the action. */
   endedEarly?: boolean;
+  /** UI timeline: `ui` events ({t, ui, text}), see core/ui-log.ts. */
+  ui?: Record<string, unknown>[];
+  /** Steps, missed steps and clicks ({t, kind, label | target}). */
+  steps?: Record<string, unknown>[];
 }
 
 export interface EngineOptions {
@@ -624,7 +648,7 @@ export class RecordingEngine {
       try {
         if (existsSync(finalWebm)) unlinkSync(finalWebm);
         await video.saveAs(finalWebm);
-        saveTimeline(finalWebm.replace(/[.]webm$/, '.timeline.json'), baseFilename);
+        saveTimeline(finalWebm.replace(/[.]webm$/, '.timeline.json'), baseFilename, videoDurationS(finalWebm));
         await video.delete().catch(() => {});
         if (announceSuccess) {
           console.log(`\n🎥 [RECORDING SUCCESSFUL]: ${finalWebm}\n`);
@@ -884,34 +908,34 @@ export class RecordingEngine {
         await sleep(idx > 0 && !opts.clickTabs ? 500 : 300);
       }
 
+      // Code the doc never gives (owner, 2026-11-25): every `ADDED:`-tagged block of the file, plus
+      // legacy `addedText` lines, each drag-selected under its own `added` mark and held until that
+      // mark's voice line has finished. `CHANGED:` / `HARNESS` lines are never selected.
+      const full = join(this.rootDir, tabs[idx].filePath);
+      const lines = tabs[idx].scrollOnly || !existsSync(full) ? [] : readFileSync(full, 'utf-8').split(/\r?\n/);
+      const { blocks, missing } = selectionsFor(lines, tabs[idx].addedText);
+      for (const bad of missing) console.warn(`   ⚠️  addedText not found in ${tabs[idx].filePath}: ${bad}`);
+      // A plain scroll for the doc's own code when the tab has added blocks (only they are selected)
+      // or when the range is (nearly) the whole file: a whole-file drag read as select-all.
+      const span = tabs[idx].endLine - tabs[idx].startLine + 1;
+      const wholeFile = lines.length > 12 && span >= 0.9 * lines.length;
+      const plain = Boolean(tabs[idx].scrollOnly) || blocks.length > 0 || wholeFile;
+
       // Scroll, then select the snippet by hand -- scoped to the active tab.
       await humanScrollCodeViewport(page, tabs[idx].startLine, idx);
-      const dragMs = tabs[idx].scrollOnly
-        ? 0
-        : await this.dragSelectSnippet(page, idx, tabs[idx].startLine, tabs[idx].endLine);
+      const dragMs = plain ? 0 : await this.dragSelectSnippet(page, idx, tabs[idx].startLine, tabs[idx].endLine);
       // The drag is time spent looking at the code, so it comes out of the
       // dwell rather than on top of it; the take stays the same length.
-      await pause(tabs[idx].scrollOnly ? Math.max(3200, opts.dwellMs) : Math.max(600, opts.dwellMs - dragMs));
+      await pause(
+        tabs[idx].scrollOnly ? Math.max(3200, opts.dwellMs) : plain ? Math.max(1800, opts.dwellMs) : Math.max(600, opts.dwellMs - dragMs),
+      );
 
-      // Error clips: point at the line the tester added because the doc page
-      // did not give it. Found by its exact text, so a moved line never
-      // selects the wrong one; not found -> warn and skip (the take still films).
-      // One entry per added line (owner rule): a string or a list of strings.
-      const added = tabs[idx].addedText;
-      const wanted = added == null ? [] : Array.isArray(added) ? added : [added];
-      if (wanted.length) {
-        const full = join(this.rootDir, tabs[idx].filePath);
-        const lines = existsSync(full) ? readFileSync(full, 'utf-8').split(/\r?\n/) : [];
-        for (const bad of wanted) {
-          const n = lines.findIndex((l) => l.includes(bad)) + 1;
-          if (n > 0) {
-            await humanScrollCodeViewport(page, n, idx);
-            await this.dragSelectSnippet(page, idx, n, n);
-            await pause(between(1800, 2400));
-          } else {
-            console.warn(`   ⚠️  addedText not found in ${tabs[idx].filePath}: ${bad}`);
-          }
-        }
+      for (const b of blocks) {
+        await humanScrollCodeViewport(page, b.from, idx);
+        await voiceGate('added');
+        mark('added', `${basename(tabs[idx].filePath)}: ${b.text.slice(0, 100)}`);
+        await this.dragSelectSnippet(page, idx, b.from, b.to);
+        await sleep(Math.max(Math.round(between(1800, 2400)), voiceHoldMs('added')));
       }
     }
 
@@ -1256,6 +1280,8 @@ export class RecordingEngine {
         await dismissNextIssues(page);
       }
 
+      await startUiLog(page);
+      setExpectUi(config.expectUi);
       mark('action');
       const action = executePageAction(page, config, this.rootDir, ctx).then(() => 'done' as const);
       action.catch(() => {}); // may still be running when the probe ends early
@@ -1280,6 +1306,7 @@ export class RecordingEngine {
       if (watch) clearInterval(watch);
     }
 
+    await checkExpectUi(page, 'end').catch(() => {});
     const breaking = distinctErrors(breakingErrors(console_.entries));
     if (!error && breaking.length) error = `The app threw (${breaking.length} distinct error(s)), first: ${breaking[0]}`;
     result.consoleErrors = distinctErrors(console_.entries).slice(0, 40);
@@ -1296,6 +1323,10 @@ export class RecordingEngine {
 
     await endTimeline().catch(() => {}); // settles outstanding checkpoints
     result.checks = timelineCheckpoints().map(({ label, expect, observed, ok }) => ({ label, expect, observed, ok }));
+    // Key moments (owner, 2026-11-25): the UI timeline, steps and clicks (t from the probe's start).
+    const evs = timelineEvents();
+    result.ui = evs.filter((e) => e.kind === 'ui').map(({ kind: _k, ...rest }) => rest);
+    result.steps = evs.filter((e) => e.kind === 'step' || e.kind === 'step-missing' || e.kind === 'click').map((e) => ({ ...e }));
     const badCheck = result.checks.find((c) => !c.ok);
     if (!error && badCheck) error = `checkpoint failed: ${badCheck.label} (expected ${badCheck.expect}, saw ${badCheck.observed ?? 'nothing'})`;
     if (error && !failShot) await page.screenshot({ path: join(out, 'failure.png') }).catch(() => {});
@@ -1576,8 +1607,11 @@ export class RecordingEngine {
         }
 
         // Dispatch specific demo actions
+        await startUiLog(page);
+        setExpectUi(config.expectUi);
         mark('action');
         await executePageAction(page, config, this.rootDir, ctx);
+        await checkExpectUi(page, 'end');
 
         if (actionFailures.length > 0) {
           throw new Error(actionFailures.join('; '));
@@ -1586,6 +1620,7 @@ export class RecordingEngine {
         console.log(`✅ Demo execution completed for ${config.id}.`);
         await pause(1500);
       } catch (e) {
+        await checkExpectUi(page, 'end').catch(() => {}); // no-op when the action already ended
         const msg = `Demo step failed: ${diagnoseError(e, config.demoUrl)}`;
         fail(msg);
         console.error(`\n❌ [Demo Failure on ${config.id}]:\n${msg}\n`);

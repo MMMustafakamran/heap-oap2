@@ -13,7 +13,7 @@ The harness exists to show doc defects. Any fix that hides one defeats the purpo
 ## 2. HARNESS changes (the only allowed edits)
 
 - Allowed only when needed to reach a page at all: ports, agent registration, missing helper files the doc never shows.
-- Mark every such line or file with a `HARNESS` comment saying what was changed and why.
+- Mark every such line or file with a comment saying what was changed and why. **Tags (owner, 2026-11-25):** `ADDED:` for code the doc never gives that the page needs to run at all (a missing helper, file, agent or stand-in: the recorder highlights it and the narration says it wasn't on the page), `CHANGED:` for wiring (agent ids, ports, URLs, config: never highlighted, never voiced). Comment forms `// ADDED:`, `# ADDED:`, `/* ADDED:`, `{/* ADDED:`, `<!-- ADDED:` (same for `CHANGED:`). Plain `HARNESS` is the legacy tag: still valid, but it is neither highlighted nor counted as added code.
 - A harness workaround that makes a broken page work is evidence, not a fix: keep the verbatim version too, and the finding still stands.
 
 ## 3. Ambiguity is a defect

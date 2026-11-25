@@ -122,3 +122,20 @@ export async function voiceTail(): Promise<void> {
   logEvent('voice-wait', { label: 'end', ms });
   await new Promise((r) => setTimeout(r, ms));
 }
+
+/**
+ * Milliseconds left on the voice line attached to the latest `label` mark (`label#n` for the nth,
+ * `label` alone for the first) plus its `+` lines, counted from now; 0 when no line attaches or the
+ * voice is off. The IDE holds an `added` selection this long (owner, 2026-11-25).
+ */
+export function voiceHoldMs(label: string): number {
+  if (!plan || !enabled || !timelineNow()) return 0;
+  const hits = timelineMarks().filter((m) => m.label === label);
+  const n = hits.length;
+  if (!n) return 0;
+  const i = plan.segs.findIndex((s) => s.at === `${label}#${n}` || (n === 1 && s.at === label));
+  if (i < 0) return 0;
+  let end = hits[n - 1].t + LEAD + plan.durs[i];
+  for (let k = i + 1; k < plan.segs.length && plan.segs[k].at === '+'; k++) end += FOLLOW_GAP + plan.durs[k];
+  return Math.max(0, Math.round((end + SAFETY - timelineNow()) * 1000));
+}

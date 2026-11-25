@@ -180,17 +180,25 @@ def load_timeline(p):
 
 FOLLOW_GAP = 0.35  # seconds of breath between a '+' line and the line before it
 
-def line_starts(segs, marks, durs):
+def line_starts(segs, marks, durs, drop_missing=False):
     """Slot start per line. 'at': '+' = the line follows the previous one in the same segment
-    (starts FOLLOW_GAP after the previous line's voice ends); anything else is a mark (see resolve)."""
+    (starts FOLLOW_GAP after the previous line's voice ends); anything else is a mark (see resolve).
+    drop_missing (owner, 2026-11-25): a line whose mark is not in this take (e.g. `added#2` when the
+    take selected one added block) gets None instead of an error, and so do the '+' lines chained to
+    it: it is dropped, never played over another segment."""
     out = []
     for i, s in enumerate(segs):
         if s["at"] == "+":
             if not out:
                 raise KeyError("first line can't be '+' (it has no previous line)")
-            out.append(out[-1] + durs[i - 1] + FOLLOW_GAP)
+            out.append(None if out[-1] is None else out[-1] + durs[i - 1] + FOLLOW_GAP)
         else:
-            out.append(resolve(marks, s["at"]))
+            try:
+                out.append(resolve(marks, s["at"]))
+            except KeyError:
+                if not drop_missing:
+                    raise
+                out.append(None)
     return out
 
 def resolve(marks, key):
@@ -293,11 +301,16 @@ def compute_fit(script_p, timeline_p, audio_dir, clip_p=None, max_overlap=MAX_OV
             durs.append(probe_dur(path)); hows.append("legacy" if src == "legacy" else "audio")
         else:
             durs.append(words(seg["text"]) / WPS); hows.append("estimate")
-    starts = line_starts(segs, marks, durs)
+    starts = line_starts(segs, marks, durs, drop_missing=True)
     rows = []
     for i, (seg, t) in enumerate(zip(segs, starts)):
         d, how = durs[i], hows[i]
-        end = starts[i + 1] if i + 1 < len(starts) else total
+        if t is None:  # mark not in this take: the mix leaves the line out (owner, 2026-11-25)
+            rows.append({"i": i, "at": seg["at"], "slotStart": None, "slotEnd": None, "slot": None, "duration": round(d, 2),
+                         "durationSource": how, "words": words(seg["text"]), "targetWords": None,
+                         "overlap": 0.0, "gap": 0.0, "flag": None, "dropped": "no mark"})
+            continue
+        end = next((x for x in starts[i + 1:] if x is not None), total)
         if end is None:  # unknown clip length: assume the last line just fits
             end, how = t + LEAD + d, how + "+noend"
         voice_end = t + LEAD + d
@@ -312,7 +325,8 @@ def compute_fit(script_p, timeline_p, audio_dir, clip_p=None, max_overlap=MAX_OV
         if rows[-1]["flag"] == "overlap":  # the recorder waits for each line, so an overlap means that wait failed
             rows[-1]["note"] = OVERLAP_NOTE
     ok = not any(r["flag"] for r in rows)
-    return {"clip": clip, "script": os.path.abspath(script_p), "timeline": os.path.abspath(timeline_p),
+    dropped = [r["at"] for r in rows if r.get("dropped")]
+    return {"clip": clip, **({"dropped": dropped} if dropped else {}), "script": os.path.abspath(script_p), "timeline": os.path.abspath(timeline_p),
             "clipDuration": total, "clipDurationSource": total_src if total is not None else None,
             "lead": LEAD, "wps": WPS, "maxOverlap": max_overlap, "maxGap": max_gap, "ok": ok, "lines": rows}
 
@@ -320,6 +334,9 @@ def print_fit(fit):
     print(f"\n{fit['clip']}  (clip {fit['clipDuration'] or '?'}s, ok={fit['ok']})")
     print(f"  {'#':>2} {'at':<16} {'slot':>13} {'len':>6} {'tts':>6} {'src':<9} {'over':>5} {'gap':>5}")
     for r in fit["lines"]:
+        if r.get("dropped"):
+            print(f"  {r['i']:>2} {r['at']:<16} {'-':>13} {'':>6} {r['duration']:6.1f} {r['durationSource']:<9}  <-- DROPPED: {r['dropped'].upper()}")
+            continue
         print(f"  {r['i']:>2} {r['at']:<16} {r['slotStart']:6.1f}-{r['slotEnd']:<6.1f} {r['slot']:6.1f} "
               f"{r['duration']:6.1f} {r['durationSource']:<9} {r['overlap']:5.1f} {r['gap']:5.1f}"
               f"{'  <-- ' + (r.get('note') or r['flag']).upper() if r['flag'] else ''}")
@@ -462,8 +479,16 @@ def cmd_mix(a):
         if not p:
             sys.exit(f"error: no audio for line '{seg['at']}' - run `tts` first")
         paths.append(p)
-    starts = line_starts(script["segments"], marks, [probe_dur(p) for p in paths])
-    placed = [(p, t + LEAD) for p, t in zip(paths, starts)]
+    starts = line_starts(script["segments"], marks, [probe_dur(p) for p in paths], drop_missing=True)
+    # Lines whose mark is not in this take are left out (fit reports them as dropped: no mark).
+    keep = [k for k, t in enumerate(starts) if t is not None]
+    for k, t in enumerate(starts):
+        if t is None:
+            print(f"  dropped line '{script['segments'][k]['at']}': no mark in this take", file=sys.stderr)
+    if not keep:
+        sys.exit("error: no narration line has its mark in this take")
+    texts = [script["segments"][k]["text"] for k in keep]
+    placed = [(paths[k], starts[k] + LEAD) for k in keep]
     inputs, filters = [], []
     natural = getattr(a, "natural", False)
     for k, (audio, start) in enumerate(placed):
@@ -473,7 +498,7 @@ def cmd_mix(a):
         # person who doesn't speak every sentence at the same pace.
         tempo = ""
         if natural:
-            h = int(hashlib.sha256(script["segments"][k]["text"].encode("utf8")).hexdigest()[:8], 16)
+            h = int(hashlib.sha256(texts[k].encode("utf8")).hexdigest()[:8], 16)
             tempo = f",atempo={0.97 + (h % 61) / 1000:.3f}"
         filters.append(f"[{k}:a]aresample=48000,aformat=channel_layouts=mono{tempo},adelay={ms}|{ms}[v{k}]")
     n = len(placed)

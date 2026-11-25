@@ -1,6 +1,7 @@
 import { type Page } from 'playwright';
 import { beat, between, chance, jitter, pause, rand, sleep } from './human';
-import { logAction } from '../timeline';
+import { currentSegment, keyframe, logAction, logMoment } from '../timeline';
+import { clickTargetAt } from '../ui-log';
 import { isFast } from '../fast';
 
 export { beat, sleep };
@@ -165,6 +166,17 @@ export async function humanGlide(
  * commits, and not for the same moment every time.
  */
 export async function humanClick(page: Page): Promise<void> {
+  // Demo clicks are key moments (owner, 2026-11-25): what was clicked, a frame just before and one
+  // ~0.6 s after. Doc, IDE-tab and taskbar clicks are not logged.
+  const demo = currentSegment() === 'demo';
+  let what = '';
+  if (demo) {
+    const { x, y } = getGlobalCursorPos();
+    what = await clickTargetAt(page, x, y);
+    const tag = (what.split(': ')[1] ?? what).replace(/[^a-zA-Z0-9]+/g, '-').slice(0, 24) || 'click';
+    logMoment('click', { target: what || '(unknown)' }, isFast() ? undefined : `before-${tag}`);
+    if (!isFast()) keyframe(`click-after-${tag}`, 800);
+  }
   if (isFast()) {
     await page.mouse.down();
     await page.mouse.up();

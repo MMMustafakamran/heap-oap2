@@ -41,7 +41,8 @@ Finding clip, which line goes where (full ❌/⚠️ clip; level 2 in §5a):
 | `doc` | opening line: page, framework, "reporting a problem" | 1 |
 | `evidence` | "This is the problem: …" (full clips only) | 1 |
 | `ide` | "This is my project…" | 3 |
-| `ide` `+` | "This part wasn't on the page…" (only when code was added) | 3 |
+| `added` / `added#n` | "This part wasn't on the page…", one per added block (owner, 2026-11-25) | 3 |
+| `ide` `+` | legacy form of the added-code line (clips without `ADDED:` tags) | 3 |
 | `demo` | "Moving on to the demo…" | 4 |
 | `notepad` | three-part recap (full clips only) | 5 |
 | `+` | polite ending, after the last line | 6 |
@@ -55,7 +56,7 @@ Finding clip, which line goes where (full ❌/⚠️ clip; level 2 in §5a):
 2. **No timing-specific lines.** The voice can't be synced to an exact click or moment, so never say "let me click it", "now I'm typing", "there it is". Say it generically, as a result:
    - ✗ "let me click it… and yeah, there's the card"
    - ✓ "after clicking the button, the card said deployment finished"
-3. **IDE part (`ide`):** "This is my project, I've implemented the exact code from the doc." If the tester had to add code to make the page run at all (HARNESS, drag-selected via `addedText`), `ide +` follows. Wiring changes (agent ids, runtime URLs, ports) get no `ide +` line (owner, 2026-11-20): "This part wasn't on the page, I had to add it myself", then what it is (e.g. "the ADK agent"). Nothing added → only the first line. **Never say a version number** anywhere in the narration (owner, 2026-11-09): versions change often and every mention would need new audio. The versions file on screen shows them.
+3. **IDE part (`ide`):** "This is my project, I've implemented the exact code from the doc." If the tester had to add code to make the page run at all (HARNESS, drag-selected via `addedText`), `ide +` follows. Wiring changes (agent ids, runtime URLs, ports) get no `ide +` line (owner, 2026-11-20): "This part wasn't on the page, I had to add it myself", then what it is (e.g. "the ADK agent"). Nothing added → only the first line. **Since 2026-11-25 (owner)** the added-code line attaches to the block's own mark, `added` (first block), `added#2` (second) ..., one line per `ADDED:` block, so the voice plays while that block is selected (the recorder holds the selection until the line ends). `ide +` for added code is legacy: it plays at a fixed time after the `ide` line, not on the highlight. A line whose mark is missing in the take is dropped from the mix (`<clip>.fit.json`: `dropped: no mark`), never played over another segment. **Never say a version number** anywhere in the narration (owner, 2026-11-09): versions change often and every mention would need new audio. The versions file on screen shows them.
 4. **Demo (`demo`):** "Moving on to the demo." Then, as results (rule 2): ❌ "It should <expected>, but <what happened>." ⚠️ "The main part works, <it does X>, but <small defect>."
 5. **Notepad (`notepad`, full ❌/⚠️ clips):** the note has three parts in this order: what the doc says should happen → what happened instead → why it broke / what's missing. The voice recaps those in plain words while Notepad stays open (the recorder holds Notepad until these lines end). Same content as the note, not word-for-word.
 6. **Ending:** always a short, polite ask to fix it, but **vary the wording between clips**. Never reuse the same ending in two clips of one batch. It is the last line of the clip (the `notepad` `+` line on full clips, the `demo` `+` line on level-2 clips). Pool:
@@ -75,7 +76,7 @@ Finding clip, which line goes where (full ❌/⚠️ clip; level 2 in §5a):
 
 The clip is doc → IDE → demo and ends there: no evidence highlight, no Notepad. Three to four lines:
 1. `doc`: the page + framework, "and I'm reporting a problem on this page" (rule 1; ⚠️ pages use the small-issue line). No evidence line.
-2. `ide`: "This is my project, I've implemented the exact code from the doc." `ide +` with the added-code line when the clip shows added code (rule 3).
+2. `ide`: "This is my project, I've implemented the exact code from the doc." Then the added-code line on `added` (`added#n` per block; legacy `ide +`) when the clip shows added code (rule 3).
 3. `demo`: "Moving on to the demo", then what went wrong, as a result (rule 4), in one or two sentences. Same problem as the report row.
 4. `+` after the demo line: a varied polite ending (rule 6).
 
@@ -90,7 +91,7 @@ Problem: the section has agent code for other frameworks only, no Google ADK age
 | `doc` | Ok so this is the Components page for Google ADK, and I'm reporting a problem on this page. |
 | `evidence` | So this is the problem, umm, the page only has agent code for other frameworks, there's no Google ADK agent anywhere in this section. |
 | `ide` | This is my project, and this frontend code is straight from the doc. |
-| `ide +` | This part, the ADK agent, wasn't given on the page, so I added it myself. |
+| `added` | This part, the ADK agent, wasn't given on the page, so I added it myself. |
 | `demo` | Moving on to the demo. I asked the agent for a component, it should have shown one in the chat, but nothing shows up, just a plain text reply. |
 | `notepad` | So basically, the page needs an ADK agent but never gives you one, so nothing renders. So yeah, kindly add the ADK code here. |
 

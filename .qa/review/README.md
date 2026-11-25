@@ -17,8 +17,8 @@ python 2-shared/qa-kit/review/consistency.py 1-frameworks/*/*/assignment.json
 
 | File | Contents |
 |---|---|
-| `<clip>.sheet.jpg` | 2-column contact sheet, 800×450 tiles with a `m:ss label` strip: doc, each evidence mark +3 s (after the drag hold, max 2), ide +4 s, demo start, after the prompt/click, demo result (last demo checkpoint + 0.5 s, else demo end − 1 s), notepad +4 s, failure terminal, final frame. ≤ 8 tiles, 1604 px wide × 1448–1932 px (≤ 3.1 MP), ~100–240 KB |
-| `<clip>.card.md` | ≤ 48 lines: expected status (to read after describing the sheet), finding one-liners, report notes, Notepad note (`FINDING_NOTES`), narration lines, tile list, checkpoints, demo-segment errors (deduped, docs-site noise removed), `.error.log` Recorder verdict, flags |
+| `<clip>.sheet.jpg` | 2-column contact sheet, 800×450 tiles with a `m:ss what happened` strip, ≤ 12 tiles (owner, 2026-11-25). Key moments by priority: `ui:<name>` expected-UI checkpoints (seen / MISSING), errors (demo errors, `ui` error events, `step-missing`, failure terminal), the first `ui` event after each prompt-sent / click, each click (just before / +0.8 s), reply finished, demo end; then one tile each for doc, evidence (+3 s, max 2), ide (the first `added` mark when there is one), notepad +4 s, and the final frame. Tiles within 1 s of a more important one are dropped. Takes without step/ui events (recorded before 2026-11-25) get the old fixed demo tiles (demo start, after prompt/click, demo result, demo end) |
+| `<clip>.card.md` | ≤ 60 lines: expected status (to read after describing the sheet), finding one-liners, report notes, Notepad note (`FINDING_NOTES`), narration lines, flags, tile list, checkpoints, Expected UI (seen / MISSING with t), UI timeline (≤ 10 lines of `ui` / `click` / `step` events), demo-segment errors (deduped, docs-site noise removed), `.error.log` Recorder verdict |
 | `index.json` | per clip: `status`, `risk` (defect flags), `attention` flags, sheet size, seconds |
 
 ## Free checks (flags on the card)
@@ -26,10 +26,11 @@ python 2-shared/qa-kit/review/consistency.py 1-frameworks/*/*/assignment.json
 | Flag | Tier | Rule |
 |---|---|---|
 | `reply-only` / `no-effect-checkpoint` | attention | ✅ page whose only deciding checkpoints are `reply` (or none): the reviewer must find the UI effect in a tile |
-| `claim-not-in-take` | defect | ❌/⚠️: quoted strings, error names (`RUN_ERROR`, `…Error`, 4xx/5xx) and "log/error says X" claims in the note or the demo/notepad narration that appear nowhere in events, `.error.log`, the error-terminal cast, checkpoints or the record log |
-| `audio` | defect | narrated mp4: audio stream present, mp4 ≈ webm (±2.5 s), each narration line ends before the clip end, no ≥ 1.5 s silence (`silencedetect -42 dB`) inside a line's window (fit.json), CI fit flags |
+| `claim-contradicted` | defect | ❌/⚠️ (owner, 2026-11-25): the note/narration says nothing showed ("nothing renders", "no buttons", "just plain text" ...) but a `ui:` checkpoint passed or the UI timeline logged buttons / a surface / an iframe ... in the demo |
+| `claim-not-in-take` | attention (was defect until 2026-11-25) | ❌/⚠️: quoted strings, error names (`RUN_ERROR`, `…Error`, 4xx/5xx) and "log/error says X" claims in the note or the demo/notepad narration that appear nowhere in events, `.error.log`, the error-terminal cast, checkpoints or the record log |
+| `audio` | defect | narrated mp4: audio stream present, mp4 ≈ webm (±2.5 s), each narration line ends before the clip end, no ≥ 1.5 s silence (`silencedetect -42 dB`) inside a line's window (fit.json), CI fit flags. A line fit.json marks `dropped: no mark` (its mark isn't in the take, left out of the mix) is `[attention]` |
 | `evidence-not-selected` | defect | record log says `Text not on screen, not selecting` for the page (whatever the evidence checkpoint says) |
-| `added-code` | defect | ❌/⚠️: a shown IDE tab has a HARNESS comment that adds code (never shown / stand-in / copied / guessed…, wiring comments skipped) but no `addedText`; an `addedText` not found in its file; added code with no `ide +` narration line. Best effort: backend files not in the page's IDE tabs are not seen |
+| `added-code` | defect | ❌/⚠️ (owner, 2026-11-25): only `ADDED:`-tagged lines and legacy `addedText` count; `CHANGED:` / plain `HARNESS` never raise it. Flags: an `addedText` not found in its file; added blocks with no `added` (or legacy `ide +`) narration line; a take from the new recorder with ADDED code but no `added` mark. Attention: more `added` lines than blocks; an `ide +` line with no added code. Backend files not in the page's IDE tabs are not seen |
 | `stale-link` | attention | `--post-upload` only: the page was filmed in this run but `links[].filmed` is older |
 | `checks: …` | defect / attention | `qa-kit/checks` `issues` (defect), `status_signals` and red runs (attention) |
 

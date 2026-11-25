@@ -64,3 +64,15 @@ Manual dispatch inputs: `ignore_drift` (record held pages anyway: only to reprod
 | **Other dependency behind npm latest** (range blocks it: new major, `^0.0.x`, an exact pin from a scaffold like `next 16.4.5`) | A reader starting today gets the newer one. If the doc's install command has no version → owner decides on bumping the range (reviewed edit to package.json, never CI). If the doc pins the version → keep it. |
 | A dir failed to re-resolve | That dir used the committed lockfile: say so in the review; often a peer-dependency clash in the new release (could itself be a finding if the doc's install fails the same way). |
 | Something breaks only on the new versions | Rerun with `use_lockfile` to confirm the doc code is unchanged and the package caused it. That is a finding (the doc's own install gives the reader the breaking version). |
+
+## 5. Unpredictable pages (owner, 2026-11-25)
+
+A page whose result flips between runs (working → failing, or failing → working) while **nothing changed**: no drift on that page (`drift.mjs`) and no CopilotKit / AG-UI version change (`versions.md`). The agent running the testing day spots it (not the clip reviewer: only it sees today's result next to the past runs, the drift and the versions).
+
+1. Probe the page twice and log both results.
+2. **Don't change its status:** the owner decides. Keep the previous clip/link unless the owner says otherwise.
+3. Add or update its row in `3-output/UNPREDICTABLE.md` (date, what happened each run) and the page's `unpredictable` list in `assignment.json` (`[{"date", "result"}]`), so the next agent sees it before judging the page.
+4. Flag it in the day's report to the owner under **Unpredictable pages**.
+5. Notes and narration on these pages stay generic ("the interrupt doesn't complete as the page says"), never one take's exact output.
+
+If the doc or a version did change, it isn't unpredictable: use sections 3 and 4.

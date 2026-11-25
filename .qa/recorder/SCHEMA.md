@@ -33,7 +33,8 @@ the recorded page is created, which is when Playwright starts the video.
 
 - `schema` — `2`. Schema 1 files are `{clip, marks}` only; `marks` is unchanged, so a schema-1
   reader still works.
-- `durationS` — time of the `end` mark (the page closes, and the video ends, right after).
+- `durationS` — time of the `end` mark (the page closes, and the video ends, right after). Clamped
+  to the saved video's real length (ffprobe): no mark or keyframe sits past the file's end (owner, 2026-11-25).
 - `recordedAt` — ISO-8601, when the clock started.
 - `page.slug` — page id from `config/pages.config.ts` (CLI flows: the flow id). `docUrl` is absent
   when the take had no doc page.
@@ -57,6 +58,7 @@ the recorded page is created, which is when Playwright starts the video.
 | `action` | The page handler starts driving the demo (just after `demo`, once the chat is ready) |
 | `click` | A notable single click inside a handler (Frontend Cards) |
 | `error` | A run-error banner was detected; the clip opens its details next |
+| `added` | (owner, 2026-11-25) One block of code the doc never gives drag-selected in the IDE (`ADDED:`-tagged lines, or a legacy `addedText` line); `detail` = `<file>: <first line>`. Inside the `ide` segment, one per block (`added`, `added#2` ...); the selection is held until that mark's narration line has finished (~2 s without audio) |
 | `evidence` | One faulty doc text drag-selected and held (`detail` = the text); one per spot. Emitted by the engine's doc step (after `doc`, before `ide`) for pages with finding evidence; older repo actions may still emit it after the demo |
 | `notepad` | Notepad opens and the note is typed |
 | `notepad-closed` | Notepad closed |
@@ -78,6 +80,7 @@ Consumers should treat unknown labels as opaque rather than reject them.
 | `error` | Run-error details are readable (observed = banner text) |
 | `evidence` | The defect text was found on the doc page (observed = the element's text, null = not found) |
 | `render` | (standard take) the page's `demo.render` selector rendered |
+| `ui:<name>` | (owner, 2026-11-25) one per `expectUi` entry of the page: ok when that UI piece was visible when the reply finished or when the page action ended; `t` = the first time it was seen (else when the action ended), `observed` = its name / text |
 
 ## 2. `<clip>.events.jsonl`
 
@@ -93,6 +96,10 @@ One JSON object per line, sorted by `t` (ties keep the order they happened in). 
 | `navigation` | `url` (main frame only) |
 | `mark` | `label`, `detail` — same as in the timeline |
 | `checkpoint` | `label`, `expect`, `observed`, `ok` — same as in the timeline |
+| `step` | (owner, 2026-11-25) `label`: `prompt-sent` (`text`), `reply-started` (`afterMs`), `reply-finished` (`chars`, the existing settle), `reply-still-streaming`, or a page action's own `waitStep` label. Keyframe `step-<label>` ~0.6 s later |
+| `step-missing` | `label`: a `waitStep` that timed out. Keyframe `step-missing-<label>` |
+| `click` | `target`: `<tag>: <accessible name or text>` under the cursor. Every `humanClick` in the demo segment (doc, IDE-tab and taskbar clicks are not logged). Keyframes `click-before-<name>` (requested before the press) and `click-after-<name>` (~0.6 s after) |
+| `ui` | `ui` (kind: `buttons`, `input`, `img`, `iframe`, `canvas`, `svg`, `surface`, `error`, `text`), `text` (≤ 80 chars). A meaningful UI change in the demo, from a MutationObserver started when the demo has loaded: new buttons (names), inputs, images / iframes / canvases / large SVGs, generative-UI surfaces, alerts / error banners / Next.js error overlay, and text changes outside the chat (state panels, counters). Streaming text inside chat messages, spinners, the recorder's overlays and the docs site are ignored. Debounced (~800 ms quiet), at most 30 per clip, one keyframe `ui-<kind>` per batch |
 
 Notes:
 
@@ -127,8 +134,22 @@ probeText(locator)                   // probe helper: visible text of the first 
 logAction(action, target, result?, extra?)  // an action for events.jsonl
 tracked(action, target, fn, extra?)  // run fn, log ok/error, return or rethrow exactly as fn did
 endTimeline()                        // engine: before page.close (last frame, pending probes)
-saveTimeline(timelinePath, clipId)   // engine: after the video is saved
+saveTimeline(timelinePath, clipId, videoDurationS?)   // engine: after the video is saved; clamps marks to the video
+logMoment(kind, fields, frameLabel?, delayMs?)        // a key-moment event (+ keyframe), not a mark
+currentSegment() / timelineEvents()                   // the segment the take is in; events so far
 ```
+
+`core/ui-log.ts` (owner, 2026-11-25), for page actions:
+
+```ts
+waitStep(page, locatorOrSelector, label, { timeoutMs?, last? }) // -> boolean; logs step / step-missing, never throws
+logStep(label, fields?)                                          // a step event + keyframe
+expectUiFor('interrupt' | 'tool-card' | 'a2ui' | 'iframe' | 'shared-state' | 'reasoning' | 'sub-agents' | 'multimodal' | 'threads', ...extra)
+// PageDefinition.expectUi: { name, selector?, text?: string | RegExp, role?, changed?: boolean }[]
+```
+
+The probe (`probe.mts`) writes the same `ui` events to `result.json` `ui` and the `step` /
+`step-missing` / `click` events to `result.json` `steps`.
 
 `checkpoint` never throws, never retries, and gives up on a probe after 3 s (observed `null`).
 A probe must only read the page.

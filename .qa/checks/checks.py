@@ -48,6 +48,7 @@ KIND_OF = {
     "demo": "demo", "demo2": "demo", "demo3": "demo", "action": "demo", "click": "demo",
     "wait": "demo", "error": "demo", "app": "demo", "reply": "demo", "result": "demo",
     "evidence": "evidence", "highlight": "evidence",
+    "added": "ide",   # added-code highlight inside the IDE segment (owner, 2026-11-25)
     "notepad": "notepad", "notepad2": "notepad", "notepad3": "notepad", "notepad-open": "notepad",
     "notepad-closed": "outro", "end": "outro",
     "console": "terminal", "terminal": "terminal",

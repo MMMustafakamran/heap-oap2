@@ -5,6 +5,7 @@ import { dismissAlertOverlay, installAlertOverlay } from './overlays/alert-dialo
 import { beat, humanClick, humanGlide, idleNudge, sleep } from './overlays/cursor';
 import { chance, humanType, pause } from './overlays/human';
 import { TIMEOUTS } from './timeouts';
+import { checkExpectUi, logStep } from './ui-log';
 import { SURFACE_SELECTOR, checkpoint, logAction, probeText } from './timeline';
 import {
   type ActionContext,
@@ -162,6 +163,7 @@ export async function waitForAgentResponseCompletion(
       hasStarted = true;
       observed.startedAfterMs = Date.now() - startTime;
       observed.chars = status.len;
+      logStep('reply-started', { afterMs: observed.startedAfterMs });
       break;
     }
 
@@ -250,6 +252,8 @@ export async function waitForAgentResponseCompletion(
         if (stableCount >= 4 && (!snap.busy || Date.now() - stableSince >= BUSY_GRACE_MS)) {
           observed.chars = currentText.length;
           settled = true;
+          logStep('reply-finished', { chars: currentText.length });
+          await checkExpectUi(page, 'reply');
           console.log(
             `   ✅ AI agent response completed (${currentText.length} characters${snap.busy ? ', run flag still set' : ''}).`,
           );
@@ -267,6 +271,7 @@ export async function waitForAgentResponseCompletion(
     // The cap ran out with text still changing. That used to fall through
     // silently and count as complete; now the caller is told.
     if (!settled) {
+      logStep('reply-still-streaming');
       observed.streamTimedOut = true;
       observed.chars = previousText.length;
       console.warn(
@@ -493,6 +498,7 @@ export async function sendPrompt(
   }
 
   logAction('submit', submitSelector, sent ? 'ok' : 'composer still holds the text after three attempts');
+  if (sent) logStep('prompt-sent', { text: prompt.slice(0, 120) });
   if (!sent) {
     throw new Error(
       'Prompt never submitted -- the composer still holds the text after three ' +

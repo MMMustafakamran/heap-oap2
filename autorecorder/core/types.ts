@@ -2,8 +2,9 @@ import { type Page } from 'playwright';
 import { PROJECT, demoUrlFor, docUrlFor } from '../config/project.config';
 import { type ServiceDefinition } from './cli/service';
 import { type IdeTabConfig } from './ide/generator';
+import { type ExpectUi } from './ui-log';
 
-export { type IdeTabConfig };
+export { type IdeTabConfig, type ExpectUi };
 
 /**
  * A dev server this page's demo needs, and which the recording shows starting.
@@ -163,6 +164,14 @@ export interface PageDefinition {
    * button-first flow).
    */
   demo?: DemoScript;
+
+  /**
+   * UI the page should show once the agent has answered (owner, 2026-11-25). Checked when the reply
+   * finishes and again when the page action ends; one checkpoint `ui:<name>` each (ok / false, with
+   * the time it was first seen and a keyframe). `expectUiFor('interrupt')` etc. give templates
+   * (core/ui-log.ts). Logging only: a miss is a failed checkpoint, the take still films.
+   */
+  expectUi?: ExpectUi[];
 }
 
 /** A place to rest the cursor: a selector (first visible match) or fixed coordinates. */

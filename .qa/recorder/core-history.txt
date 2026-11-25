@@ -64,3 +64,11 @@ a81d07b94e712282  engine.ts
 # before the auto VERSIONS.md IDE tab (2026-11-24)
 d4c8d7ebd60baa5e  engine.ts
 8473a180a317d262  ide/generator.ts
+# before key-moment step/ui log, ADDED blocks, expectUi (2026-11-25)
+ecdccd69156db179  actions.ts
+a83be1bdf5fa34bd  engine.ts
+9bdc0e81cb08d76f  timeline.ts
+10dd813d5e3176d3  types.ts
+ff299a7d49cc27a8  ide/generator.ts
+c4fc52975ae593f1  overlays/cursor.ts
+6eacd21cc8bcf864  voice.ts

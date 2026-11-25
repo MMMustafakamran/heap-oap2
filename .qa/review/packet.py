@@ -17,7 +17,8 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
-TILE_W, TILE_H, LABEL_H, COLS, MAX_TILES = 800, 450, 30, 2, 8
+TILE_W, TILE_H, LABEL_H, COLS, MAX_TILES = 800, 450, 30, 2, 12
+CARD_LINES = 60
 DEFECT, ATTENTION = "defect", "attention"
 HEALTH_CP = {"evidence", "app-alive", "no-redbox"}
 NOISE_HOSTS = ("docs.copilotkit.ai", "google-analytics", "googletagmanager", "posthog", "sentry", "vercel",
@@ -356,7 +357,29 @@ def chk_claims(texts, hay):
             n = norm(tok).strip()
             if n and n not in h and n.replace(" ", "") not in hz:
                 bad.append(f"'{tok}'")
-    return [(DEFECT, "claim-not-in-take: note/narration cites " + "; ".join(bad[:4]) + " but events, .error.log and terminal show none of it")] if bad else []
+    # (owner, 2026-11-25) not found is [attention]; [defect] only when a checkpoint or the UI timeline contradicts it (chk_contradiction)
+    return [(ATTENTION, "claim-not-in-take: note/narration cites " + "; ".join(bad[:4]) + " but events, .error.log and terminal show none of it")] if bad else []
+
+
+ABSENCE_RE = re.compile(r"\b(nothing|no (?:card|ui|buttons?|component|surface|widget|chart|image|panel|frame|iframe|approve)|"
+                        r"never (?:renders?|shows?|appears?)|(?:doesn'?t|didn'?t|does not|did not) (?:render|show|appear)|"
+                        r"(?:just|only) (?:a )?plain text|just text|blank)\b", re.I)
+SHOWN_UI = ("buttons", "surface", "iframe", "canvas", "img", "svg", "input")
+
+
+def chk_contradiction(texts, cps, ui_events, win):
+    """[defect] when the note/narration says nothing showed but a ui: checkpoint passed or the UI timeline logged UI in the demo."""
+    said = [t for t in texts if ABSENCE_RE.search(t or "")]
+    if not said:
+        return []
+    ok_ui = [c for c in cps if str(c.get("label", "")).startswith("ui:") and c.get("ok")]
+    shown = [e for e in ui_events if e.get("ui") in SHOWN_UI and (not win or win[0] <= e.get("t", 0) <= win[1] + 1)]
+    if not ok_ui and not shown:
+        return []
+    what = (f"checkpoint {ok_ui[0]['label']} ok at {fmt_t(ok_ui[0].get('t', 0))}" if ok_ui else
+            f"UI timeline {fmt_t(shown[0].get('t', 0))} {shown[0].get('ui')}: {str(shown[0].get('text', ''))[:60]}")
+    m = ABSENCE_RE.search(said[0])
+    return [(DEFECT, f"claim-contradicted: note/narration says '{m.group(0)}' but {what}")]
 
 
 def rms_windows(mp4, win=0.25):
@@ -422,6 +445,9 @@ def chk_audio(mp4, fit, webm_dur):
     info["room_db"], info["silences"] = room, len(sil)
     bad = []
     for ln in lines:
+        if ln.get("dropped"):  # mark not in this take: left out of the mix (owner, 2026-11-25)
+            flags.append((ATTENTION, f"audio: line {ln.get('at')} dropped ({ln['dropped']}), check the take still says what it must"))
+            continue
         if ln.get("flag"):
             bad.append(f"{ln.get('at')} fit={ln['flag']}")
         a = (ln.get("slotStart") or 0) + lead
@@ -448,43 +474,53 @@ def chk_evidence(section, cps):
                      f"('{miss[0][:70]}')" + (" although the evidence checkpoint says ok" if ok else ""))]
 
 
-ADDED_RE = re.compile(r"never (?:defined|shown|shows|given|named)|not (?:shown|on the page|given|defined)|isn'?t shown|"
-                      r"stand-?ins?|copied (?:from|verbatim)|guessed|shows only|only shows|fragments?|imports? .{0,60} but|"
-                      r"doc never|page never|has no |shows no|never shows|is empty|missing", re.I)
-WIRING_RE = re.compile(r"runtimeUrl|runtime-url|agentId|agent id|\bport\b|\bagent=|use client|client component|see above|"
-                       r"doc says \"/api|url", re.I)
+ADDED_TAG = re.compile(r"(?://|#|/\*|<!--)\s*ADDED:|^\s*\*\s*ADDED:")
 
 
-def chk_added_code(repo, block, segs, status):
+def added_blocks(lines):
+    """Number of ADDED blocks in a file: runs of tagged lines (recorder core/code-tags.ts; follow lines don't change the count)."""
+    n, prev = 0, False
+    for ln in lines:
+        hit = bool(ADDED_TAG.search(ln))
+        if hit and not prev:
+            n += 1
+        prev = hit
+    return n
+
+
+def chk_added_code(repo, block, segs, status, marks=None, new_recorder=False):
+    """(owner, 2026-11-25) Only `ADDED:` lines and legacy addedText count as added code; HARNESS / CHANGED: never raise it."""
     if status not in ("❌", "⚠️") or not block:
         return []
     out = []
-    tabs = ide_tabs(block)
-    any_added = any(t[3] for t in tabs)
-    real_added = any("HARNESS" not in x or ADDED_RE.search(x) and not (WIRING_RE.search(x) and not re.search(r"never (?:defined|shown)|stand-?in|copied", x, re.I))
-                     for t in tabs for x in t[3])
-    for fp, a, b, added in tabs:
+    n_added, files = 0, []
+    any_text = False
+    for fp, a, b, added in ide_tabs(block):
         src = rd(os.path.join(repo["root"], fp))
         if src is None:
             continue
-        lines = src.splitlines()
+        k = added_blocks(src.splitlines())
+        if k:
+            n_added += k
+            files.append(os.path.basename(fp))
         for want in added:
+            any_text = True
             if want and want not in src:
                 out.append((DEFECT, f"added-code: addedText not found in {os.path.basename(fp)} (recorder skips the highlight): '{want[:60]}'"))
-        if added:
-            continue
-        hits = [ln.strip() for ln in lines  # whole file: added code outside the shown range isn't highlighted either
-                if "HARNESS" in ln and ADDED_RE.search(ln) and not (WIRING_RE.search(ln) and not re.search(r"never|stand-?in|copied", ln, re.I))]
-        if hits:
-            out.append((DEFECT, f"added-code: {os.path.basename(fp)} has HARNESS added code with no addedText highlight: '{hits[0][:90]}'"))
+            elif want and not any(ADDED_TAG.search(ln) for ln in src.splitlines() if want in ln):
+                n_added += 1
     labels = [s.get("at") for s in segs]
+    added_lines = [l for l in labels if str(l).split("#")[0] == "added"]
     ide_plus = any(labels[i] == "ide" and i + 1 < len(labels) and labels[i + 1] == "+" for i in range(len(labels)))
-    if segs and (real_added or out) and not ide_plus:
-        out.append((DEFECT, "added-code: code is added (addedText/HARNESS) but the narration has no `ide +` line saying it wasn't on the page"))
-    elif segs and any_added and not ide_plus:
-        out.append((ATTENTION, "added-code: an addedText highlight looks like wiring and has no `ide +` line: check the highlight is needed added code"))
-    if segs and ide_plus and not any_added and not out:
-        out.append((ATTENTION, "added-code: narration has an `ide +` line but no addedText is set, check it isn't only wiring"))
+    voiced = bool(added_lines) or (ide_plus and any_text)
+    if segs and n_added and not voiced:
+        out.append((DEFECT, f"added-code: {n_added} added block(s) ({', '.join(files) or 'addedText'}) but no `added` narration line saying it wasn't on the page"))
+    if segs and added_lines and len(added_lines) > n_added:
+        out.append((ATTENTION, f"added-code: {len(added_lines)} `added` narration line(s) for {n_added} added block(s): extra lines are dropped"))
+    if marks is not None and new_recorder and n_added and not any(m.get("label") == "added" for m in marks):
+        out.append((DEFECT, "added-code: ADDED code in the IDE tabs but no `added` mark in this take (not highlighted)"))
+    if segs and ide_plus and not n_added and not added_lines and not out:
+        out.append((ATTENTION, "added-code: narration has an `ide +` line but no ADDED block or addedText is set, check it isn't only wiring"))
     return out
 
 
@@ -497,51 +533,98 @@ def chk_stale(link, day):
 
 # ---------------------------------------------------------------- sheet
 
-def tile_plan(marks, cps, dur, status):
-    spans = segment_spans(marks, dur)
-    nxt = lambda t: next((m["t"] for m in marks if m["t"] > t + 0.05), dur)
+def tile_plan_legacy(marks, cps, dur):
+    """Fixed demo tiles for takes without step/ui events (recorded before 2026-11-25)."""
     plan = []
+    win = demo_window(marks, dur)
+    if win:
+        plan.append((win[0] + 2, "demo start", 3))
+        act = next((m["t"] for m in marks if m["label"] in ("action", "click") and win[0] < m["t"] < win[1]), None)
+        if act is not None and win[1] - act > 8:
+            plan.append((act + 6, "demo after prompt/click", 3))
+        dc = [c for c in cps if c.get("label") not in HEALTH_CP and win[0] <= c.get("t", 0) <= win[1] + 1]
+        if dc and dc[-1]["t"] < win[1] - 2:
+            plan.append((dc[-1]["t"] + 0.5, f"demo result (cp {dc[-1]['label']})", 2))
+            plan.append((win[1] - 1, "demo end", 4))
+        else:
+            if win[1] - win[0] > 25:
+                plan.append(((win[0] + win[1]) / 2, "demo mid", 5))
+            plan.append((win[1] - 1, "demo result (demo end)", 2))
+    return plan
 
-    def add(t, label, cap=None):
+
+def tile_plan(marks, cps, dur, status, events=None):
+    """Key moments (owner, 2026-11-25), each (t, label) with a priority (lower = kept first):
+    0 expected-UI checkpoints, 1 errors / failure, 2 first UI change after each prompt/click,
+    3 clicks (before/after), reply finished, demo end, 4 one tile each for doc / evidence / ide (an
+    `added` mark first) / notepad. Up to MAX_TILES; old takes without step/ui events get the fixed demo tiles."""
+    events = events or []
+    spans_next = lambda t: next((m["t"] for m in marks if m["t"] > t + 0.05), dur)
+    win = demo_window(marks, dur)
+    cand = []
+
+    def add(t, label, pri, cap=None):
         t = min(max(0.2, t), (cap if cap is not None else dur) - 0.3, dur - 0.3)
-        plan.append((round(t, 1), label))
+        cand.append((round(t, 1), label[:62], pri))
 
     first = {m["label"]: m["t"] for m in reversed(marks)}
     if "doc" in first:
-        add(first["doc"] + 1.5, "doc", nxt(first["doc"]))
+        add(first["doc"] + 1.5, "doc", 4, spans_next(first["doc"]))
     evs = [m for m in marks if m["label"] == "evidence"]
     for i, m in enumerate(evs[:2]):
-        add(m["t"] + 3, f"evidence{'#' + str(i + 1) if len(evs) > 1 else ''} (held)", nxt(m["t"]))
-    if "ide" in first:
-        add(first["ide"] + 4, "ide", nxt(first["ide"]))
-    win = demo_window(marks, dur)
-    if win:
-        add(win[0] + 2, "demo start", win[1])
-        act = next((m["t"] for m in marks if m["label"] in ("action", "click") and win[0] < m["t"] < win[1]), None)
-        if act is not None and win[1] - act > 8:
-            add(act + 6, "demo after prompt/click", win[1])
-        dc = [c for c in cps if c.get("label") not in HEALTH_CP and win[0] <= c.get("t", 0) <= win[1] + 1]
-        if dc and dc[-1]["t"] < win[1] - 2:
-            add(dc[-1]["t"] + 0.5, f"demo result (cp {dc[-1]['label']})", win[1])
-            add(win[1] - 1, "demo end", win[1])
-        else:
-            if win[1] - win[0] > 25:
-                add((win[0] + win[1]) / 2, "demo mid", win[1])
-            add(win[1] - 1, "demo result (demo end)", win[1])
+        add(m["t"] + 3, f"evidence{'#' + str(i + 1) if len(evs) > 1 else ''} (held)", 4 if i == 0 else 5, spans_next(m["t"]))
+    added = [m for m in marks if m["label"] == "added"]
+    for i, m in enumerate(added[:2]):
+        add(m["t"] + 1.8, f"added: {str(m.get('detail', ''))[:48]}", 4 if i == 0 else 5, spans_next(m["t"]))
+    if "ide" in first and not added:
+        add(first["ide"] + 4, "ide", 4, spans_next(first["ide"]))
     if "notepad" in first:
-        add(first["notepad"] + 4, "notepad", nxt(first["notepad"]))
+        add(first["notepad"] + 4, "notepad", 4, spans_next(first["notepad"]))
     if "failure" in first:
-        add(first["failure"] + 6, "failure terminal", dur)
-    add(dur - 0.6, "final")
-    seen, out = set(), []
-    for t, l in sorted(plan, key=lambda x: x[0]):
-        if any(abs(t - s) < 1.0 for s in seen):
+        add(first["failure"] + 6, "failure terminal", 1, dur)
+
+    key = [e for e in events if e.get("kind") in ("ui", "step", "step-missing", "click")]
+    if win and key:
+        lo, hi = win[0] - 1, win[1] + 1
+        for c in cps:
+            if str(c.get("label", "")).startswith("ui:") and lo <= c.get("t", 0) <= hi:
+                add(c["t"] + 0.3, f"{c['label']} {'seen' if c.get('ok') else 'MISSING'}", 0, win[1])
+        for t, k, cnt, txt in event_errors(events, marks, dur)[:2]:
+            add(t + 0.5, f"error: {txt[:50]}", 1, win[1])
+        for e in events:
+            if e.get("kind") == "ui" and e.get("ui") == "error" and lo <= e.get("t", 0) <= hi:
+                add(e["t"] + 0.4, f"ui: error {str(e.get('text', ''))[:44]}", 1, win[1])
+                break
+        triggers = [e["t"] for e in events if (e.get("kind") == "step" and e.get("label") == "prompt-sent") or e.get("kind") == "click"]
+        uis = sorted((e for e in events if e.get("kind") == "ui" and lo <= e.get("t", 0) <= hi), key=lambda e: e["t"])
+        used = set()
+        for tr in triggers:
+            nxt = next((e for e in uis if e["t"] > tr and id(e) not in used), None)
+            if nxt is not None:
+                used.add(id(nxt))
+                add(nxt["t"] + 0.4, f"ui: {nxt.get('ui')} {str(nxt.get('text', ''))[:48]}", 2, win[1])
+        for e in events:
+            if e.get("kind") == "click" and lo <= e.get("t", 0) <= hi:
+                tgt = str(e.get("target", "")).split(": ", 1)[-1][:40]
+                add(e["t"] - 0.2, f"click {tgt}", 3, win[1])
+                add(e["t"] + 0.8, f"after click {tgt}", 3, win[1])
+            elif e.get("kind") == "step" and e.get("label") == "reply-finished":
+                add(e["t"] + 0.5, "reply finished", 3, win[1])
+            elif e.get("kind") == "step-missing":
+                add(e["t"], f"step missing: {str(e.get('label', ''))[:40]}", 1, win[1])
+        add(win[1] - 1, "demo end", 3, win[1])
+    else:
+        for t, l, pri in tile_plan_legacy(marks, cps, dur):
+            add(t, l, pri, win[1] if win else None)
+    add(dur - 0.6, "final", 6)
+    # Keep the most important tile when two land within 1 s, then cut to MAX_TILES by priority.
+    out = []
+    for t, l, pri in sorted(cand, key=lambda x: (x[2], x[0])):
+        if any(abs(t - s) < 1.0 for s, _, _ in out):
             continue
-        seen.add(t)
-        out.append((t, l))
-    while len(out) > MAX_TILES:
-        out.pop(next(i for i, (_, l) in enumerate(out) if l in ("demo mid", "demo end", "doc", "final")))
-    return out
+        out.append((t, l, pri))
+    out = sorted(out, key=lambda x: (x[2], x[0]))[:MAX_TILES]
+    return [(t, l) for t, l, _ in sorted(out, key=lambda x: x[0])]
 
 
 def esc_filter_path(p):
@@ -611,6 +694,8 @@ def build_clip(clip, run_dir, repo, sections, out_dir, post_upload, run_label):
 
     flags = []
     flags += chk_reply_only(status, cps)
+    ui_events = [e for e in events if e.get("kind") == "ui"]
+    new_recorder = any(e.get("kind") in ("step", "ui", "click") for e in events)
     if status in ("❌", "⚠️"):
         texts = [s.get("text", "") for s in segs if s.get("at") in ("demo", "notepad", "+")]
         if note:
@@ -621,12 +706,13 @@ def build_clip(clip, run_dir, repo, sections, out_dir, post_upload, run_label):
         hay = "\n".join([json.dumps(take_ev, ensure_ascii=False), errlog or "", cast,
                          json.dumps([c for c in cps if c.get("label") != "evidence"], ensure_ascii=False)])
         flags += chk_claims(texts, hay)
+        flags += chk_contradiction(texts, cps, ui_events, demo_window(marks, dur))
     af, ainfo = chk_audio(mp4, fit, dur) if status in ("❌", "⚠️") or os.path.exists(mp4) else ([], {})
     if status in ("❌", "⚠️") and not os.path.exists(mp4):
         af.append((DEFECT, "audio: no narrated mp4 in this run for a ❌/⚠️ page"))
     flags += af
     flags += chk_evidence(section, cps)
-    flags += chk_added_code(repo, block, segs, status)
+    flags += chk_added_code(repo, block, segs, status, marks, new_recorder)
     if post_upload:
         flags += chk_stale(link, (tl.get("recordedAt") or "")[:10])
     for i in checks.get("issues") or []:  # "frozen to the end" is usually the post-reply hold: attention, not defect
@@ -637,7 +723,7 @@ def build_clip(clip, run_dir, repo, sections, out_dir, post_upload, run_label):
         flags.append((ATTENTION, f"checks: {len(checks['look_at'])} red run(s) to look at: " +
                       ", ".join((f"{fmt_t(r.get('start', 0))}-{fmt_t(r.get('end', 0))} {r.get('segment', '')}" if isinstance(r, dict) else str(r)[:60]) for r in checks["look_at"][:3])))
 
-    plan = tile_plan(marks, cps, dur, status)
+    plan = tile_plan(marks, cps, dur, status, events)
     sheet = os.path.join(out_dir, clip + ".sheet.jpg")
     tmp = tempfile.mkdtemp(prefix="pkt-")
     try:
@@ -658,12 +744,38 @@ def build_clip(clip, run_dir, repo, sections, out_dir, post_upload, run_label):
         L.append("## Narration")
         for s in segs:
             L.append(f"- {s.get('at')}: {s.get('text', '')[:200]}")
+    L.append("## Flags (treat every one)")
+    for kind, f in flags:
+        L.append(f"- [{kind}] {f}")
+    if not flags:
+        L.append("- none")
     L.append("## Sheet tiles")
     L.append(" · ".join(f"{fmt_t(t)} {l}" for t, l in plan) + ("" if ok_sheet else "  (SHEET FAILED)"))
     L.append("## Checkpoints")
     for c in cps[:8]:
         L.append(f"- {fmt_t(c.get('t', 0))} {c.get('label')} {'ok' if c.get('ok') else 'FAIL'}: "
                  f"expect {str(c.get('expect', ''))[:60]} | saw {str(c.get('observed', '')).strip()[:110]!r}")
+    exp = [c for c in cps if str(c.get("label", "")).startswith("ui:")]
+    if exp:
+        L.append("## Expected UI")
+        for c in exp[:6]:
+            L.append(f"- {c['label'][3:]}: {'seen ' + fmt_t(c.get('t', 0)) + ' ' + repr(str(c.get('observed', ''))[:70]) if c.get('ok') else 'MISSING (checked ' + fmt_t(c.get('t', 0)) + ')'}")
+    tl_rows = []
+    for e in events:
+        k = e.get("kind")
+        if k == "ui":
+            tl_rows.append((e.get("t", 0), f"ui {e.get('ui')}: {str(e.get('text', ''))[:70]}"))
+        elif k in ("step", "step-missing"):
+            tl_rows.append((e.get("t", 0), f"{k} {e.get('label')}"))
+        elif k == "click":
+            tl_rows.append((e.get("t", 0), f"click {str(e.get('target', ''))[:60]}"))
+    if tl_rows:
+        L.append("## UI timeline")
+        if len(tl_rows) > 10:  # keep the UI changes and clicks, then steps
+            pri = lambda r: 0 if r[1].startswith(("ui ", "click", "step-missing")) else 1
+            tl_rows = sorted(sorted(tl_rows, key=pri)[:10])
+        for t, txt in tl_rows:
+            L.append(f"- {fmt_t(t)} {txt}")
     errs = event_errors(events, marks, dur)
     L.append("## Errors (demo, docs noise removed)")
     for t, k, cnt, txt in errs[:6]:
@@ -673,12 +785,7 @@ def build_clip(clip, run_dir, repo, sections, out_dir, post_upload, run_label):
     v = verdict_of(errlog)
     if v:
         L.append(f"## Recorder verdict (.error.log, not on camera)\n{v}")
-    L.append("## Flags (treat every one)")
-    for kind, f in flags:
-        L.append(f"- [{kind}] {f}")
-    if not flags:
-        L.append("- none")
-    L = [ln for ln in "\n".join(L).splitlines()][:48]
+    L = [ln for ln in "\n".join(L).splitlines()][:CARD_LINES]
     with open(os.path.join(out_dir, clip + ".card.md"), "w", encoding="utf-8") as f:
         f.write("\n".join(L) + "\n")
     return {"clip": clip, "run": run_label, "status": status, "slug": slug,
