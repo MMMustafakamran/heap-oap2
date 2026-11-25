@@ -26,6 +26,8 @@ export const PAGES_INTERACT: PageDefinition[] = [
     extraTabs: [{ filePath: `${P}/RenderingInAppApp.vue`, startLine: 1, endLine: 14 }],
     prompt: 'Mark the prototype item as done.', // the doc's own check step (FINDINGS.md #26)
     waitAfterPromptMs: 8000,
+    // The doc promises the prototype item's data-done flips to true on the canvas.
+    expectUi: [{ name: 'prototype-done', selector: 'li[data-done="true"]', text: 'Build a prototype' }],  // custom: the 'shared-state' template's state-change also fires on the chat's own text
   },
   {
     id: 'shared-state-streaming', name: 'State Streaming (Vue)', videoName: 'SharedStateStreaming', videoFile: '24-SharedStateStreaming',

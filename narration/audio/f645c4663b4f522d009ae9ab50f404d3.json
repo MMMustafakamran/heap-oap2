@@ -1,0 +1,9 @@
+{
+ "text": "Moving on to the demo. I asked for a short draft, the panel should follow the agent's state and show the draft, but umm, it never shows any of it, it just stays on Idle.",
+ "model": "s2.1-pro-free",
+ "refSha256": "2c9d0ecf4608feacc07c88e869cd4dec601481306a939b7be92fc1bff521a727",
+ "duration": 11.471,
+ "file": "f645c4663b4f522d009ae9ab50f404d3.mp3",
+ "clip": "OAI-vue-15-StateRendering",
+ "at": "demo"
+}

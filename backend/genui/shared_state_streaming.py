@@ -1,7 +1,7 @@
 # State Rendering page (docs.copilotkit.ai/vue/openai-agents-python/generative-ui/state-rendering).
-# The page shows write_document, _document_so_far and DocumentStreamingAgent. HARNESS: the imports and
+# The page shows write_document, _document_so_far and DocumentStreamingAgent. ADDED: the imports and
 # the agent the page wraps (`shared_state_streaming_agent`) are never shown.
-from collections.abc import AsyncIterator  # HARNESS: imports never shown on the page
+from collections.abc import AsyncIterator  # ADDED: imports never shown on the page
 from contextlib import aclosing
 
 from ag_ui.core import BaseEvent, EventType, RunAgentInput, StateDeltaEvent
@@ -22,7 +22,7 @@ def write_document(document: str) -> str:
     return "Document written to shared state."
 
 
-# HARNESS: the page wraps `shared_state_streaming_agent` but never shows it.
+# ADDED: the page wraps `shared_state_streaming_agent` but never shows it.
 shared_state_streaming_agent = Agent(
     name="writer",
     instructions="You write documents. Always use the write_document tool for any text the user asks for.",

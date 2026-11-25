@@ -381,6 +381,20 @@ jobs:
             echo "up: :$port$path"
           done
 
+      - name: Cache static ffmpeg
+        uses: actions/cache@v4
+        with:
+          path: ~/ffmpeg-static
+          key: ffmpeg-static-linux64-v1
+      - name: Install ffmpeg/ffprobe before recording (the end-mark clamp needs ffprobe)
+        run: |
+          if [ ! -x ~/ffmpeg-static/ffprobe ]; then
+            mkdir -p ~/ffmpeg-static
+            curl -fsSL --retry 3 https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz               | tar -xJ --strip-components=1 -C ~/ffmpeg-static
+          fi
+          echo "$HOME/ffmpeg-static" >> "$GITHUB_PATH"
+          ~/ffmpeg-static/ffprobe -version | head -1
+
       - name: Record
         id: rec
         env:
@@ -400,12 +414,6 @@ jobs:
         if: always()
         with:
           python-version: '3.12'
-      - name: Cache static ffmpeg
-        if: always()
-        uses: actions/cache@v4
-        with:
-          path: ~/ffmpeg-static
-          key: ffmpeg-static-linux64-v1
       - name: Clip checks for this shard (the report job reuses them)
         if: always()
         run: |

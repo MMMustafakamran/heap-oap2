@@ -41,10 +41,12 @@ export const PAGES_GENUI: PageDefinition[] = [
     ideFile: `${G}/state-rendering/components/ResearchProgress.vue`, startLine: 1, endLine: 22,
     extraTabs: [
       { filePath: `${G}/state-rendering/App.vue`, startLine: 1, endLine: 12 },
-      { filePath: `${B}/shared_state_streaming.py`, startLine: 1, endLine: 70, addedText: 'shared_state_streaming_agent = Agent(' },
+      { filePath: `${B}/shared_state_streaming.py`, startLine: 1, endLine: 70 },
     ],
     prompt: 'Write a short three sentence draft about why the sky is blue.',
     waitAfterPromptMs: 4000,
+    // The doc promises the progress panel follows the agent state: status off Idle and the draft shown.
+    expectUi: [{ name: 'progress-draft', selector: 'section[aria-live="polite"] article' }],  // custom: the 'shared-state' template's state-change also fires on the chat's own text
   },
   {
     id: 'mcp-apps', name: 'MCP Apps (Vue)', videoName: 'McpApps', videoFile: '16-McpApps',

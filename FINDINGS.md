@@ -18,7 +18,7 @@ Stack: @copilotkit/vue 1.90.0, @copilotkit/runtime 1.90.0 (npm latest), @ag-ui/c
 ### [State Rendering](https://docs.copilotkit.ai/vue/openai-agents-python/generative-ui/state-rendering)
 **#6 The UI reads state keys the agent never writes.**
 - **Doc:** `type ResearchState = { status?: string; draft?: string; completed?: number; total?: number };` vs the agent's `shared_state().update(document=document)`; the wrapped `shared_state_streaming_agent` is never shown.
-- **Result:** the agent streams `document`, the panel stays `Idle` with an empty bar and no text reply (3/3 probes).
+- **Result:** after asking for a draft, the panel never shows the agent's state: it stays `Idle` with an empty bar and no draft (the agent can only ever write `document`).
 
 ### [Sub-agents](https://docs.copilotkit.ai/vue/openai-agents-python/multi-agent/subagents)
 **#11 The delegation log, the page's main feature, has no frontend code.**

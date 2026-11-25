@@ -462,7 +462,7 @@
     6
    ],
    "notes": [
-    "Issue: UI reads status/draft/progress, agent only writes document, panel stays Idle."
+    "Issue: UI reads status/draft/progress, agent only writes document, panel never shows it."
    ],
    "block": null,
    "links": [
@@ -491,12 +491,16 @@
         "text": "This is my project, I've implemented the exact code from the doc."
        },
        {
-        "at": "+",
-        "text": "This part, the writer agent that gets wrapped, wasn't on the page, so I had to add it myself."
+        "at": "added",
+        "text": "This part, the imports, wasn't on the page, so I added them myself."
+       },
+       {
+        "at": "added#2",
+        "text": "And this one, the writer agent that gets wrapped, wasn't given either, so I wrote it."
        },
        {
         "at": "demo",
-        "text": "Moving on to the demo. I asked for a short draft, the panel should show progress and the draft, but it just stays on Idle with an empty bar."
+        "text": "Moving on to the demo. I asked for a short draft, the panel should follow the agent's state and show the draft, but umm, it never shows any of it, it just stays on Idle."
        },
        {
         "at": "notepad",

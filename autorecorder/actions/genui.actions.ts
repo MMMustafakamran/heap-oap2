@@ -19,7 +19,7 @@ registerDocEvidence(FINDING_EVIDENCE);
 const NOTES: Record<string, string> = {
   'state-rendering': [
     'state rendering page says the progress panel follows the agents state live',
-    'asked for a draft,agent wrote it but the panel just stays on idle with an empty bar',
+    'asked for a draft but the panel never shows the agents state,stays on idle with an empty bar',
     'the vue component reads status draft completed and total',
     'but the agent code on the page only writes document into state,so nothing matches',
     'page also never shows the shared_state_streaming_agent it wraps,had to write that myself',
