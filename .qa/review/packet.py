@@ -367,8 +367,9 @@ ABSENCE_RE = re.compile(r"\b(nothing|no (?:card|ui|buttons?|component|surface|wi
 SHOWN_UI = ("buttons", "surface", "iframe", "canvas", "img", "svg", "input")
 
 
-def chk_contradiction(texts, cps, ui_events, win):
-    """[defect] when the note/narration says nothing showed but a ui: checkpoint passed or the UI timeline logged UI in the demo."""
+def chk_contradiction(texts, cps, ui_events, win, has_added=False):
+    """[defect] when the note/narration says nothing showed but a ui: checkpoint passed or the UI timeline logged UI in the demo.
+    [attention] instead when the page has added code: the demo may show it working on the harness addition (REVIEW.md §4a)."""
     said = [t for t in texts if ABSENCE_RE.search(t or "")]
     if not said:
         return []
@@ -379,7 +380,10 @@ def chk_contradiction(texts, cps, ui_events, win):
     what = (f"checkpoint {ok_ui[0]['label']} ok at {fmt_t(ok_ui[0].get('t', 0))}" if ok_ui else
             f"UI timeline {fmt_t(shown[0].get('t', 0))} {shown[0].get('ui')}: {str(shown[0].get('text', ''))[:60]}")
     m = ABSENCE_RE.search(said[0])
-    return [(DEFECT, f"claim-contradicted: note/narration says '{m.group(0)}' but {what}")]
+    own = has_added or any(re.search(r"\b(my own|i added|added it myself|harness|showcase|by hand)\b", t or "", re.I) for t in texts)
+    tier = ATTENTION if own else DEFECT
+    extra = " (page has added code: the UI may be the harness addition working, check which part the claim is about)" if own else ""
+    return [(tier, f"claim-contradicted: note/narration says '{m.group(0)}' but {what}{extra}")]
 
 
 def rms_windows(mp4, win=0.25):
@@ -512,7 +516,7 @@ def chk_added_code(repo, block, segs, status, marks=None, new_recorder=False):
     labels = [s.get("at") for s in segs]
     added_lines = [l for l in labels if str(l).split("#")[0] == "added"]
     ide_plus = any(labels[i] == "ide" and i + 1 < len(labels) and labels[i + 1] == "+" for i in range(len(labels)))
-    voiced = bool(added_lines) or (ide_plus and any_text)
+    voiced = bool(added_lines) or ide_plus  # `ide +` is the legacy form of the added-code line
     if segs and n_added and not voiced:
         out.append((DEFECT, f"added-code: {n_added} added block(s) ({', '.join(files) or 'addedText'}) but no `added` narration line saying it wasn't on the page"))
     if segs and added_lines and len(added_lines) > n_added:
@@ -568,20 +572,21 @@ def tile_plan(marks, cps, dur, status, events=None):
         cand.append((round(t, 1), label[:62], pri))
 
     first = {m["label"]: m["t"] for m in reversed(marks)}
+    # Segment tiles are reserved (priority -1): the cut to MAX_TILES never drops doc / evidence / ide / notepad.
     if "doc" in first:
-        add(first["doc"] + 1.5, "doc", 4, spans_next(first["doc"]))
+        add(first["doc"] + 1.5, "doc", -1, spans_next(first["doc"]))
     evs = [m for m in marks if m["label"] == "evidence"]
     for i, m in enumerate(evs[:2]):
-        add(m["t"] + 3, f"evidence{'#' + str(i + 1) if len(evs) > 1 else ''} (held)", 4 if i == 0 else 5, spans_next(m["t"]))
+        add(m["t"] + 3, f"evidence{'#' + str(i + 1) if len(evs) > 1 else ''} (held)", -1 if i == 0 else 5, spans_next(m["t"]))
     added = [m for m in marks if m["label"] == "added"]
     for i, m in enumerate(added[:2]):
-        add(m["t"] + 1.8, f"added: {str(m.get('detail', ''))[:48]}", 4 if i == 0 else 5, spans_next(m["t"]))
+        add(m["t"] + 1.8, f"added: {str(m.get('detail', ''))[:48]}", -1 if i == 0 else 5, spans_next(m["t"]))
     if "ide" in first and not added:
-        add(first["ide"] + 4, "ide", 4, spans_next(first["ide"]))
+        add(first["ide"] + 4, "ide", -1, spans_next(first["ide"]))
     if "notepad" in first:
-        add(first["notepad"] + 4, "notepad", 4, spans_next(first["notepad"]))
+        add(first["notepad"] + 4, "notepad", -1, spans_next(first["notepad"]))
     if "failure" in first:
-        add(first["failure"] + 6, "failure terminal", 1, dur)
+        add(first["failure"] + 6, "failure terminal", -1, dur)
 
     key = [e for e in events if e.get("kind") in ("ui", "step", "step-missing", "click")]
     if win and key:
@@ -612,7 +617,7 @@ def tile_plan(marks, cps, dur, status, events=None):
                 add(e["t"] + 0.5, "reply finished", 3, win[1])
             elif e.get("kind") == "step-missing":
                 add(e["t"], f"step missing: {str(e.get('label', ''))[:40]}", 1, win[1])
-        add(win[1] - 1, "demo end", 3, win[1])
+        add(win[1] - 1, "demo end", 2, win[1])
     else:
         for t, l, pri in tile_plan_legacy(marks, cps, dur):
             add(t, l, pri, win[1] if win else None)
@@ -706,7 +711,9 @@ def build_clip(clip, run_dir, repo, sections, out_dir, post_upload, run_label):
         hay = "\n".join([json.dumps(take_ev, ensure_ascii=False), errlog or "", cast,
                          json.dumps([c for c in cps if c.get("label") != "evidence"], ensure_ascii=False)])
         flags += chk_claims(texts, hay)
-        flags += chk_contradiction(texts, cps, ui_events, demo_window(marks, dur))
+        has_added = any(str(s.get("at", "")).split("#")[0] == "added" for s in segs) or bool(
+            block and (re.search(r"\baddedText\s*:", block) or re.search(r"\bideAddedText\s*:", block)))
+        flags += chk_contradiction(texts, cps, ui_events, demo_window(marks, dur), has_added)
     af, ainfo = chk_audio(mp4, fit, dur) if status in ("❌", "⚠️") or os.path.exists(mp4) else ([], {})
     if status in ("❌", "⚠️") and not os.path.exists(mp4):
         af.append((DEFECT, "audio: no narrated mp4 in this run for a ❌/⚠️ page"))
@@ -761,7 +768,10 @@ def build_clip(clip, run_dir, repo, sections, out_dir, post_upload, run_label):
         for c in exp[:6]:
             L.append(f"- {c['label'][3:]}: {'seen ' + fmt_t(c.get('t', 0)) + ' ' + repr(str(c.get('observed', ''))[:70]) if c.get('ok') else 'MISSING (checked ' + fmt_t(c.get('t', 0)) + ')'}")
     tl_rows = []
+    dwin = demo_window(marks, dur)
     for e in events:
+        if dwin and not (dwin[0] - 1 <= e.get("t", 0) <= dwin[1] + 1):
+            continue
         k = e.get("kind")
         if k == "ui":
             tl_rows.append((e.get("t", 0), f"ui {e.get('ui')}: {str(e.get('text', ''))[:70]}"))

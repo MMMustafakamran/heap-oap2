@@ -72,3 +72,9 @@ a83be1bdf5fa34bd  engine.ts
 ff299a7d49cc27a8  ide/generator.ts
 c4fc52975ae593f1  overlays/cursor.ts
 6eacd21cc8bcf864  voice.ts
+# 2026-11-25 first key-moment version (f074c49)
+9d5cd92477241a80  ui-log.ts
+36b42a55f2cde7d1  overlays/cursor.ts
+9fdf8f175d8e1d1f  actions.ts
+1e0f3f5aedc15b9e  engine.ts
+042a4bb758545743  timeline.ts

@@ -1,5 +1,5 @@
 {
-  "actions.ts": "9fdf8f175d8e1d1f",
+  "actions.ts": "53fb59fed8dd9df5",
   "cli/audio.ts": "08a138e8b7ebd46e",
   "cli/cast.ts": "b8cb1edc651d0440",
   "cli/distribute.ts": "e19afa43814cda49",
@@ -23,7 +23,7 @@
   "fast.ts": "5fb4326b213528cf",
   "ide/generator.ts": "ff299a7d49cc27a8",
   "overlays/alert-dialog.ts": "1558c8ec248df353",
-  "overlays/cursor.ts": "36b42a55f2cde7d1",
+  "overlays/cursor.ts": "225f657695a2f835",
   "overlays/human.ts": "667bce08c3cee662",
   "overlays/note-style.ts": "9091daec70b45fc1",
   "overlays/notepad.ts": "5a5c53c0ed5ec775",
@@ -33,7 +33,7 @@
   "timeline.ts": "042a4bb758545743",
   "timeouts.ts": "ba4e52b004b4fa04",
   "types.ts": "ea826287c58aa8b4",
-  "ui-log.ts": "9d5cd92477241a80",
+  "ui-log.ts": "67332d4681cc751a",
   "versions.ts": "524cafa17d36a91d",
   "voice.ts": "3365a8f9e36b6bb3"
 }

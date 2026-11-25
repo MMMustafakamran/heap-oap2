@@ -473,13 +473,18 @@ def cmd_mix(a):
     script = load_json(a.script)
     _, marks = load_timeline(a.timeline)
     total = probe_dur(a.clip)
+    # Which lines have their mark in this take (durations don't matter for that); the others are dropped.
+    present = line_starts(script["segments"], marks, [0.0] * len(script["segments"]), drop_missing=True)
     paths = []
-    for seg in script["segments"]:
+    for seg, t in zip(script["segments"], present):
+        if t is None:
+            paths.append(None)
+            continue
         p, _ = cached_audio(seg["text"], a.audio_dir, {"clip": script.get("clip"), "at": seg["at"]})
         if not p:
             sys.exit(f"error: no audio for line '{seg['at']}' - run `tts` first")
         paths.append(p)
-    starts = line_starts(script["segments"], marks, [probe_dur(p) for p in paths], drop_missing=True)
+    starts = line_starts(script["segments"], marks, [probe_dur(p) if p else 0.0 for p in paths], drop_missing=True)
     # Lines whose mark is not in this take are left out (fit reports them as dropped: no mark).
     keep = [k for k, t in enumerate(starts) if t is not None]
     for k, t in enumerate(starts):

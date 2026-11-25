@@ -369,7 +369,7 @@ export async function sendPrompt(
   const inputBox = await inputLocator.boundingBox();
   if (inputBox) {
     await humanGlide(page, inputBox.x + 80, inputBox.y + inputBox.height / 2, 18);
-    await humanClick(page);
+    await humanClick(page, { log: false });
   } else {
     await inputLocator.click();
   }
@@ -452,7 +452,7 @@ export async function sendPrompt(
       const btnBox = await submitBtn.boundingBox();
       if (btnBox) {
         await humanGlide(page, btnBox.x + btnBox.width / 2, btnBox.y + btnBox.height / 2, 16);
-        await humanClick(page);
+        await humanClick(page, { log: false });
       } else {
         await submitBtn.click();
       }

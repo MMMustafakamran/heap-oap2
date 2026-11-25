@@ -10,7 +10,7 @@
  */
 import { type Locator, type Page } from 'playwright';
 import { SELECTORS } from '../config/selectors.config';
-import { SURFACE_SELECTOR, checkpoint, keyframe, logMoment, timelineEvents, timelineNow } from './timeline';
+import { SURFACE_SELECTOR, checkpoint, currentSegment, keyframe, logMoment, timelineEvents, timelineNow } from './timeline';
 import { isFast } from './fast';
 
 /** One piece of UI the page should show once the agent has answered (PageDefinition.expectUi). */
@@ -34,6 +34,8 @@ const PROBE_MS = 3000;
 let uiCount = 0;
 let expected: ExpectUi[] = [];
 let actionStart = 0;
+let uiPage: Page | undefined;
+let checking = false;
 const seen = new Map<string, { t: number; observed: string }>();
 const hooked = new WeakSet<Page>();
 
@@ -204,6 +206,8 @@ function onUi(raw: string): void {
   }
   // One keyframe per settled batch: the observer already waited for the DOM to go quiet.
   if (logged && !isFast()) keyframe(`ui-${slug(items[0].kind)}`);
+  // Expected UI can be transient (interrupt buttons vanish once clicked): look for it on every UI change too.
+  if (uiPage && expected.length) void checkExpectUi(uiPage, 'ui');
 }
 
 /**
@@ -212,6 +216,7 @@ function onUi(raw: string): void {
  */
 export async function startUiLog(page: Page): Promise<void> {
   uiCount = 0;
+  uiPage = page;
   const cfg = {
     msg: SELECTORS.assistantMessage,
     chat: CHAT_SEL,
@@ -224,7 +229,8 @@ export async function startUiLog(page: Page): Promise<void> {
     hooked.add(page);
     await page.exposeFunction('__qaUi', (raw: string) => onUi(raw)).catch(() => {});
     page.on('load', () => {
-      if (timelineNow()) void install();
+      // Only a reload of the demo: never the failure terminal or Notepad pages that follow it.
+      if (timelineNow() && currentSegment() === 'demo') void install();
     });
   }
   await install();
@@ -267,23 +273,21 @@ async function probeOne(page: Page, item: ExpectUi): Promise<string | null> {
 }
 
 /**
- * Looks for each expected UI piece. `reply`: when the reply has finished (only notes what is seen,
- * with a keyframe). `end`: when the page action ends; emits one checkpoint `ui:<name>` per piece,
- * ok when seen at either moment, its `t` the first time it was seen (one checkpoint per name, so a
- * piece that only shows after a click never fails the probe early). Never throws.
+ * Looks for each expected UI piece not seen yet. `ui` (each UI-change batch), `click` (just before
+ * each demo click) and `reply` (reply finished) only note what is seen, with a keyframe: transient UI
+ * such as interrupt buttons that vanish once clicked is caught there. `end`: when the page action
+ * ends; emits one checkpoint `ui:<name>` per piece, ok when seen at any of those moments, its `t` the
+ * first time it was seen (one checkpoint per name, so a piece that only shows after a click never
+ * fails the probe early). Never throws.
  */
-export async function checkExpectUi(page: Page, when: 'reply' | 'end'): Promise<void> {
+export async function checkExpectUi(page: Page, when: 'ui' | 'click' | 'reply' | 'end'): Promise<void> {
   if (!expected.length || !timelineNow() || page.isClosed()) return;
-  for (const item of expected) {
-    if (seen.has(item.name)) continue;
-    const observed = await Promise.race([
-      probeOne(page, item).catch(() => null),
-      new Promise<null>((r) => setTimeout(() => r(null), PROBE_MS)),
-    ]);
-    if (observed) {
-      seen.set(item.name, { t: timelineNow(), observed });
-      if (when === 'reply' && !isFast()) keyframe(`ui-${slug(item.name)}`);
-    }
+  if (checking && when !== 'end') return;
+  checking = true;
+  try {
+    await lookForExpected(page, when);
+  } finally {
+    checking = false;
   }
   if (when !== 'end') return;
   for (const item of expected) {
@@ -292,6 +296,20 @@ export async function checkExpectUi(page: Page, when: 'reply' | 'end'): Promise<
     void checkpoint(`ui:${item.name}`, expect, () => hit?.observed ?? null, hit ? { t: hit.t } : {});
   }
   expected = [];
+}
+
+async function lookForExpected(page: Page, when: string): Promise<void> {
+  for (const item of expected) {
+    if (seen.has(item.name)) continue;
+    const observed = await Promise.race([
+      probeOne(page, item).catch(() => null),
+      new Promise<null>((r) => setTimeout(() => r(null), PROBE_MS)),
+    ]);
+    if (observed) {
+      seen.set(item.name, { t: timelineNow(), observed });
+      if (when !== 'end' && !isFast()) keyframe(`ui-${slug(item.name)}`);
+    }
+  }
 }
 
 function describeExpect(i: ExpectUi): string {
