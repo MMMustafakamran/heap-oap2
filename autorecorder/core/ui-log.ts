@@ -245,7 +245,29 @@ export function setExpectUi(list: ExpectUi[] | undefined): void {
 
 async function probeOne(page: Page, item: ExpectUi): Promise<string | null> {
   if (item.changed) {
-    const hit = timelineEvents().find((e) => e.kind === 'ui' && e.ui === 'text' && e.t >= actionStart);
+    // Only state panels outside the chat count: drop text that is the chat's own (messages, composer),
+    // using the UI logger's chat/message selectors, since some chats (Vue) slip past its observer.
+    const hits = timelineEvents().filter((e) => e.kind === 'ui' && e.ui === 'text' && e.t >= actionStart);
+    if (!hits.length) return null;
+    const chatText = await page
+      .evaluate(
+        ({ sel }) => {
+          const norm = (t: string): string => t.replace(/\s+/g, ' ').trim().toLowerCase();
+          const out: string[] = [];
+          for (const el of Array.from(document.querySelectorAll(sel))) out.push(norm((el as HTMLElement).innerText || ''));
+          for (const el of Array.from(document.querySelectorAll('textarea, input, [contenteditable="true"]'))) {
+            out.push(norm((el as HTMLInputElement).value || (el as HTMLElement).innerText || ''));
+          }
+          return out.join('  ');
+        },
+        { sel: `${SELECTORS.assistantMessage}, ${CHAT_SEL}` },
+      )
+      .catch(() => '');
+    const norm = (t: string): string => t.replace(/\s+/g, ' ').trim().toLowerCase();
+    const hit = hits.find((e) => {
+      const t = norm(String(e.text ?? ''));
+      return t && !chatText.includes(t);
+    });
     return hit ? `text changed: ${String(hit.text ?? '')}` : null;
   }
   let loc: Locator;

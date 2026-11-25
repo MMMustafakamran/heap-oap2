@@ -139,3 +139,14 @@ export function voiceHoldMs(label: string): number {
   for (let k = i + 1; k < plan.segs.length && plan.segs[k].at === '+'; k++) end += FOLLOW_GAP + plan.durs[k];
   return Math.max(0, Math.round((end + SAFETY - timelineNow()) * 1000));
 }
+
+/**
+ * Whether the take's script has a line at `key` (`label#n`; `#1` also matches the bare label).
+ * No script → false. Independent of the voice being on, so probes select the same blocks as takes.
+ * ADDED blocks are selected only when voiced (owner, 2026-11-25).
+ */
+export function voiceHasLine(key: string): boolean {
+  if (!plan) return false;
+  const [label, n] = key.split('#');
+  return plan.segs.some((s) => s.at === key || (Number(n || 1) === 1 && s.at === label));
+}

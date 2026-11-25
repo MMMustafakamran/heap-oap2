@@ -26,13 +26,19 @@ export interface AddedBlock {
   to: number;
   /** First line's text, trimmed (the `added` mark's detail). */
   text: string;
+  /** A legacy `addedText` line: always selected, voiced or not. */
+  legacy?: boolean;
 }
+
+/** Blocks in one file separated by at most this many untagged lines are one block (one mark, one voice line). */
+const MERGE_GAP = 3;
 
 /**
  * The ADDED blocks of a file, in line order. A block is a run of consecutive tagged lines; when the
  * run ends on a comment-only line (`// ADDED: helper the doc never shows` above the code), it also
  * covers the lines below it up to the first blank line, at most 6. A file whose header comment says
- * ADDED is one block: the header plus its first lines, never the whole file.
+ * ADDED is one block: the header plus its first lines, never the whole file. Blocks separated by
+ * at most 3 untagged lines merge into one (owner, 2026-11-25).
  */
 export function addedBlocks(lines: readonly string[]): AddedBlock[] {
   const out: AddedBlock[] = [];
@@ -56,7 +62,7 @@ export function addedBlocks(lines: readonly string[]): AddedBlock[] {
       }
     }
     const prev = out[out.length - 1];
-    if (prev && i + 1 <= prev.to + 1) prev.to = Math.max(prev.to, j + 1);
+    if (prev && i + 1 <= prev.to + 1 + MERGE_GAP) prev.to = Math.max(prev.to, j + 1);
     else out.push({ from: i + 1, to: j + 1, text: lines[start].trim() });
     i = j;
   }
@@ -81,7 +87,7 @@ export function selectionsFor(
       continue;
     }
     if (blocks.some((b) => n >= b.from && n <= b.to)) continue;
-    blocks.push({ from: n, to: n, text: lines[n - 1].trim() });
+    blocks.push({ from: n, to: n, text: lines[n - 1].trim(), legacy: true });
   }
   blocks.sort((a, b) => a.from - b.from);
   return { blocks, missing };

@@ -3,7 +3,7 @@ import { basename, dirname, isAbsolute, join } from 'node:path';
 import { chromium, type Browser, type BrowserContext, type Page } from 'playwright';
 import { executePageAction } from '../actions';
 import { spawnSync } from 'node:child_process';
-import { endTimeline, mark, saveTimeline, setTimelinePage, startTimeline, timelineCheckpoints, timelineEvents } from './timeline';
+import { endTimeline, mark, saveTimeline, setTimelinePage, startTimeline, timelineCheckpoints, timelineEvents, timelineMarks } from './timeline';
 import { selectionsFor } from './code-tags';
 import { checkExpectUi, setExpectUi, startUiLog } from './ui-log';
 import { diagnoseError } from './diagnostics';
@@ -26,7 +26,7 @@ import {
 import { pickShell, runFailureTerminal } from './failure-terminal';
 import { generateIdeHtml, type IdeTabConfig } from './ide/generator';
 import { closeNotepad, openNotepad, typeInNotepad } from './overlays/notepad';
-import { loadVoicePlan, voiceGate, voiceHoldMs, voiceTail } from './voice';
+import { loadVoicePlan, voiceGate, voiceHasLine, voiceHoldMs, voiceTail } from './voice';
 import { setFast } from './fast';
 import { humanClick, humanGlide, humanScrollDown, restCursorSomewhere, sleep } from './overlays/cursor';
 import { between, jitter, pause, seedTake } from './overlays/human';
@@ -931,6 +931,15 @@ export class RecordingEngine {
       );
 
       for (const b of blocks) {
+        // An ADDED block is selected only when the clip's script voices this `added#N` (a file shared
+        // by several pages carries other pages' blocks); legacy addedText lines always are.
+        const n = timelineMarks().filter((m) => m.label === 'added').length + 1;
+        if (!b.legacy && !voiceHasLine(`added#${n}`)) {
+          console.log(`   ↪️  ${basename(tabs[idx].filePath)}:${b.from} ADDED block not voiced (no added#${n} line): scrolled past`);
+          await humanScrollCodeViewport(page, b.from, idx);
+          await pause(900);
+          continue;
+        }
         await humanScrollCodeViewport(page, b.from, idx);
         await voiceGate('added');
         mark('added', `${basename(tabs[idx].filePath)}: ${b.text.slice(0, 100)}`);
