@@ -45,7 +45,7 @@ Segments in order, each starting at a mark:
 | notepad | `notepad` | ❌/⚠️ full clips only. Notepad with the three-part note (doc says / happened / why it broke), casual text |
 | outro | `notepad-closed`, `end` | Notepad closed, end of clip |
 | terminal | `terminal`, `console` | Optional log window; red log text is normal |
-| failure | `failure` | Failed takes only: the **end-of-clip error terminal** (see rule b) |
+| failure | `failure` | Failed takes only: the **end-of-clip error terminal**, a Windows Terminal / PowerShell window (see rule b) |
 
 ## 4. Two rules that override first impressions
 
@@ -56,8 +56,10 @@ status mismatch: the page is still ❌ because it doesn't work *as published*. O
 the clip hides that a harness addition was needed (no note, no narration, and the report says ✅).
 
 **(b) The terminal window at the end of failure clips is intentional.** A failed take ends with a
-window titled `Error console — <page-id>`: a real bash session where `ls logs/`, `tail -n 25
-<log>` and `grep -n -i -E ... <log>` are typed and their real output shown. It shows the viewer the real terminal error.
+Windows Terminal window titled `Windows PowerShell` (older clips: `Error console — <page-id>` or a Git Bash
+title), large, over a dimmed backdrop: a real PowerShell session (pwsh on Linux CI with a Windows-style `PS C:\...>`
+prompt; bash fallback) where `ls logs`, `Get-Content <log> -Tail 25` and `Select-String -Path <log> -Pattern ...`
+(bash: `ls logs/`, `tail`, `grep`) are pasted in and their real output shown. It shows the viewer the real terminal error.
 **Never flag it**: not as an overlay, not as a glitch, not as "a harness failure on screen". Its
 red text is not an overlay. Do read it, and read `logs/<page-id>.error.log`: its **Recorder verdict** section (not on camera) is the recorder's summary of the error.
 

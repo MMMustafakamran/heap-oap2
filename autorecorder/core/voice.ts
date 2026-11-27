@@ -66,11 +66,20 @@ export function loadVoicePlan(root: string, pageId: string, clip: string): void 
   plan = { segs, durs: segs.map((s) => dur.get(s.text) ?? words(s.text) / WPS) };
 }
 
+/**
+ * Where the saved clip will start (s, timeline clock): trim-head cuts the still head, so a mark
+ * before it (the `doc` mark) is played at the cut, not at its own time. Set by the cursor's first move.
+ */
+let headFloor = 0;
+export function setVoiceHeadFloor(s: number): void {
+  headFloor = s > 0 ? s : 0;
+}
+
 function resolve(key: string): number | null {
   const [label, n] = key.split('#');
   const hits = timelineMarks().filter((m) => m.label === label);
   const i = Number(n || 1) - 1;
-  return i < hits.length ? hits[i].t : null;
+  return i < hits.length ? Math.max(hits[i].t, headFloor) : null;
 }
 
 /** Voice end (s, timeline clock) of each line before `upto`; null for lines whose mark hasn't fired. */

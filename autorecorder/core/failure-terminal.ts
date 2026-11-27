@@ -24,7 +24,7 @@
  */
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, statSync } from 'node:fs';
-import { dirname, join, relative, sep } from 'node:path';
+import { basename, dirname, join, relative, sep } from 'node:path';
 import { type Cast } from './cli/cast';
 import { PtySession, sleep } from './cli/session';
 import { type LogSource, findAnchor } from './failure-evidence';
@@ -60,12 +60,75 @@ function gitForWindowsRoot(): string | null {
   return null;
 }
 
-/** A prompt that shows only the folder name: no user, no host, no full path. */
-const BASH_PS1 = '\\[\\e[32m\\]\\W\\[\\e[0m\\] $ ';
+/**
+ * The Git Bash prompt as a Windows user sees it: a blank line, then
+ * user@host MINGW64 ~/Desktop/<folder> (main), then "$ " on its own line.
+ * A fixed string: `\\w` would print the real machine path.
+ */
+export function gitBashPs1(folder: string): string {
+  const f = folder.replace(/[^A-Za-z0-9._-]/g, '');
+  return `\\n\\[\\e[32m\\]QS@DESKTOP \\[\\e[35m\\]MINGW64 \\[\\e[33m\\]~/Desktop/${f}\\[\\e[36m\\] (main)\\[\\e[0m\\]\\n$ `;
+}
 
-export function pickShell(): ShellSpec | null {
+/** Window title Git Bash shows for that folder. */
+export function gitBashTitle(folder: string): string {
+  return `MINGW64:/c/Users/QS/Desktop/${folder.replace(/[^A-Za-z0-9._-]/g, '')}`;
+}
+
+/**
+ * Startup for the PowerShell tab: a prompt that shows the Windows-style
+ * project path (never the real machine path), `ls` as Get-ChildItem in a
+ * Windows-looking table, then a clean screen with the banner a Windows
+ * Terminal PowerShell tab shows.
+ */
+export function powershellStartup(folder: string): string {
+  const f = folder.replace(/[^A-Za-z0-9._-]/g, '');
+  return [
+    // Windows: the real prompt (it matches the "Directory:" line ls prints).
+    // Elsewhere (Linux pwsh) a Windows-style path, since /home/... would give it away.
+    `if ($IsLinux -or $IsMacOS) { function global:prompt { 'PS C:\\Users\\QS\\Desktop\\${f}> ' } }`,
+    // Linux pwsh: `ls` is /bin/ls and its own table shows UnixMode/User/Group.
+    `if ($IsLinux -or $IsMacOS) { Remove-Item Alias:ls -ErrorAction SilentlyContinue; function global:ls { Get-ChildItem @args | Format-Table @{n='Mode';e={'-a----'}},@{n='LastWriteTime';e={$_.LastWriteTime.ToString('M/d/yyyy  h:mm tt')};a='right'},Length,Name -AutoSize } } else { Set-Alias ls Get-ChildItem -Option AllScope -Force }`,
+    `try { $Host.UI.RawUI.WindowTitle = 'Windows PowerShell' } catch {}`,
+    `Clear-Host`,
+    `Write-Host 'Windows PowerShell'`,
+    `Write-Host 'Copyright (C) Microsoft Corporation. All rights reserved.'`,
+    `Write-Host ''`,
+  ].join('; ');
+}
+
+const PS_PROMPT = /PS [^\n]*>\s*$/;
+
+/** pwsh from PATH, if installed. */
+function findPwsh(): string | null {
+  try {
+    const cmd = process.platform === 'win32' ? 'where' : 'which';
+    const out = execFileSync(cmd, ['pwsh'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).split(/\r?\n/)[0].trim();
+    return out && existsSync(out) ? out : null;
+  } catch {
+    return null;
+  }
+}
+
+export function pickShell(folder = 'project'): ShellSpec | null {
+  // A Windows Terminal PowerShell tab is what the clip shows: pwsh where it
+  // exists (Linux runners have it), else Windows PowerShell; bash only as a fallback.
+  if (!process.env.QA_FAILURE_SHELL) {
+    const psArgs = ['-NoLogo', '-NoProfile', '-NoExit', '-Command', powershellStartup(folder)];
+    const pwsh = findPwsh();
+    if (pwsh) return { kind: 'powershell', file: pwsh, args: psArgs, env: { TERM: 'xterm-256color' }, prompt: PS_PROMPT };
+    if (process.platform === 'win32') {
+      const ps = join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
+      if (existsSync(ps)) return { kind: 'powershell', file: ps, args: psArgs, env: {}, prompt: PS_PROMPT };
+    }
+  }
+  return pickBash(folder);
+}
+
+function pickBash(folder: string): ShellSpec | null {
   const bashEnv = (extraPath?: string): Record<string, string> => ({
-    PS1: BASH_PS1,
+    PS1: gitBashPs1(folder),
+    MSYSTEM: 'MINGW64',
     HISTFILE: '/dev/null',
     TERM: 'xterm-256color',
     CHERE_INVOKING: '1', // Git Bash: stay in the cwd we start it in
@@ -214,11 +277,12 @@ export function failureCommands(kind: ShellKind, rootDir: string, logs: LogSourc
       cmds.push(`grep -n -i -E --color=always "${GREP_PATTERN}" ${q(p(rel(rootDir, grepLog.path)))} | tail -n 8`);
     }
   } else {
-    const q = (s: string) => `'${s.replace(/'/g, "''")}'`;
-    for (const d of dirs.length ? dirs : ['logs']) cmds.push(`Get-ChildItem ${q(d)} -Name`);
-    for (const l of chosen) cmds.push(`Get-Content ${q(rel(rootDir, l.path))} -Tail 25`);
+    const w = (s: string) => s.split(/[\\/]+/).join('\\');
+    const q = (s: string) => (/^[\w.\\-]+$/.test(s) ? s : `'${s.replace(/'/g, "''")}'`);
+    for (const d of dirs.length ? dirs : ['logs']) cmds.push(`ls ${q(w(d))}`);
+    for (const l of chosen) cmds.push(`Get-Content ${q(w(rel(rootDir, l.path)))} -Tail 25`);
     if (grepLog) {
-      cmds.push(`Select-String -Pattern '${GREP_PATTERN}' ${q(rel(rootDir, grepLog.path))} | Select-Object -Last 8`);
+      cmds.push(`Select-String -Path ${q(w(rel(rootDir, grepLog.path)))} -Pattern '${GREP_PATTERN}' | Select-Object -Last 10`);
     }
   }
   return cmds;
@@ -234,6 +298,8 @@ export interface FailureTerminalOptions {
   onData: (data: string) => void;
   /** Stop early (e.g. the overall time bound ran out). */
   signal?: { aborted: boolean };
+  /** Runs right before each paste (the recorder clicks into the window first). */
+  beforePaste?: (index: number) => Promise<void>;
   /** This take's verdict + browser console text: decides which silent, crashed logs belong to it (pickLogs). */
   takeText?: string;
 }
@@ -244,7 +310,7 @@ export interface FailureTerminalOptions {
  * be started.
  */
 export async function runFailureTerminal(opts: FailureTerminalOptions): Promise<{ cast: Cast; commands: string[]; shell: string }> {
-  const shell = pickShell();
+  const shell = pickShell(basename(opts.rootDir));
   if (!shell) throw new Error('no shell found for the failure terminal (bash / powershell)');
   const commands = failureCommands(shell.kind, opts.rootDir, opts.logs, opts.takeText ?? '');
 
@@ -264,8 +330,9 @@ export async function runFailureTerminal(opts: FailureTerminalOptions): Promise<
     if (!ready.matched) throw new Error(`shell prompt did not appear in 15s (${shell.file})`);
     await sleep(between(700, 1100));
 
-    for (const cmd of commands) {
+    for (const [ci, cmd] of commands.entries()) {
       if (opts.signal?.aborted) break;
+      if (opts.beforePaste) await opts.beforePaste(ci).catch(() => {});
       // Pasted in one go, not typed (owner, 2026-11-09), then a short look before Enter.
       session.send(cmd);
       await sleep(between(600, 1000));

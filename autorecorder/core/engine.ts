@@ -23,14 +23,15 @@ import {
   writeFailureLog,
   type LogSource,
 } from './failure-evidence';
-import { pickShell, runFailureTerminal } from './failure-terminal';
+import { gitBashTitle, pickShell, runFailureTerminal } from './failure-terminal';
+import { trimClipHead } from './trim-head';
 import { generateIdeHtml, type IdeTabConfig } from './ide/generator';
 import { closeNotepad, openNotepad, typeInNotepad } from './overlays/notepad';
 import { loadVoicePlan, voiceGate, voiceHasLine, voiceHoldMs, voiceTail } from './voice';
 import { setFast } from './fast';
-import { humanClick, humanGlide, humanScrollDown, restCursorSomewhere, sleep } from './overlays/cursor';
+import { firstCursorMoveS, getGlobalCursorPos, humanClick, humanGlide, humanScrollDown, resetIdle, restCursorSomewhere, sleep } from './overlays/cursor';
 import { between, jitter, pause, seedTake } from './overlays/human';
-import { clickTaskbarApp, ensureOverlays } from './overlays/taskbar';
+import { carryCursorToNextPage, clickTaskbarApp, ensureOverlays, IDE_ROUTE_PATH, installOverlayInitScript, TERMINAL_ROUTE_PATH } from './overlays/taskbar';
 import { timeoutsFor } from './timeouts';
 import { docEvidenceFor, highlightDocEvidence, type DocEvidenceItem } from './doc-evidence';
 import { type ActionContext, type PageRecordConfig, type RecorderTimeouts } from './types';
@@ -242,10 +243,10 @@ function withWindowFade(html: string): string {
  * Virtual path the simulated IDE is served from, on the frontend's own origin.
  * Intercepted by Playwright and fulfilled from memory -- it never reaches Next.js.
  */
-const IDE_ROUTE_PATH = '/__autorecord_ide__';
+// IDE_ROUTE_PATH: imported from overlays/taskbar (the first-frame overlay script reads it too).
 
 /** Same trick for the terminal window: served from memory, never from Next.js. */
-const TERMINAL_ROUTE_PATH = '/__autorecord_terminal__';
+// TERMINAL_ROUTE_PATH: imported from overlays/taskbar.
 
 /** One terminal segment of a CLI video. */
 export interface CliRecordSegment {
@@ -577,6 +578,9 @@ export class RecordingEngine {
       },
     });
 
+    // Taskbar and cursor on the first frame of every navigation (no pop-in after load).
+    await installOverlayInitScript(context);
+
     // A page's `docStorage` (e.g. the docs site's persisted framework tab) is in place before the
     // first script of every page runs, warm-up included.
     if (docStorage && Object.keys(docStorage).length) {
@@ -649,6 +653,9 @@ export class RecordingEngine {
         if (existsSync(finalWebm)) unlinkSync(finalWebm);
         await video.saveAs(finalWebm);
         saveTimeline(finalWebm.replace(/[.]webm$/, '.timeline.json'), baseFilename, videoDurationS(finalWebm));
+        // Cut the still doc page at the head (starts ~1 s before the first cursor move). Runs before
+        // anything reads the timeline (CI fit/mix, checks, review packets): every t shifts with it.
+        trimClipHead(finalWebm, firstCursorMoveS());
         await video.delete().catch(() => {});
         if (announceSuccess) {
           console.log(`\n🎥 [RECORDING SUCCESSFUL]: ${finalWebm}\n`);
@@ -696,8 +703,8 @@ export class RecordingEngine {
       return Date.now() - started;
     }
 
-    // Press at the start of the first line.
-    await humanGlide(page, first.x + 6, first.y + first.height / 2, 18);
+    // Press a few px before the first glyph of the first line.
+    await humanGlide(page, first.x - (2 + between(0, 4)), first.y + first.height / 2);
     await sleep(between(60, 140));
     await page.evaluate(`(function(){var c=document.getElementById('playwright-virtual-mouse');if(c)c.style.transform='translate(-4px, -2px) scale(0.9)';})()`).catch(() => {});
     await paint(from);
@@ -714,6 +721,15 @@ export class RecordingEngine {
       await page.evaluate(`(function(){var c=document.getElementById('playwright-virtual-mouse');if(c){c.style.left='${x.toFixed(1)}px';c.style.top='${y.toFixed(1)}px';}})()`).catch(() => {});
       await paint(n);
       await sleep(jitter(stepMs, 0.35));
+    }
+    // Sometimes one line too far, then back up onto the last one.
+    if (between(0, 1) < 0.25 && (await rowBox(to + 1))) {
+      const yo = bottom + first.height;
+      await page.evaluate(`(function(){var c=document.getElementById('playwright-virtual-mouse');if(c){c.style.top='${yo.toFixed(1)}px';}})()`).catch(() => {});
+      await paint(to + 1);
+      await sleep(between(140, 260));
+      await page.evaluate(`(function(){var c=document.getElementById('playwright-virtual-mouse');if(c){c.style.top='${bottom.toFixed(1)}px';}})()`).catch(() => {});
+      await paint(to);
     }
 
     // Release, and leave the cursor resting on the selection.
@@ -748,9 +764,16 @@ export class RecordingEngine {
     nextApp: 'vscode' | 'chrome' | 'terminal',
     timeouts: RecorderTimeouts,
     evidence: DocEvidenceItem[] = [],
+    navigateNext?: () => Promise<unknown>,
   ): Promise<string | null> {
+    // A spot near (cx, cy), never the same pixel twice: +-60-120 px on each axis.
+    const near = (cx: number, cy: number): [number, number] => [
+      cx + (between(0, 1) < 0.5 ? -1 : 1) * between(60, 120),
+      cy + (between(0, 1) < 0.5 ? -1 : 1) * between(60, 120),
+    ];
     console.log(`\n📖 Step 1: Navigating to Official Doc (${docUrl})...`);
     try {
+      await carryCursorToNextPage(page);
       await page.goto(docUrl, { waitUntil: 'domcontentloaded', timeout: timeouts.docNavMs });
 
       // Fast check for doc header / content readiness
@@ -773,8 +796,10 @@ export class RecordingEngine {
       const hydration = waitForDocSettled(page, 6000);
 
       // Crisp pause so viewer registers the doc title, then glide straight into reading
-      await sleep(500);
-      await humanGlide(page, 960, 380, 16);
+      {
+        const [rx, ry] = near(960, 380);
+        await humanGlide(page, rx, ry);
+      }
 
       if (!(await hydration)) {
         console.warn(`   ⚠️ Doc page height still changing after 6s; scrolling anyway.`);
@@ -801,7 +826,8 @@ export class RecordingEngine {
         // the two read as "this code, in our file".
         await dragSelectDocCode(page, codeBox);
       } else {
-        await humanGlide(page, 650, 450, 18);
+        const [rx, ry] = near(650, 450);
+        await humanGlide(page, rx, ry);
       }
       // A beat on the selected snippet before switching apps.
       await pause(900);
@@ -811,7 +837,7 @@ export class RecordingEngine {
       await highlightDocEvidence(page, evidence);
 
       console.log(`   🖱️ Switching to ${nextApp} via Windows 11 Taskbar...`);
-      await clickTaskbarApp(page, nextApp);
+      await clickTaskbarApp(page, nextApp, navigateNext);
       return null;
     } catch (e) {
       const note = `Doc page (${docUrl}): ${diagnoseError(e, 'doc-page')}`;
@@ -869,12 +895,12 @@ export class RecordingEngine {
     return tabs;
   }
 
-  private async showIde(
-    page: Page,
-    tabs: IdeTabConfig[],
-    origin: string,
-    opts: { dwellMs: number; clickTabs: boolean },
-  ): Promise<void> {
+  /**
+   * Builds the IDE window and registers its in-memory route, so the switch
+   * into it can start the moment the taskbar tile is clicked (building it
+   * after the click -- highlighting every file -- was most of a 2.8 s switch).
+   */
+  private async prepareIde(page: Page, tabs: IdeTabConfig[], origin: string): Promise<string> {
     const [first, ...extra] = tabs;
     const ideHtml = await generateIdeHtml(
       this.rootDir,
@@ -888,9 +914,25 @@ export class RecordingEngine {
     await page.route(ideUrl, (route) =>
       route.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: withWindowFade(ideHtml) }),
     );
-    await page.goto(ideUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
+    return ideUrl;
+  }
+
+  private async showIde(
+    page: Page,
+    tabs: IdeTabConfig[],
+    origin: string,
+    opts: { dwellMs: number; clickTabs: boolean; preparedUrl?: string; alreadyOpen?: boolean },
+  ): Promise<void> {
+    const ideUrl = opts.preparedUrl ?? (await this.prepareIde(page, tabs, origin));
+    if (!opts.alreadyOpen) {
+      await carryCursorToNextPage(page);
+      await page.goto(ideUrl, { waitUntil: 'commit', timeout: 20000 });
+    }
+    await page.waitForSelector('#ide-view-0', { state: 'attached', timeout: 15000 });
+    // Line positions depend on the embedded code font: measure only once it is in.
+    await page.evaluate(() => (document as any).fonts?.ready).catch(() => {});
     await ensureOverlays(page, 'vscode');
-    await sleep(300);
+    await sleep(150);
 
     for (let idx = 0; idx < tabs.length; idx++) {
       if (idx > 0) {
@@ -993,9 +1035,20 @@ export class RecordingEngine {
   /** Serves the terminal window for `opts.cast` and navigates to it. Returns its URL. */
   private async openTerminalWindow(
     page: Page,
-    opts: { cast: Cast; title?: string; origin?: string },
+    opts: { cast: Cast; title?: string; origin?: string; live?: boolean; viaTaskbar?: boolean },
   ): Promise<string> {
-    const terminalHtml = withWindowFade(generateTerminalHtml({ cast: opts.cast, title: opts.title }));
+    // Live terminal opens over the other apps: the current screen (minus the
+    // drawn cursor) becomes the backdrop behind the new window.
+    let backdrop: string | undefined;
+    if (opts.live) {
+      try {
+        await page.evaluate(`(function(){var c=document.getElementById('playwright-virtual-mouse');if(c)c.style.visibility='hidden';})()`);
+        const shot = await page.screenshot({ type: 'jpeg', quality: 82 });
+        await page.evaluate(`(function(){var c=document.getElementById('playwright-virtual-mouse');if(c)c.style.visibility='visible';})()`);
+        backdrop = `data:image/jpeg;base64,${shot.toString('base64')}`;
+      } catch {}
+    }
+    const terminalHtml = generateTerminalHtml({ cast: opts.cast, title: opts.title, live: opts.live, backdrop });
     const terminalUrl = new URL(
       TERMINAL_ROUTE_PATH,
       opts.origin ?? PROJECT.frontendUrl,
@@ -1008,9 +1061,26 @@ export class RecordingEngine {
         body: terminalHtml,
       }),
     );
-    await page.goto(terminalUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
+    const go = () => page.goto(terminalUrl, { waitUntil: 'commit', timeout: 20000 });
+    let opened = false;
+    if (opts.viaTaskbar) {
+      try {
+        await clickTaskbarApp(page, 'terminal', async () => {
+          await go();
+          opened = true;
+        });
+      } catch {
+        // The page under it may be wedged (an error overlay, a dead renderer): just open it.
+      }
+    }
+    if (!opened) {
+      await carryCursorToNextPage(page);
+      await go();
+    }
+    await page.waitForSelector('#term-host', { state: 'attached', timeout: 15000 });
+    await page.evaluate('window.__termReady').catch(() => {});
     await ensureOverlays(page, 'terminal');
-    await sleep(400);
+    await sleep(150);
     return terminalUrl;
   }
 
@@ -1047,9 +1117,10 @@ export class RecordingEngine {
       console.warn('   Evidence note: no bash/powershell found, terminal not shown on camera');
       return;
     }
-    const title = `Error console — ${pageId}`;
-    const cols = 120;
-    const rows = 32;
+    // Looks like the Git Bash window it is (the page id stays in the logs and the cast file name).
+    const title = shell.kind === 'bash' ? gitBashTitle(basename(this.rootDir)) : 'Windows PowerShell';
+    let cols = 110;
+    let rows = 28;
     const abort = { aborted: false };
     // PTY chunks go to the window in order, one evaluate at a time.
     let writes: Promise<unknown> = Promise.resolve();
@@ -1068,8 +1139,18 @@ export class RecordingEngine {
               events: [],
             },
             title,
+            live: true,
+            viaTaskbar: true,
           });
-          await sleep(500);
+          // Grid sized to the window before the shell starts, so its output wraps where xterm does.
+          const fit = (await page.evaluate('window.__termFit && window.__termFit()').catch(() => null)) as
+            | { cols: number; rows: number }
+            | null;
+          if (fit && fit.cols > 0 && fit.rows > 0) {
+            cols = fit.cols;
+            rows = fit.rows;
+          }
+          await sleep(300);
           const run = await runFailureTerminal({
             rootDir: this.rootDir,
             logs,
@@ -1078,6 +1159,19 @@ export class RecordingEngine {
             rows,
             onData: write,
             signal: abort,
+            // Click into the terminal where the prompt is, a short beat, then the paste.
+            beforePaste: async (ci) => {
+              await writes;
+              const at = (await page
+                .evaluate(`(function(){var h=document.querySelector('.xterm-cursor-layer')||document.getElementById('term-host');var r=document.getElementById('term-host').getBoundingClientRect();var c=document.querySelector('.xterm-helper-textarea');var cr=c?c.getBoundingClientRect():null;return {x:(cr&&cr.left>r.left?cr.left:r.left+40),y:Math.min(r.bottom-24,(cr&&cr.top>r.top?cr.top+10:r.top+r.height/2)),l:r.left,r:r.right};})()`)
+                .catch(() => null)) as { x: number; y: number; l: number; r: number } | null;
+              if (at) {
+                const x = Math.min(at.r - 40, Math.max(at.l + 30, at.x + between(20, 160)));
+                if (ci === 0 || Math.abs(getGlobalCursorPos().y - at.y) > 40) await humanGlide(page, x, at.y);
+                await humanClick(page, { hoverMs: [40, 90], log: false });
+              }
+              await sleep(between(80, 200));
+            },
             // Which silent, crashed server logs belong to this take (never another page's dead server).
             takeText: [error, ...consoleEntries.map((e) => `${e.text} ${e.source ?? ''}`)].join('\n'),
           });
@@ -1116,6 +1210,7 @@ export class RecordingEngine {
     console.log(`======================================================`);
 
     seedTake(req.id);
+    resetIdle();
     restCursorSomewhere();
 
     const warnings: string[] = [];
@@ -1358,6 +1453,7 @@ export class RecordingEngine {
     console.log(`======================================================`);
 
     seedTake(config.id);
+    resetIdle();
     restCursorSomewhere();
 
     const timeouts = timeoutsFor(config);
@@ -1474,7 +1570,30 @@ export class RecordingEngine {
       await voiceGate('doc');
 
       mark('doc');
-      const docNote = await this.showDocPage(page, config.docUrl, 'vscode', timeouts, docEvidenceFor(config.id, config.findingEvidence));
+      const ideTabs = this.withVersionsTab([
+        { filePath: config.ideFile, startLine: config.startLine, endLine: config.endLine, addedText: config.ideAddedText },
+        ...(config.extraTabs ?? []),
+      ]);
+      let ideUrl: string | undefined;
+      let ideOpened = false;
+      try {
+        ideUrl = await this.prepareIde(page, ideTabs, config.demoUrl);
+      } catch (e) {
+        console.warn(`   ⚠️ IDE prebuild failed, building it after the switch: ${diagnoseError(e, 'ide-simulation')}`);
+      }
+      const docNote = await this.showDocPage(
+        page,
+        config.docUrl,
+        'vscode',
+        timeouts,
+        docEvidenceFor(config.id, config.findingEvidence),
+        ideUrl
+          ? async () => {
+              await page.goto(ideUrl!, { waitUntil: 'commit', timeout: 20000 });
+              ideOpened = true;
+            }
+          : undefined,
+      );
       if (docNote) warnings.push(docNote);
 
       // ----------------------------------------------------
@@ -1487,15 +1606,12 @@ export class RecordingEngine {
         `\n💻 Step 2: Displaying Project Code in VS Code IDE (${config.ideFile}: lines ${config.startLine}-${config.endLine})...`,
       );
       try {
-        await this.showIde(
-          page,
-          this.withVersionsTab([
-            { filePath: config.ideFile, startLine: config.startLine, endLine: config.endLine, addedText: config.ideAddedText },
-            ...(config.extraTabs ?? []),
-          ]),
-          config.demoUrl,
-          { dwellMs: hasExtraTabs ? 1500 : 1800, clickTabs: true },
-        );
+        await this.showIde(page, ideTabs, config.demoUrl, {
+          dwellMs: hasExtraTabs ? 1500 : 1800,
+          clickTabs: true,
+          preparedUrl: ideUrl,
+          alreadyOpen: ideOpened,
+        });
 
         // Straight to the terminal when this page has a server to show starting;
         // otherwise back to the browser for the demo.

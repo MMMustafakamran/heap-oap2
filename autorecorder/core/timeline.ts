@@ -59,6 +59,11 @@ const FRAME_RETRY_MS = 2000;
 const PROBE_TIMEOUT_MS = 3000;
 
 const now = (): number => Math.round((Date.now() - t0) / 100) / 10;
+
+/** Seconds since the take's video started (0 before a take). */
+export function timelineSeconds(): number {
+  return t0 ? (Date.now() - t0) / 1000 : 0;
+}
 const clip = (s: unknown): string => {
   const text = String(s ?? '');
   return text.length > MAX_TEXT ? `${text.slice(0, MAX_TEXT)}…` : text;

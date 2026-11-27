@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs';
+import { codiconFace, ICON_FAMILY, monoFontFace, MONO_STACK, uiFontFace, VSCODE_UI_STACK as UI_STACK } from '../assets/fonts';
 import { basename, join } from 'node:path';
 import { createHighlighter, type Highlighter } from 'shiki';
 
@@ -111,6 +112,18 @@ async function highlightLines(code: string, ext: string): Promise<string[]> {
   }
 }
 
+/** One Codicons glyph (see assets/fonts.ts). */
+function ci(code: string, size = 16, extra = ''): string {
+  return `<i class="ci" style="font-size:${size}px;${extra}">&#x${code};</i>`;
+}
+const CI = {
+  files: 'eaf0', search: 'ea6d', scm: 'ea68', debug: 'eb91', extensions: 'eae6', beaker: 'ea79',
+  account: 'eb99', gear: 'eb51', chevronRight: 'eab6', chevronDown: 'eab4', close: 'ea76', ellipsis: 'ea7c',
+  arrowLeft: 'ea9b', arrowRight: 'ea9c', layoutLeft: 'ebf3', layoutPanel: 'ec01', layoutRight: 'ec00',
+  layout: 'ebeb', split: 'eb56', branch: 'ea68', sync: 'ea77', error: 'ea87', warning: 'ea6c', bell: 'eaa2',
+  method: 'ea8c', klass: 'eb5b', remote: 'eb3a', check: 'eab2', copilot: 'ec1e',
+} as const;
+
 function getFileIcon(ext: string): string {
   const isTsx = ext === 'tsx' || ext === 'ts' || ext === 'js' || ext === 'jsx';
   const isPython = ext === 'py';
@@ -197,13 +210,13 @@ export async function generateIdeHtml(
           onclick="window.switchIdeTab(${idx})"
           style="${
             isActive
-              ? 'background:#1f1f1f;border-top:1px solid #0078d4;color:#ffffff;'
+              ? 'background:#1f1f1f;box-shadow:inset 0 1px 0 #0078d4;border-top:1px solid #0078d4;color:#ffffff;'
               : 'background:#181818;border-top:1px solid transparent;color:#9d9d9d;'
           }"
         >
           <span class="file-icon">${icon}</span>
-          <span>${escapeHtml(fileName)}</span>
-          <span class="close-btn">&#x2715;</span>
+          <span style="${tab.scrollOnly ? 'font-style:italic;' : ''}">${escapeHtml(fileName)}</span>
+          <span class="close-btn" style="visibility:${isActive ? 'visible' : 'hidden'}">${ci(CI.close, 16)}</span>
         </div>
       `;
     })
@@ -218,6 +231,18 @@ export async function generateIdeHtml(
       const normalizedPath = tab.filePath.replace(/\\/g, '/');
       const pathParts = normalizedPath.split('/');
       const codeLines = code.split('\n');
+      // Indent guides: one level per indent unit of leading whitespace; blank
+      // lines take the smaller level of their neighbours, as the editor does.
+      const unit = ext === 'py' ? 4 : 2;
+      const lead = codeLines.map((l) => (l.trim() ? Math.floor((l.match(/^[ \t]*/)?.[0].replace(/\t/g, '    ').length ?? 0) / unit) : -1));
+      const levels = lead.map((lv, i) => {
+        if (lv >= 0) return lv;
+        let a = 0;
+        for (let k = i - 1; k >= 0; k--) if (lead[k] >= 0) { a = lead[k]; break; }
+        let b = 0;
+        for (let k = i + 1; k < lead.length; k++) if (lead[k] >= 0) { b = lead[k]; break; }
+        return Math.min(a, b);
+      });
 
       const linesHtml = codeLines
         .map((line, lIdx) => {
@@ -235,10 +260,12 @@ export async function generateIdeHtml(
           const snippetAttr = isHighlighted ? ' data-snippet="1"' : '';
           const caretHtml = isCaretLine ? '<span class="vs-caret"></span>' : '';
 
+          const lv = levels[lIdx] ?? 0;
+          const guides = lv > 0 ? `<i class="ig" style="width:${lv * unit}ch;background-size:${unit}ch 100%"></i>` : '';
           return `
-            <div class="code-line" data-line="${lineNum}"${snippetAttr}>
-              <div class="line-num">${lineNum}</div>
-              <div class="line-content"><span>${highlightedContent}${caretHtml}</span></div>
+            <div class="code-line${isCaretLine ? ' current-line' : ''}" data-line="${lineNum}"${snippetAttr}>
+              <div class="line-num${isCaretLine ? ' current' : ''}">${lineNum}</div>
+              <div class="line-content">${guides}<span>${highlightedContent}${caretHtml}</span></div>
             </div>
           `;
 
@@ -273,10 +300,17 @@ export async function generateIdeHtml(
               }
               <span>${escapeHtml(part)}</span>
             </span>
-            ${!isLast ? '<span class="breadcrumb-sep">&rsaquo;</span>' : ''}
+            ${!isLast ? `<span class="breadcrumb-sep">${ci(CI.chevronRight, 16)}</span>` : ''}
           `;
         })
         .join('');
+      // The symbol the caret sits in, as the breadcrumb bar shows it.
+      const symMatch =
+        /^\s*export\s+(?:default\s+)?(?:async\s+)?(function|class|interface|const|type)\s+(\w+)/m.exec(code) ??
+        /^\s*(def|class)\s+(\w+)/m.exec(code);
+      const symbolHtml = symMatch
+        ? `<span class="breadcrumb-sep">${ci(CI.chevronRight, 16)}</span><span class="breadcrumb-item">${ci(/class|interface|type/.test(symMatch[1]) ? CI.klass : CI.method, 16, 'color:' + (/class|interface|type/.test(symMatch[1]) ? '#ee9d28' : '#b180d7'))}<span>${escapeHtml(symMatch[2])}</span></span>`
+        : '';
 
       const isDisplayed = idx === activeTabIdx;
 
@@ -285,7 +319,7 @@ export async function generateIdeHtml(
         isDisplayed ? 'flex' : 'none'
       };flex-direction:column;flex:1;overflow:hidden;">
           <div class="breadcrumbs-bar">
-            ${breadcrumbsHtml}
+            ${breadcrumbsHtml}${symbolHtml}
           </div>
           <div class="editor-body">
             <div class="code-viewport">
@@ -300,47 +334,57 @@ export async function generateIdeHtml(
     })
     .join('');
 
-  // Build tree nodes for primary file + extra tabs
-  const primaryParts = primaryFilePath.replace(/\\/g, '/').split('/');
-  const treeNodes: string[] = [];
-
-  for (let i = 0; i < primaryParts.length; i++) {
-    const isFile = i === primaryParts.length - 1;
-    const part = primaryParts[i];
-    const indentClass = i === 0 ? '' : `pl-${Math.min(i, 4)}`;
-
-    if (isFile) {
-      const ext = part.split('.').pop() ?? '';
-      treeNodes.push(`
-        <div class="tree-node ${indentClass} file-node active-file" data-tab-idx="0" onclick="window.switchIdeTab(0)">
-          <span class="file-icon">${getFileIcon(ext)}</span>
-          <span class="file-label">${escapeHtml(part)}</span>
-        </div>
-      `);
-    } else {
-      treeNodes.push(`
-        <div class="tree-node ${indentClass} folder-node">
-          <svg class="chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#c5c5c5" stroke-width="1.3"><path d="m4 6 4 4 4-4"/></svg>
-          <span class="folder-name">${escapeHtml(part)}</span>
-        </div>
-      `);
+  // Explorer: one tree built from every open file's path, folders first, so
+  // backend files sit under backend/ and nothing is listed under the wrong folder.
+  interface TreeDir { dirs: Map<string, TreeDir>; files: Map<string, number> }
+  const rootTree: TreeDir = { dirs: new Map(), files: new Map() };
+  tabsList.forEach((tab, tIdx) => {
+    const parts = tab.filePath.replace(/\\/g, '/').split('/').filter(Boolean);
+    let node = rootTree;
+    for (const dir of parts.slice(0, -1)) {
+      if (!node.dirs.has(dir)) node.dirs.set(dir, { dirs: new Map(), files: new Map() });
+      node = node.dirs.get(dir)!;
     }
-  }
-
-  // Extra files in tree
-  extraTabs.forEach((extra, eIdx) => {
-    const eParts = extra.filePath.replace(/\\/g, '/').split('/');
-    const eName = eParts[eParts.length - 1];
-    const eExt = eName.split('.').pop() ?? '';
-    const eIndent = `pl-${Math.min(eParts.length - 1, 4)}`;
-
-    treeNodes.push(`
-      <div class="tree-node ${eIndent} file-node" data-tab-idx="${eIdx + 1}" onclick="window.switchIdeTab(${eIdx + 1})">
-        <span class="file-icon">${getFileIcon(eExt)}</span>
-        <span class="file-label">${escapeHtml(eName)}</span>
-      </div>
-    `);
+    const file = parts[parts.length - 1];
+    if (!node.files.has(file)) node.files.set(file, tIdx);
   });
+  const treeNodes: string[] = [];
+  const chevron = ci(CI.chevronDown, 16, 'color:#c5c5c5');
+  const chevronClosed = ci(CI.chevronRight, 16, 'color:#c5c5c5');
+  // Tree indent guides: one thin line per ancestor level, as the explorer draws them.
+  const guides = (depth: number): string =>
+    Array.from({ length: Math.max(0, depth - 1) }, (_, k) => `<i class="tg" style="left:${16 + k * 8}px"></i>`).join('');
+  // A few folders every project has, collapsed and greyed (git-ignored), so the tree is not just the open files.
+  if (rootTree.dirs.has('frontend')) {
+    const fe = rootTree.dirs.get('frontend')!;
+    for (const ign of ['.next', 'node_modules']) if (!fe.dirs.has(ign)) fe.dirs.set(ign, { dirs: new Map(), files: new Map() });
+  }
+  const IGNORED = new Set(['.next', 'node_modules', '__pycache__', '.venv']);
+  const walk = (node: TreeDir, depth: number): void => {
+    const byName = (a: [string, unknown], b: [string, unknown]) => a[0].localeCompare(b[0], 'en', { sensitivity: 'base' });
+    for (const [name, child] of [...node.dirs.entries()].sort(byName)) {
+      const ignored = IGNORED.has(name);
+      const empty = child.dirs.size === 0 && child.files.size === 0;
+      // Git decorations: folders holding changed files in the modified colour with a dot.
+      const deco = ignored ? 'color:#8c8c8c' : depth === 1 ? 'color:#e2c08d' : 'color:#73c991';
+      const dot = ignored ? '' : `<span class="gdot" style="background:${depth === 1 ? '#e2c08d' : '#73c991'}"></span>`;
+      treeNodes.push(`
+        <div class="tree-node folder-node" style="padding-left:${8 + depth * 8}px">
+          ${guides(depth)}${empty ? chevronClosed : chevron}
+          <span class="folder-name" style="${deco}">${escapeHtml(name)}</span>${dot}
+        </div>`);
+      walk(child, depth + 1);
+    }
+    for (const [name, tIdx] of [...node.files.entries()].sort(byName)) {
+      const ext = name.split('.').pop() ?? '';
+      treeNodes.push(`
+        <div class="tree-node file-node${tIdx === activeTabIdx ? ' active-file' : ''}" data-tab-idx="${tIdx}" style="padding-left:${8 + depth * 8 + 16}px" onclick="window.switchIdeTab(${tIdx})">
+          ${guides(depth)}<span class="file-icon">${getFileIcon(ext)}</span>
+          <span class="file-label" style="color:#e2c08d">${escapeHtml(name)}</span><span class="gtag">M</span>
+        </div>`);
+    }
+  };
+  walk(rootTree, 1);
 
   const primaryExt = basename(primaryFilePath).split('.').pop() ?? '';
   const primaryLang = getLangLabel(primaryExt);
@@ -351,6 +395,7 @@ export async function generateIdeHtml(
 <head>
   <meta charset="UTF-8">
   <title>${escapeHtml(projectName)} - Visual Studio Code</title>
+  <style>${monoFontFace()}${uiFontFace()}${codiconFace()}</style>
   <style>
     * {
       box-sizing: border-box;
@@ -361,9 +406,9 @@ export async function generateIdeHtml(
       width: 100vw;
       height: 100vh;
       overflow: hidden;
-      background-color: #1f1f1f;
+      background-color: #181818;
       color: #cccccc;
-      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+      font-family: ${UI_STACK};
       user-select: none;
       -webkit-user-select: none;
     }
@@ -371,7 +416,7 @@ export async function generateIdeHtml(
       display: flex;
       flex-direction: column;
       width: 100vw;
-      height: 100vh;
+      height: calc(100vh - 48px);
       overflow: hidden;
       animation: win11Open 0.22s cubic-bezier(0.1, 0.9, 0.2, 1);
     }
@@ -547,7 +592,7 @@ export async function generateIdeHtml(
       flex: 1;
       overflow-y: auto;
       padding: 2px 4px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: ${UI_STACK};
       font-size: 12px;
       line-height: 22px;
     }
@@ -578,6 +623,18 @@ export async function generateIdeHtml(
       color: #ffffff;
     }
     .folder-name { color: #cccccc; }
+    .pane-collapsed {
+      height: 22px;
+      border-top: 1px solid #2b2b2b;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      padding-left: 2px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #cccccc;
+      flex: none;
+    }
     .file-icon { display: flex; align-items: center; }
     /* Editor Area */
     .editor-pane {
@@ -637,7 +694,7 @@ export async function generateIdeHtml(
       display: flex;
       align-items: center;
       gap: 6px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: ${UI_STACK};
       font-size: 11px;
       color: #858585;
     }
@@ -665,10 +722,26 @@ export async function generateIdeHtml(
       flex: 1;
       overflow-y: auto;
       padding: 10px 0 60px 0;
-      font-family: Consolas, 'Cascadia Code', 'Cascadia Mono', 'Fira Code', 'DejaVu Sans Mono', 'Liberation Mono', 'Droid Sans Mono', monospace;
+      font-family: ${MONO_STACK};
       font-size: 14px;
       line-height: 22px;
       -webkit-font-smoothing: antialiased;
+    }
+    .code-viewport::-webkit-scrollbar { width: 14px; height: 14px; background: transparent; }
+    .code-viewport::-webkit-scrollbar-track { background: transparent; }
+    .code-viewport::-webkit-scrollbar-thumb { background: rgba(121, 121, 121, 0.4); border-radius: 0; }
+    .code-viewport::-webkit-scrollbar-corner { background: transparent; }
+    .code-line.current-line .line-content { box-shadow: inset 0 0 0 2px #282828; }
+    .line-num.current { color: #cccccc; }
+    .line-content { position: relative; }
+    .ig {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      pointer-events: none;
+      background-image: linear-gradient(to right, #404040 0, #404040 1px, transparent 1px);
+      background-repeat: repeat-x;
     }
     .code-line {
       display: flex;
@@ -690,7 +763,7 @@ export async function generateIdeHtml(
     .line-num {
       width: 58px;
       text-align: right;
-      padding-right: 18px;
+      padding-right: 26px;
       color: #6e7681;
       flex-shrink: 0;
       user-select: none;
@@ -778,6 +851,45 @@ export async function generateIdeHtml(
       gap: 4px;
       cursor: pointer;
     }
+    /* Look pass (2026-11-27): Selawik 13px UI, Codicons, Dark Modern chrome. */
+    .ci { font-family: '${ICON_FAMILY}'; font-style: normal; line-height: 1; display: inline-flex; align-items: center; justify-content: center; -webkit-font-smoothing: antialiased; }
+    body, html { font-size: 13px; }
+    .titlebar { height: 35px; background: #181818; font-size: 13px; position: relative; padding: 0 0 0 10px; }
+    .titlebar-left { gap: 8px; }
+    .menubar { gap: 0; font-size: 13px; color: #cccccc; }
+    .menubar span { padding: 3px 7px; }
+    .titlebar-center { width: auto; height: 26px; background: transparent; border: 0; padding: 0; gap: 10px; font-size: 13px; }
+    .nav-arrows { display: inline-flex; gap: 10px; color: #cccccc; }
+    .cc-box { width: 520px; height: 24px; background: #222222; border: 1px solid #3c3c3c; border-radius: 6px; display: flex; align-items: center; justify-content: center; gap: 6px; color: #9d9d9d; font-size: 12.5px; }
+    .titlebar-controls { gap: 0; color: #cccccc; height: 35px; }
+    .titlebar-controls .lay { display: inline-flex; gap: 12px; margin-right: 14px; }
+    .titlebar-controls .cap { width: 46px; height: 35px; display: inline-flex; align-items: center; justify-content: center; }
+    .activity-bar { padding: 4px 0; color: #868686; }
+    .activity-group { gap: 2px; }
+    .activity-icon { width: 48px; height: 48px; }
+    .activity-icon.active { color: #d7d7d7; }
+    .activity-icon.active::before { top: 0; bottom: 0; background: #0078d4; }
+    .badge { bottom: 8px; right: 6px; background: #0078d4; font-size: 9px; font-weight: 600; border-radius: 9px; padding: 1px 4px; min-width: 16px; text-align: center; }
+    .sidebar-header { font-size: 13px; text-transform: none; letter-spacing: 0; font-weight: 400; color: #cccccc; padding: 8px 12px 8px 20px; }
+    .sidebar-project { font-size: 13px; font-weight: 700; color: #cccccc; padding: 2px 4px; gap: 2px; }
+    .file-tree { font-size: 13px; line-height: 22px; padding: 0; }
+    .tree-node { gap: 4px; padding-right: 8px; }
+    .tree-node .tg { position: absolute; top: 0; bottom: 0; width: 1px; background: #585858; opacity: .45; }
+    .tree-node .gdot { width: 7px; height: 7px; border-radius: 50%; margin-left: auto; opacity: .9; }
+    .tree-node .gtag { margin-left: auto; color: #e2c08d; font-size: 12px; }
+    .tree-node.active-file { background: #37373d; outline: 1px solid #0078d4; }
+    .pane-collapsed { font-size: 11px; text-transform: uppercase; }
+    .tab { font-size: 13px; padding: 0 6px 0 10px; gap: 6px; }
+    .tab .close-btn { margin-left: 4px; padding: 2px; display: inline-flex; }
+    .tabs-right-actions { gap: 14px; color: #cccccc; }
+    .breadcrumbs-bar { font-size: 13px; height: 22px; gap: 2px; color: #a9a9a9; }
+    .breadcrumb-sep { color: #a9a9a9; display: inline-flex; }
+    .breadcrumb-item { gap: 4px; }
+    .statusbar { font-size: 12px; background: #181818; color: #cccccc; }
+    .statusbar-item .ci { margin-right: 3px; }
+    .statusbar-left, .statusbar-right { gap: 14px; }
+    .line-num { color: #6e7681; font-size: 14px; }
+    .line-num.current, .line-num.highlighted { color: #cccccc; }
   </style>
 </head>
 <body>
@@ -785,36 +897,20 @@ export async function generateIdeHtml(
     <!-- Title Bar -->
     <header class="titlebar">
       <div class="titlebar-left">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="#007acc">
-          <path d="M18.5 2.5 12 8.5 7 4.5 3.5 6v12L7 19.5l5-4 6.5 6 3-1.5V4l-3-1.5z" />
-        </svg>
+        <svg class="vs-logo" width="16" height="16" viewBox="0 0 24 24"><path fill="#0065a9" d="M17.6 1.8 8.2 10.4 4.3 7.4 2.2 8.4v7.2l2.1 1 3.9-3 9.4 8.6 4.2-2V3.8l-4.2-2z"/><path fill="#007acc" d="M17.6 1.8 8.2 10.4l3.1 2.9 6.3-4.8v-6.7z"/><path fill="#1f9cf0" d="M17.6 22.2 8.2 13.6l3.1-2.9 6.3 4.8v6.7z"/></svg>
         <div class="menubar">
-          <span>File</span>
-          <span>Edit</span>
-          <span>Selection</span>
-          <span>View</span>
-          <span>Go</span>
-          <span>Run</span>
-          <span>Terminal</span>
-          <span>Help</span>
+          <span>File</span><span>Edit</span><span>Selection</span><span>View</span><span>Go</span><span>Run</span><span>Terminal</span><span>Help</span>
         </div>
       </div>
-
       <div class="titlebar-center">
-        <div class="search-left">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#858585" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <span>${escapeHtml(projectName.toLowerCase())} &gt; ${escapeHtml(
-            primaryFilePath.replace(/\\/g, '/'),
-          )}</span>
-        </div>
-        <span class="keybadge">Ctrl + P</span>
+        <span class="nav-arrows">${ci(CI.arrowLeft, 16)}${ci(CI.arrowRight, 16, 'color:#6b6b6b')}</span>
+        <div class="cc-box">${ci(CI.search, 14)}<span>${escapeHtml(projectName)}</span></div>
       </div>
-
       <div class="titlebar-controls">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg>
-        <span>&#x2500;</span>
-        <span>&#x25A1;</span>
-        <span>&#x2715;</span>
+        <span class="lay">${ci(CI.layoutLeft, 16)}${ci(CI.layoutPanel, 16)}${ci(CI.layoutRight, 16)}${ci(CI.layout, 16)}</span>
+        <span class="cap"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 5.5h10" stroke="#ccc"/></svg></span>
+        <span class="cap"><svg width="10" height="10" viewBox="0 0 10 10"><rect x=".5" y=".5" width="9" height="9" stroke="#ccc" fill="none"/></svg></span>
+        <span class="cap"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M.5.5l9 9M9.5.5l-9 9" stroke="#ccc"/></svg></span>
       </div>
     </header>
 
@@ -823,68 +919,16 @@ export async function generateIdeHtml(
       <!-- Activity Bar -->
       <aside class="activity-bar">
         <div class="activity-group">
-          <!-- Explorer (Active): codicon "files", two stacked pages -->
-          <div class="activity-icon active">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
-              <path d="M8.5 3.5h7l4 4v11a1 1 0 0 1-1 1h-10a1 1 0 0 1-1-1v-14a1 1 0 0 1 1-1z" />
-              <path d="M15.5 3.5v4h4" />
-              <path d="M6 7.5H5a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h9" />
-            </svg>
-          </div>
-          <!-- Search -->
-          <div class="activity-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <circle cx="13.5" cy="10.5" r="6" />
-              <path d="M9.3 14.7 4 20" stroke-linecap="round" />
-            </svg>
-          </div>
-          <!-- Source Control -->
-          <div class="activity-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <circle cx="7" cy="6" r="2.2" />
-              <circle cx="7" cy="18" r="2.2" />
-              <circle cx="17" cy="9" r="2.2" />
-              <path d="M7 8.2v7.6" />
-              <path d="M17 11.2c0 3-2.5 3.6-5 4.1-2 .4-3.5 1-3.8 2.5" />
-            </svg>
-            <span class="badge">1</span>
-          </div>
-          <!-- Run & Debug: codicon "debug-alt", play with a bug -->
-          <div class="activity-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
-              <path d="M5.5 4.5v15l7.5-4.6V9.1z" />
-              <path d="M13 12.5l6.5-4V19z" />
-              <path d="M11 4.5 19 9.5" />
-              <circle cx="17.5" cy="16.5" r="2.6" fill="#181818" />
-              <path d="M17.5 13.9v-1.2M15.3 15l-1.2-.6M19.7 15l1.2-.6M15.3 18l-1.2.6M19.7 18l1.2.6M17.5 19.1v1.2" stroke-linecap="round" />
-            </svg>
-          </div>
-          <!-- Extensions: three squares and one lifted away -->
-          <div class="activity-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
-              <rect x="4" y="10" width="5.5" height="5.5" />
-              <rect x="9.5" y="15.5" width="5.5" height="5.5" />
-              <rect x="4" y="15.5" width="5.5" height="5.5" />
-              <rect x="13.5" y="3" width="6.5" height="6.5" />
-            </svg>
-          </div>
+          <div class="activity-icon active">${ci(CI.files, 24)}</div>
+          <div class="activity-icon">${ci(CI.search, 24)}</div>
+          <div class="activity-icon">${ci(CI.scm, 24)}<span class="badge">12</span></div>
+          <div class="activity-icon">${ci(CI.debug, 24)}</div>
+          <div class="activity-icon">${ci(CI.extensions, 24)}<span class="badge">1</span></div>
+          <div class="activity-icon">${ci(CI.beaker, 24)}</div>
         </div>
         <div class="activity-group">
-          <!-- Account -->
-          <div class="activity-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <circle cx="12" cy="12" r="8.5" />
-              <circle cx="12" cy="10" r="3" />
-              <path d="M6.3 18.2c1.2-2.3 3.2-3.4 5.7-3.4s4.5 1.1 5.7 3.4" />
-            </svg>
-          </div>
-          <!-- Manage (gear) -->
-          <div class="activity-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="2.8" />
-              <path d="M12 3.5l1.3 2.2 2.5-.6.7 2.5 2.5.7-.6 2.5 2.1 1.2-2.1 1.3.6 2.5-2.5.7-.7 2.5-2.5-.6L12 20.5l-1.3-2.1-2.5.6-.7-2.5-2.5-.7.6-2.5L3.5 12l2.1-1.2-.6-2.5 2.5-.7.7-2.5 2.5.6z" />
-            </svg>
-          </div>
+          <div class="activity-icon">${ci(CI.account, 24)}</div>
+          <div class="activity-icon">${ci(CI.gear, 24)}</div>
         </div>
       </aside>
 
@@ -892,17 +936,17 @@ export async function generateIdeHtml(
       <div class="sidebar">
         <div class="sidebar-header">
           <span>Explorer</span>
-          <span style="color:#858585;cursor:pointer;">&#x22EF;</span>
+          <span style="color:#cccccc;">${ci(CI.ellipsis, 16)}</span>
         </div>
         <div class="sidebar-project">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <path d="m6 9 6 6 6-6" />
-          </svg>
-          <span>${escapeHtml(projectName.toUpperCase())}</span>
+          ${ci(CI.chevronDown, 16)}
+          <span>${escapeHtml(projectName)}</span>
         </div>
         <div class="file-tree">
           ${treeNodes.join('')}
         </div>
+        <div class="pane-collapsed">${ci(CI.chevronRight, 16)}<span>Outline</span></div>
+        <div class="pane-collapsed">${ci(CI.chevronRight, 16)}<span>Timeline</span></div>
       </div>
 
       <!-- Editor Pane -->
@@ -911,10 +955,7 @@ export async function generateIdeHtml(
           <div class="tabs-left">
             ${tabHeadersHtml}
           </div>
-          <div class="tabs-right-actions">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M3 3h18v18H3z"/></svg>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
-          </div>
+          <div class="tabs-right-actions">${ci(CI.split, 16)}${ci(CI.ellipsis, 16)}</div>
         </div>
 
         ${tabBodiesHtml}
@@ -924,31 +965,19 @@ export async function generateIdeHtml(
     <!-- Status Bar -->
     <footer class="statusbar">
       <div class="statusbar-left">
-        <span class="statusbar-item" style="background:#1f8ad2;padding:0 6px;margin-left:-10px;height:100%;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 8l-4 4 4 4M17 8l4 4-4 4"/></svg>
-        </span>
-        <span class="statusbar-item">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="18" cy="18" r="3" />
-            <circle cx="6" cy="6" r="3" />
-            <path d="M18 15V9a9 9 0 0 0-9-9" />
-            <path d="M6 9v12" />
-          </svg>
-          main*
-        </span>
-        <span class="statusbar-item">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-          0&#x2193; 1&#x2191;
-        </span>
-        <span class="statusbar-item">&#x2297; 0 &nbsp;&#x26A0; 0</span>
+        <span class="statusbar-item" style="background:#0078d4;color:#fff;padding:0 9px;margin-left:-10px;height:100%;">${ci(CI.remote, 16)}</span>
+        <span class="statusbar-item">${ci(CI.branch, 16)} main*</span>
+        <span class="statusbar-item">${ci(CI.sync, 16)}</span>
+        <span class="statusbar-item">${ci(CI.error, 16)} 0 ${ci(CI.warning, 16)} 0</span>
       </div>
       <div class="statusbar-right">
         <span class="statusbar-item">Ln ${startLine}, Col 1</span>
-        <span class="statusbar-item">Spaces: 2</span>
+        <span class="statusbar-item">Spaces: ${primaryExt === 'py' ? 4 : 2}</span>
         <span class="statusbar-item">UTF-8</span>
-        <span class="statusbar-item">${primaryLang}</span>
-        <span class="statusbar-item">Prettier &#x2713;</span>
-        <span class="statusbar-item">&#x1F514;</span>
+        <span class="statusbar-item">LF</span>
+        <span class="statusbar-item">{ } ${primaryLang}</span>
+        <span class="statusbar-item">${ci(CI.check, 16)} Prettier</span>
+        <span class="statusbar-item">${ci(CI.bell, 16)}</span>
       </div>
     </footer>
   </div>
@@ -960,6 +989,8 @@ export async function generateIdeHtml(
       var view = document.getElementById('ide-view-' + idx);
       if (!view) return;
       var rows = view.querySelectorAll('.code-line[data-line]');
+      var cur = view.querySelectorAll('.current-line');
+      for (var c = 0; c < cur.length; c++) cur[c].classList.remove('current-line');
       for (var i = 0; i < rows.length; i++) {
         var n = Number(rows[i].getAttribute('data-line'));
         var on = n >= from && n <= to;
@@ -979,12 +1010,16 @@ export async function generateIdeHtml(
           tabs[i].classList.add('active');
           tabs[i].style.background = '#1f1f1f';
           tabs[i].style.borderTop = '1px solid #0078d4';
+          tabs[i].style.boxShadow = 'inset 0 1px 0 #0078d4';
           tabs[i].style.color = '#ffffff';
+          var cb = tabs[i].querySelector('.close-btn'); if (cb) cb.style.visibility = 'visible';
         } else {
           tabs[i].classList.remove('active');
           tabs[i].style.background = '#181818';
           tabs[i].style.borderTop = '1px solid transparent';
+          tabs[i].style.boxShadow = 'none';
           tabs[i].style.color = '#9d9d9d';
+          var cbi = tabs[i].querySelector('.close-btn'); if (cbi) cbi.style.visibility = 'hidden';
         }
         if (views[i]) views[i].style.display = i === idx ? 'flex' : 'none';
       }

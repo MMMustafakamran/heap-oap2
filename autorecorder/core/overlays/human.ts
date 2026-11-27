@@ -16,14 +16,33 @@ import { isFast } from '../fast';
  */
 
 let state = 0x9e3779b9;
+/**
+ * A second stream for idle movement during waits. A wait lasts as long as the
+ * agent takes, so the number of idle moves differs between runs; drawing them
+ * from the main stream would shift every later pause of the take.
+ */
+let idleState = 0x85ebca6b;
+
+function step(s: number): [number, number] {
+  s = (s + 0x6d2b79f5) | 0;
+  let t = s;
+  t = Math.imul(t ^ (t >>> 15), t | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return [s, ((t ^ (t >>> 14)) >>> 0) / 4294967296];
+}
 
 /** mulberry32: small, fast, good enough for pacing. */
 function next(): number {
-  state = (state + 0x6d2b79f5) | 0;
-  let t = state;
-  t = Math.imul(t ^ (t >>> 15), t | 1);
-  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  const [s, v] = step(state);
+  state = s;
+  return v;
+}
+
+/** Draw from the idle stream (see idleState). */
+export function idleRand(): number {
+  const [s, v] = step(idleState);
+  idleState = s;
+  return v;
 }
 
 /** Reseeds from a string. Call once at the start of every take. */
@@ -34,6 +53,7 @@ export function seedTake(id: string): void {
     h = Math.imul(h, 16777619);
   }
   state = h | 0;
+  idleState = (h ^ 0x27d4eb2f) | 0;
   // Discard the first few draws: consecutive seeds otherwise start close.
   next();
   next();
@@ -93,6 +113,51 @@ export function beat(ms: number): Promise<void> {
   return sleep(jitter(ms * PACE, 0.15));
 }
 
+/** QWERTY neighbours (same row and the rows above/below), lower case. */
+const NEIGHBOURS: Record<string, string> = {
+  q: 'wa', w: 'qeas', e: 'wrsd', r: 'etdf', t: 'ryfg', y: 'tugh', u: 'yihj', i: 'uojk', o: 'ipkl', p: 'ol',
+  a: 'qwsz', s: 'awedxz', d: 'serfcx', f: 'drtgvc', g: 'ftyhbv', h: 'gyujnb', j: 'huikmn', k: 'jiolm', l: 'kop',
+  z: 'asx', x: 'zsdc', c: 'xdfv', v: 'cfgb', b: 'vghn', n: 'bhjm', m: 'njk',
+};
+
+export interface TypoPlan {
+  /** Index in the text of the letter that is mistyped. */
+  index: number;
+  /** The neighbouring key typed instead (same case). */
+  wrong: string;
+}
+
+/**
+ * About one prompt in three gets exactly one typo: a QWERTY neighbour for a
+ * letter, never in the first or last two characters, never on a space or
+ * punctuation, never inside a URL- or code-like token. Drawn from the take's
+ * seed, so the same take makes the same slip. `TYPO_TEST=1` forces one (testing).
+ */
+export function planTypo(text: string): TypoPlan | null {
+  const roll = next();
+  const pick = next();
+  const key = next();
+  if (!(roll < 1 / 3 || process.env.TYPO_TEST === '1')) return null;
+  const candidates: number[] = [];
+  const re = /\S+/g;
+  for (let m = re.exec(text); m; m = re.exec(text)) {
+    const tok = m[0];
+    // URL / code-ish: anything with a slash, dot inside, @, colon, brackets, underscores, digits, quotes...
+    if (/[\/@:_<>{}()\[\]=`$#%&*+|\\~"]|\w\.\w|\d/.test(tok)) continue;
+    for (let i = 0; i < tok.length; i++) {
+      const at = m.index + i;
+      if (at < 2 || at >= text.length - 2) continue;
+      if (/[A-Za-z]/.test(tok[i]) && NEIGHBOURS[tok[i].toLowerCase()]) candidates.push(at);
+    }
+  }
+  if (!candidates.length) return null;
+  const index = candidates[Math.floor(pick * candidates.length)];
+  const ch = text[index];
+  const opts = NEIGHBOURS[ch.toLowerCase()];
+  const w = opts[Math.floor(key * opts.length)];
+  return { index, wrong: ch === ch.toUpperCase() ? w.toUpperCase() : w };
+}
+
 export interface TypeRhythm {
   /** Mean per-character delay. Ordinary typing sits around 60-90ms. */
   charDelayMs?: number;
@@ -126,10 +191,24 @@ export function keystrokeDelay(ch: string, opts: TypeRhythm = {}): number {
  * every key with no variation — the most machine-like thing a chat clip can
  * show, and it was in every one.
  */
-export async function humanType(page: Page, text: string, opts: TypeRhythm = {}): Promise<void> {
+export async function humanType(
+  page: Page,
+  text: string,
+  opts: TypeRhythm & { typo?: TypoPlan | null; onTypo?: () => void } = {},
+): Promise<void> {
   if (isFast()) return page.keyboard.type(text);
+  let i = 0;
   for (const ch of text) {
+    if (opts.typo && opts.typo.index === i) {
+      // Wrong key, a beat to notice it, Backspace, then the right one.
+      opts.onTypo?.();
+      await page.keyboard.type(opts.typo.wrong);
+      await sleep(150 + next() * 150);
+      await page.keyboard.press('Backspace');
+      await sleep(40 + next() * 50);
+    }
     await page.keyboard.type(ch);
     await sleep(keystrokeDelay(ch, opts));
+    i++;
   }
 }

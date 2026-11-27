@@ -2,8 +2,8 @@ import { type Page } from 'playwright';
 import { SELECTORS } from '../config/selectors.config';
 import { consoleMark, fatalConsoleError } from './console-capture';
 import { dismissAlertOverlay, installAlertOverlay } from './overlays/alert-dialog';
-import { beat, humanClick, humanGlide, idleNudge, sleep } from './overlays/cursor';
-import { chance, humanType, pause } from './overlays/human';
+import { beat, humanClick, humanGlide, idleDrift, sleep } from './overlays/cursor';
+import { chance, humanType, pause, planTypo } from './overlays/human';
 import { TIMEOUTS } from './timeouts';
 import { checkExpectUi, logStep } from './ui-log';
 import { SURFACE_SELECTOR, checkpoint, logAction, probeText } from './timeline';
@@ -189,6 +189,8 @@ export async function waitForAgentResponseCompletion(
         );
       }
     }
+    // Waiting for the first token: the hand is not frozen either.
+    await idleDrift(page);
     await sleep(300);
   }
 
@@ -206,9 +208,9 @@ export async function waitForAgentResponseCompletion(
     while (Date.now() - streamStart < streamTimeoutMs) {
       // A reader's hand is not still for twenty seconds. Every second or so,
       // a small drift — biased downward, following the text as it arrives.
-      if (++polls % 3 === 0 && chance(0.7)) {
-        await idleNudge(page, 4);
-      }
+      // Idle stream, so a long or short wait never shifts the take's other moves.
+      ++polls;
+      await idleDrift(page, 4);
       // The compared value is the reply text plus what else the turn renders: the number of
       // assistant messages, generative-UI surfaces and frames, and how much they show. A reply
       // whose text sat still while a tool built its UI ("Building quicksort visualiser...",
@@ -410,12 +412,30 @@ export async function sendPrompt(
     // recovering from a swallowed submit, and is typed quickly rather than
     // performed a second time.
     if (attempt === 1) {
-      await humanType(page, prompt, { charDelayMs: 95 }); // slower, like a person (owner, 2026-11-09)
+      // Sometimes one slip, corrected at once (planTypo: ~1 in 3 prompts, seeded).
+      const typo = planTypo(prompt);
+      await humanType(page, prompt, {
+        charDelayMs: 95, // slower, like a person (owner, 2026-11-09)
+        typo,
+        onTypo: () => typo && logAction('typo', inputSelector, 'ok', { at: typo.index, wrong: typo.wrong, right: prompt[typo.index] }),
+      });
     } else {
       await page.keyboard.type(prompt, { delay: 12 });
     }
     logAction('type', inputSelector, 'ok', { text: prompt, attempt });
     await pause(300);
+
+    // What is sent must be the prompt exactly. If the correction went wrong
+    // (or anything else changed the text), clear it and type it again plainly.
+    {
+      const val = await inputLocator.inputValue().catch(() => null);
+      if (val !== null && val.trim() && val !== prompt) {
+        console.warn(`   ⚠️ Composer holds "${val.slice(0, 60)}", not the prompt: retyping without slips.`);
+        await inputLocator.fill('').catch(() => {});
+        await page.keyboard.type(prompt, { delay: 12 });
+        await sleep(200);
+      }
+    }
 
     // React owns the value once hydrated; if it wiped what we typed, put it back.
     const typedVal = await inputLocator.inputValue().catch(() => prompt);

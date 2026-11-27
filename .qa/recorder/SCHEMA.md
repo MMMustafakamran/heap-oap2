@@ -35,6 +35,10 @@ the recorded page is created, which is when Playwright starts the video.
   reader still works.
 - `durationS` — time of the `end` mark (the page closes, and the video ends, right after). Clamped
   to the saved video's real length (ffprobe): no mark or keyframe sits past the file's end (owner, 2026-11-25).
+- `trimmedHeadS` — optional (2026-11-27): seconds cut off the start of the video at save time
+  (`core/trim-head.ts`: the still doc page before the first cursor move, kept to ~1 s). Every `t`
+  in `marks`, `checkpoints`, `keyframes` and `<clip>.events.jsonl`, and `durationS`, were already
+  shifted back by it (negatives clamp to 0), so all times match the trimmed file. Absent = no trim.
 - `recordedAt` — ISO-8601, when the clock started.
 - `page.slug` — page id from `config/pages.config.ts` (CLI flows: the flow id). `docUrl` is absent
   when the take had no doc page.

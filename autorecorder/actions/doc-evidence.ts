@@ -1,6 +1,7 @@
 import { type Locator, type Page } from 'playwright';
 import { type PageRecordConfig } from '../core/types';
-import { getGlobalCursorPos, humanGlide, idleNudge, sleep } from '../core/overlays/cursor';
+import { getGlobalCursorPos, humanGlide, idleNudge, sleep, smoothWheelBurst } from '../core/overlays/cursor';
+import { rand } from '../core/overlays/human';
 import { closeNotepad, openNotepad, typeInNotepad } from '../core/overlays/notepad';
 import { clickTaskbarApp, ensureOverlays, waitForHydration } from '../core/overlays/taskbar';
 import { checkpoint, mark, probeText } from '../core/timeline';
@@ -62,10 +63,12 @@ export async function showDocEvidence(page: Page, config: PageRecordConfig, item
     console.log(`   👉 ${item.caption}`);
     await wheelIntoView(page, target, item.text);
     await dragSelect(page, target, item.text);
-    for (let i = 0; i < 4; i++) {
+    // Hold on the selection ~2-3 s: two short looks, then a random beat.
+    for (let i = 0; i < 2; i++) {
       await sleep(900);
       await idleNudge(page);
     }
+    await sleep(200 + rand() * 1000);
   }
 }
 
@@ -122,11 +125,7 @@ async function scrollInfo(target: Locator, text?: string): Promise<{ textY: numb
 }
 
 async function wheelBurst(page: Page, delta: number): Promise<void> {
-  const notches = Math.max(2, Math.round(Math.abs(delta) / 100));
-  for (let n = 0; n < notches; n++) {
-    await page.mouse.wheel(0, delta / notches);
-    await sleep(35 + Math.random() * 45);
-  }
+  await smoothWheelBurst(Math.round(delta), (d) => page.mouse.wheel(0, d));
   await sleep(250 + Math.random() * 400);
 }
 
@@ -226,12 +225,35 @@ async function dragSelect(page: Page, target: Locator, text: string): Promise<vo
     console.warn(`   ⚠️ Text not on screen, not selecting: "${text}"`);
     return;
   }
-  await humanGlide(page, pts.sx - 3, pts.sy);
-  await sleep(300 + Math.random() * 300);
+  // A hand lands a few px before the first glyph and lets go a little past the
+  // last one; now and then it runs a word too far and pulls back.
+  const before = 2 + rand() * 4;
+  const after = rand() * 8;
+  await humanGlide(page, pts.sx - before, pts.sy);
+  await sleep(300 + rand() * 300);
   await page.mouse.down();
-  await humanGlide(page, pts.ex + 2, pts.ey, 34);
+  if (rand() < 0.3) {
+    await humanGlide(page, pts.ex + 30 + rand() * 30, pts.ey, undefined, { drag: true });
+    await sleep(120 + rand() * 120);
+  }
+  await humanGlide(page, pts.ex + after, pts.ey, undefined, { drag: true });
   await sleep(120);
   await page.mouse.up();
+  // The selection must still cover the whole evidence text; if the loose
+  // endpoints missed a glyph, select it again from the exact ends.
+  const covered = await page
+    .evaluate((want) => {
+      const got = (window.getSelection()?.toString() ?? '').replace(/\s+/g, ' ');
+      return got.includes(want.replace(/\s+/g, ' ').trim());
+    }, text)
+    .catch(() => true);
+  if (!covered) {
+    await humanGlide(page, pts.sx - 1, pts.sy);
+    await page.mouse.down();
+    await humanGlide(page, pts.ex + 1, pts.ey, undefined, { drag: true });
+    await sleep(120);
+    await page.mouse.up();
+  }
 }
 
 /** Doc evidence, then the note typed into Notepad (humanized), with timeline marks. */

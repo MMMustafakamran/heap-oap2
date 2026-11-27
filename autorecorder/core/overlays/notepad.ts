@@ -1,6 +1,7 @@
 import { type Page } from 'playwright';
 import { isFast } from '../fast';
-import { humanClick, humanGlide, sleep } from './cursor';
+import { humanClick, humanGlide, sleep, visualClick } from './cursor';
+import { between } from './human';
 import { keystrokeDelay, type TypeRhythm } from './human';
 import { keyframe, logAction, logInput } from '../timeline';
 import { loadVoicePlan, notepadVoiceMs } from '../voice';
@@ -34,19 +35,18 @@ export async function openNotepad(
   });
 
   if (coords) {
-    await humanGlide(page, coords.x, coords.y, 22);
-    await sleep(180);
-    await humanClick(page);
+    await humanGlide(page, coords.x, coords.y);
+    await humanClick(page, { hoverMs: [60, 120], log: false });
     await page.evaluate(() => {
       const tile = document.getElementById('win11-taskbar-notepad');
       const ind = document.getElementById('win11-notepad-indicator');
-      if (tile) tile.style.backgroundColor = 'rgba(255,255,255,0.08)';
+      if (tile) tile.style.backgroundColor = 'rgba(255,255,255,0.06)';
       if (ind) {
-        ind.style.background = '#60a5fa';
+        ind.style.background = '#4cc2ff';
         ind.style.width = '16px';
       }
     });
-    await sleep(450);
+    await sleep(120);
   }
 
   await page.evaluate(
@@ -73,7 +73,7 @@ export async function openNotepad(
         'overflow:hidden',
         'font-family:"Segoe UI Variable Text","Segoe UI",system-ui,sans-serif',
         'opacity:0',
-        'transition:opacity .18s ease-out,transform .18s cubic-bezier(.2,0,0,1)',
+        'transition:opacity .15s ease-out,transform .15s cubic-bezier(.2,0,0,1)',
         'pointer-events:none',
       ].join(';');
 
@@ -118,10 +118,18 @@ export async function openNotepad(
       win.appendChild(caretStyle);
 
       document.documentElement.appendChild(win);
+      const cur0 = document.getElementById('playwright-virtual-mouse');
+      if (cur0) document.documentElement.appendChild(cur0);
       // Equal z-index: the later element paints on top. Keep the window after any portal Next adds later.
       const keepOnTop = window.setInterval(() => {
         if (!win.isConnected) return window.clearInterval(keepOnTop);
-        if (document.documentElement.lastElementChild !== win) document.documentElement.appendChild(win);
+        // Window on top of the page, cursor on top of the window.
+        const cur = document.getElementById('playwright-virtual-mouse');
+        const last = document.documentElement.lastElementChild;
+        if (last !== cur || cur?.previousElementSibling !== win) {
+          document.documentElement.appendChild(win);
+          if (cur) document.documentElement.appendChild(cur);
+        }
       }, 400);
       requestAnimationFrame(() => {
         win.style.opacity = '1';
@@ -131,7 +139,7 @@ export async function openNotepad(
     { windowId: WINDOW_ID, textId: TEXT_ID, posId: POS_ID, caretId: CARET_ID, name: fileName },
   );
 
-  await sleep(650);
+  await sleep(250);
 }
 
 export type TypeOptions = TypeRhythm & {
@@ -180,7 +188,21 @@ export async function typeInNotepad(
     }
     const note = shown.join('');
     const rows = note.split('\n');
-    await sleep(500 + Math.random() * 400);
+    // A person clicks into the text area first, then pastes: glide to the
+    // first line, click, a short beat, Ctrl+V.
+    const area = await page
+      .evaluate((id: string) => {
+        const el = document.getElementById(id);
+        if (!el) return null;
+        const r = el.getBoundingClientRect();
+        return { x: r.left, y: r.top, w: r.width };
+      }, TEXT_ID)
+      .catch(() => null);
+    if (area) {
+      await humanGlide(page, area.x + 30 + between(0, Math.min(200, area.w / 3)), area.y + 18 + between(0, 10));
+      await visualClick(page);
+    }
+    await sleep(between(80, 200));
     logInput('paste'); // Ctrl+V: the page is drawn, so no real key event fires
     await page.evaluate(
       (a: { textId: string; caretId: string; posId: string; t: string; l: number; col: number }) => {

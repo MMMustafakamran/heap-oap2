@@ -57,12 +57,13 @@ These files are what `qa-kit/checks/` and the Haiku review ([instructions/REVIEW
 
 ## The end-of-clip terminal on failed takes (intentional)
 
-A take that fails ends with a terminal window titled `Error console — <page-id>` running a
-**real shell**: node-pty spawns bash (Git Bash on Windows, PowerShell only as a fallback;
-`QA_FAILURE_SHELL` overrides) in the repo root, the recorder types ordinary commands into it at
-a human rhythm (`ls logs/`, `tail -n 25 <log>` for the server logs this page wrote to, then
-`grep -n -i -E --color=always "error|exception|failed|404" <log> | tail -n 8` on the one holding
-an error-like line), and every byte the PTY prints is streamed into the window live. Nothing on
+A take that fails ends with a big Windows Terminal window titled `Windows PowerShell` (over a
+dimmed backdrop) running a **real shell**: node-pty spawns pwsh where it exists (GitHub ubuntu
+runners have it preinstalled; on Linux the prompt is a Windows-style `PS C:\Users\...>`), else
+Windows PowerShell, bash only as a fallback (`QA_FAILURE_SHELL` overrides), in the repo root. The
+recorder clicks into it and pastes ordinary commands (`ls logs`, `Get-Content <log> -Tail 25` for
+the server logs this page wrote to, then `Select-String -Path <log> -Pattern ... | Select-Object
+-Last 10` on the one holding an error-like line; bash fallback: `ls logs/`, `tail`, `grep`), and every byte the PTY prints is streamed into the window live. Nothing on
 screen is written by the recorder: no header, no verdict, no summary. **This is intentional**:
 it shows the viewer the real terminal error. Keep it; reviewers must not flag it (red text from
 grep or the servers is not an overlay). The browser console is not terminal output and is not

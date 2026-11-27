@@ -1,7 +1,8 @@
-import { type Locator, type Page } from 'playwright';
+import { type BrowserContext, type Locator, type Page } from 'playwright';
 import { logAction } from '../timeline';
 import { isFast } from '../fast';
 import { getGlobalCursorPos, humanClick, humanGlide, sleep } from './cursor';
+import { between } from './human';
 
 /**
  * Height of the simulated Windows 11 taskbar, in CSS pixels.
@@ -125,27 +126,31 @@ export const TASKBAR_APPS = {
   chrome: {
     tileId: 'win11-taskbar-chrome',
     indicatorId: 'win11-chrome-indicator',
-    // Offset from centre, used only if the tile cannot be measured — tiles are
-    // 40px on a 6px gap, so each one sits 46px right of the last.
-    fallbackOffsetX: 23,
+    // Offset from centre, used only if the tile cannot be measured: tiles are
+    // 44px on a 4px gap, so each one sits 48px right of the last.
+    fallbackOffsetX: 24,
   },
   vscode: {
     tileId: 'win11-taskbar-vscode',
     indicatorId: 'win11-vscode-indicator',
-    fallbackOffsetX: 69,
+    fallbackOffsetX: 72,
   },
   terminal: {
     tileId: 'win11-taskbar-terminal',
     indicatorId: 'win11-terminal-indicator',
-    fallbackOffsetX: 161,
+    fallbackOffsetX: 168,
   },
 } as const;
 
 export type TaskbarApp = keyof typeof TASKBAR_APPS;
 
-const ACTIVE_TILE_BG = 'rgba(255,255,255,0.08)';
-const ACTIVE_INDICATOR = '#60a5fa';
-const IDLE_INDICATOR = 'rgba(255,255,255,0.4)';
+const ACTIVE_TILE_BG = 'rgba(255,255,255,0.06)';
+const ACTIVE_INDICATOR = '#4cc2ff';
+const IDLE_INDICATOR = 'rgba(255,255,255,0.45)';
+
+/** Virtual paths of the in-memory IDE and terminal windows (engine.ts serves them). */
+export const IDE_ROUTE_PATH = '/__autorecord_ide__';
+export const TERMINAL_ROUTE_PATH = '/__autorecord_terminal__';
 
 /** JS that paints every tile for the given active app. Used by both code paths. */
 function applyActiveAppJs(activeApp: TaskbarApp): string {
@@ -166,20 +171,218 @@ function applyActiveAppJs(activeApp: TaskbarApp): string {
     .join('');
 }
 
+/* Taskbar icons: simple shapes drawn for this recorder, no product artwork copied. */
+const ICON_NOTEPAD =
+  '<svg width="24" height="24" viewBox="0 0 24 24"><defs><linearGradient id="arNpG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fd0ff"/><stop offset="1" stop-color="#2b9de6"/></linearGradient></defs>' +
+  '<rect x="4" y="3.5" width="16" height="18" rx="2.2" fill="url(#arNpG)"/><rect x="5.3" y="6.6" width="13.4" height="13.6" rx="1.2" fill="#f4fbff"/>' +
+  '<path d="M7.5 10h9M7.5 12.8h9M7.5 15.6h6" stroke="#5aa9db" stroke-width="1.1" stroke-linecap="round"/>' +
+  '<path d="M8 2.6v2.8M12 2.6v2.8M16 2.6v2.8" stroke="#1d5f93" stroke-width="1.5" stroke-linecap="round"/></svg>';
+
+const ICON_TERMINAL =
+  '<svg width="24" height="24" viewBox="0 0 24 24"><defs><linearGradient id="arTmG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5b5b5b"/><stop offset="1" stop-color="#2a2a2a"/></linearGradient></defs>' +
+  '<rect x="2.5" y="3.5" width="19" height="17" rx="3" fill="#1b1b1b" stroke="url(#arTmG)" stroke-width="1.2"/>' +
+  '<rect x="2.5" y="3.5" width="19" height="3.6" rx="1.6" fill="#3a3a3a"/>' +
+  '<path d="m6.6 10.4 3.3 2.7-3.3 2.7" stroke="#ececec" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>' +
+  '<path d="M11.6 16.6h5.4" stroke="#bdbdbd" stroke-width="1.7" stroke-linecap="round"/></svg>';
+
+const ICON_COPILOT =
+  '<svg width="24" height="24" viewBox="0 0 24 24"><defs>' +
+  '<linearGradient id="arCpA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2fb3ff"/><stop offset="1" stop-color="#2167e8"/></linearGradient>' +
+  '<linearGradient id="arCpB" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb357"/><stop offset=".55" stop-color="#f6577c"/><stop offset="1" stop-color="#b44ff0"/></linearGradient></defs>' +
+  '<path d="M7.2 4.2h6.6c1.2 0 2 .7 1.6 1.9l-3.6 11.2c-.4 1.2-1.4 2.5-3.2 2.5H5.2c-1.3 0-2-.8-1.6-2l3.5-11.1c.2-1.4.9-2.5 2.1-2.5z" fill="url(#arCpA)" opacity=".95"/>' +
+  '<path d="M10.6 4.2h6.2c1.6 0 2.6 1.1 2.1 2.7l-3.3 10.6c-.5 1.6-1.6 2.3-2.9 2.3H6.5c1.4 0 2.4-1 2.8-2.3l3.5-11.1c.3-1.3-.5-2.2-2.2-2.2z" fill="url(#arCpB)" opacity=".92"/></svg>';
+
+/**
+ * Builds (or repaints) the taskbar and the drawn cursor. Defined as a page
+ * function so the same code runs from the context init script (first frame of
+ * every navigation) and from ensureOverlays (repaint after load).
+ */
+function overlayBuilderJs(): string {
+  const tile = (id: string, inner: string, indId?: string): string =>
+    `'<div id="${id}" style="width:44px;height:40px;display:flex;align-items:center;justify-content:center;position:relative;border-radius:4px;">${inner}` +
+    (indId
+      ? `<div id="${indId}" style="position:absolute;bottom:1px;width:6px;height:3px;background:${IDLE_INDICATOR};border-radius:2px;transition:width .2s ease,background .2s ease;"></div>`
+      : '') +
+    `</div>'`;
+  const tiles = [
+    tile(
+      'win11-taskbar-start',
+      '<svg width="22" height="22" viewBox="0 0 24 24"><defs><linearGradient id="w11s" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4cc2ff"/><stop offset="1" stop-color="#0f6cbd"/></linearGradient></defs><rect x="2.5" y="2.5" width="8.6" height="8.6" rx="0.6" fill="url(#w11s)"/><rect x="12.9" y="2.5" width="8.6" height="8.6" rx="0.6" fill="url(#w11s)"/><rect x="2.5" y="12.9" width="8.6" height="8.6" rx="0.6" fill="url(#w11s)"/><rect x="12.9" y="12.9" width="8.6" height="8.6" rx="0.6" fill="url(#w11s)"/></svg>',
+    ),
+    tile(
+      'win11-taskbar-search',
+      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e5e5e5" stroke-width="1.9" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.6-4.6"/></svg>',
+    ),
+    tile(
+      'win11-taskbar-taskview',
+      '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="11" height="12" rx="2" stroke="#e5e5e5" stroke-width="1.6"/><rect x="10" y="8" width="11" height="12" rx="2" fill="#2b2b2b" stroke="#e5e5e5" stroke-width="1.6"/></svg>',
+    ),
+    tile(
+      'win11-taskbar-explorer',
+      '<svg width="24" height="24" viewBox="0 0 24 24"><path d="M2.5 5.5A1.5 1.5 0 0 1 4 4h5.2l2 2H20a1.5 1.5 0 0 1 1.5 1.5V9H2.5V5.5z" fill="#e39b1e"/><rect x="4.5" y="8" width="13" height="4" rx="0.6" fill="#3d8fe0"/><rect x="5.5" y="9" width="11" height="2.5" rx="0.4" fill="#e9f2fb"/><path d="M2.5 9.5h19v9A1.5 1.5 0 0 1 20 20H4a1.5 1.5 0 0 1-1.5-1.5v-9z" fill="#f9c43c"/><path d="M2.5 11h19v7.5A1.5 1.5 0 0 1 20 20H4a1.5 1.5 0 0 1-1.5-1.5V11z" fill="#ffd45c"/></svg>',
+      'win11-explorer-indicator',
+    ),
+    tile(
+      'win11-taskbar-chrome',
+      '<svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10.5" fill="#ffffff"/><path fill="#ea4335" d="M12 1.5C8.1 1.5 4.7 3.6 2.9 6.8l4.6 8 .1-.1A5.5 5.5 0 0 1 12 6.5h9.6A10.5 10.5 0 0 0 12 1.5z"/><path fill="#fbbc04" d="M21.6 6.5H12a5.5 5.5 0 0 1 4.8 8.2l-4.7 8.1c5.8-.1 10.4-4.7 10.4-10.4 0-2.1-.6-4.1-1.7-5.7l.8-.2z"/><path fill="#34a853" d="M7.5 14.8 2.9 6.8A10.5 10.5 0 0 0 12.1 22.8l4.7-8.1a5.5 5.5 0 0 1-9.3.1z"/><circle cx="12" cy="12" r="4.2" fill="#ffffff"/><circle cx="12" cy="12" r="3.3" fill="#4285f4"/></svg>',
+      'win11-chrome-indicator',
+    ),
+    tile(
+      'win11-taskbar-vscode',
+      '<svg width="24" height="24" viewBox="0 0 24 24"><path fill="#0065a9" d="M17.6 1.8 8.2 10.4 4.3 7.4 2.2 8.4v7.2l2.1 1 3.9-3 9.4 8.6 4.2-2V3.8l-4.2-2z"/><path fill="#007acc" d="M17.6 1.8 8.2 10.4l3.1 2.9 6.3-4.8v-6.7z"/><path fill="#1f9cf0" d="M17.6 22.2 8.2 13.6l3.1-2.9 6.3 4.8v6.7z"/><path fill="#0065a9" d="m2.2 8.4 2.1-1 6.5 4.6-6.5 4.6-2.1-1V8.4z"/></svg>',
+      'win11-vscode-indicator',
+    ),
+    tile('win11-taskbar-notepad', ICON_NOTEPAD, 'win11-notepad-indicator'),
+    tile('win11-taskbar-terminal', ICON_TERMINAL, 'win11-terminal-indicator'),
+    tile('win11-taskbar-copilot', ICON_COPILOT),
+  ].join(',\n');
+
+  return `
+  window.__arBuildOverlays = function (activeApp, curX, curY) {
+    if (window.top !== window) return;
+    var root = document.documentElement;
+    if (!root) return;
+    var bar = document.getElementById('win11-taskbar-overlay') || window.__autorecordBar;
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'win11-taskbar-overlay';
+      bar.style.cssText = 'position:fixed!important;bottom:0!important;left:0!important;width:100vw!important;height:48px!important;background:rgba(32,32,32,0.85)!important;backdrop-filter:blur(30px) saturate(150%)!important;-webkit-backdrop-filter:blur(30px) saturate(150%)!important;border-top:1px solid rgba(255,255,255,0.08)!important;box-shadow:none!important;z-index:2147483645!important;display:flex!important;align-items:center!important;justify-content:space-between!important;padding:0 8px 0 12px!important;box-sizing:border-box!important;font-family:"Segoe UI Variable Small","Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,sans-serif!important;user-select:none!important;pointer-events:auto!important;';
+      var swallow = function (e) { if (e.stopPropagation) e.stopPropagation(); if (e.preventDefault) e.preventDefault(); };
+      bar.addEventListener('mousedown', swallow, true);
+      bar.addEventListener('mouseup', swallow, true);
+      bar.addEventListener('click', swallow, true);
+      bar.innerHTML = [
+        '<div style="display:flex;align-items:center;gap:8px;padding:3px 8px;border-radius:4px;cursor:default;">',
+        '  <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.5" fill="#f59e0b"/><path d="M12 2v2.5M12 19.5V22M4.93 4.93l1.77 1.77M17.3 17.3l1.77 1.77M2 12h2.5M19.5 12H22M4.93 19.07l1.77-1.77M17.3 6.7l1.77-1.77" stroke="#fbbf24" stroke-width="1.8" stroke-linecap="round"/></svg>',
+        '  <div style="display:flex;flex-direction:column;line-height:1.15;"><span style="font-size:12px;color:#f3f3f3;">76°F</span><span style="font-size:11px;color:#a8a8a8;">Mostly sunny</span></div>',
+        '</div>',
+        '<div id="win11-taskbar-center-icons" style="display:flex;align-items:center;gap:4px;position:absolute;left:50%;transform:translateX(-50%);">',
+        ${tiles},
+        '</div>',
+        '<div style="display:flex;align-items:center;gap:4px;font-size:12px;color:#f3f3f3;">',
+        '  <div style="width:24px;height:40px;display:flex;align-items:center;justify-content:center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d6d6d6" stroke-width="2.2" stroke-linecap="round"><path d="m18 15-6-6-6 6"/></svg></div>',
+        '  <div style="padding:0 6px;font-size:12px;color:#f3f3f3;line-height:1.15;text-align:center;">ENG<br><span style="font-size:11px;color:#bdbdbd;">US</span></div>',
+        '  <div style="display:flex;align-items:center;gap:9px;padding:0 8px;height:40px;">',
+        '    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f0f0f0" stroke-width="2" stroke-linecap="round"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>',
+        '    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f0f0f0" stroke-width="2" stroke-linecap="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>',
+        '    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#f0f0f0" stroke-width="1.6"><rect x="2" y="7" width="17" height="10" rx="2"/><path d="M22 11v2" stroke-linecap="round"/><rect x="4" y="9" width="11" height="6" fill="#f0f0f0" stroke="none" rx="1"/></svg>',
+        '  </div>',
+        '  <div style="display:flex;flex-direction:column;align-items:flex-end;line-height:1.2;padding:0 8px;">',
+        '    <span id="win11-time" style="font-size:12px;color:#f3f3f3;"></span>',
+        '    <span id="win11-date" style="font-size:12px;color:#f3f3f3;"></span>',
+        '  </div>',
+        '  <div style="width:30px;height:40px;display:flex;align-items:center;justify-content:center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#e0e0e0" stroke-width="1.8" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>',
+        '  <div style="width:6px;height:40px;border-left:1px solid rgba(255,255,255,0.12);"></div>',
+        '</div>'
+      ].join('');
+      var tick = function () {
+        var now = new Date();
+        var t = document.getElementById('win11-time');
+        var d = document.getElementById('win11-date');
+        if (t) t.textContent = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+        if (d) d.textContent = now.toLocaleDateString([], { month: 'numeric', day: 'numeric', year: 'numeric' });
+      };
+      tick();
+      setInterval(tick, 1000);
+    }
+    if (!bar.isConnected) root.appendChild(bar);
+    window.__autorecordBar = bar;
+    window.__arPaintActive(activeApp);
+
+    if (!window.__autorecordOverlayGuard && window.MutationObserver) {
+      window.__autorecordOverlayGuard = new MutationObserver(function () {
+        var b = window.__autorecordBar;
+        var c = window.__autorecordCursor;
+        if (b && !b.isConnected) document.documentElement.appendChild(b);
+        if (c && !c.isConnected) document.documentElement.appendChild(c);
+      });
+      window.__autorecordOverlayGuard.observe(root, { childList: true });
+    }
+
+    var cursor = document.getElementById('playwright-virtual-mouse') || window.__autorecordCursor;
+    if (!cursor) {
+      cursor = document.createElement('div');
+      cursor.id = 'playwright-virtual-mouse';
+      cursor.style.cssText = 'position:fixed!important;width:24px!important;height:24px!important;z-index:2147483647!important;pointer-events:none!important;transform:translate(-4px,-2px)!important;transform-origin:4px 2px!important;transition:transform 0.04s ease-out!important;';
+      cursor.style.left = curX + 'px';
+      cursor.style.top = curY + 'px';
+      cursor.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" style="filter:drop-shadow(0 1px 1px rgba(0,0,0,0.28));"><path d="M4 2 L4 19.1 L8.4 15.1 L11.2 21.2 L14 19.9 L11.3 14.1 L17.2 14.1 Z" fill="#ffffff" stroke="#2b2b2b" stroke-width="1" stroke-linejoin="round"/></svg>';
+    }
+    if (!cursor.isConnected) root.appendChild(cursor);
+    window.__autorecordCursor = cursor;
+  };
+  window.__arPaintActive = function (activeApp) {
+    ${Object.keys(TASKBAR_APPS)
+      .map((a) => `if (activeApp === '${a}') { ${applyActiveAppJs(a as TaskbarApp)} }`)
+      .join('\n    ')}
+  };
+  `;
+}
+
+/**
+ * Context init script: the taskbar and cursor are on the very first painted
+ * frame of every navigation, instead of being injected after load (which
+ * showed a bare frame, then the furniture popping in). The window kind comes
+ * from the URL; the in-memory IDE and terminal windows also get a dark
+ * background from the first frame, so a switch never flashes white.
+ */
+function overlayInitScript(): string {
+  return `(function () {
+    try {
+      if (window.top !== window) return;
+      ${overlayBuilderJs()}
+      var path = location.pathname || '';
+      var app = path.indexOf('${IDE_ROUTE_PATH}') === 0 ? 'vscode' : path.indexOf('${TERMINAL_ROUTE_PATH}') === 0 ? 'terminal' : 'chrome';
+      if (app !== 'chrome' && document.documentElement) document.documentElement.style.background = '${'#181818'}';
+      var pos = window.__arCursorInit || { x: 960, y: 540 };
+      window.__arBuildOverlays(app, pos.x, pos.y);
+      // Re-attach once the parser has built <body>, in case it replaced anything.
+      document.addEventListener('DOMContentLoaded', function () {
+        var p = window.__arCursorInit || pos;
+        window.__arBuildOverlays(app, p.x, p.y);
+      });
+    } catch (e) {}
+  })();`;
+}
+
+let navSeq = 0;
+const initInstalled = new WeakSet<BrowserContext>();
+
+/** Installs the first-frame overlay script on a recording context. Once per context. */
+export async function installOverlayInitScript(context: BrowserContext): Promise<void> {
+  if (isFast() || initInstalled.has(context)) return;
+  initInstalled.add(context);
+  await context.addInitScript({ content: overlayInitScript() });
+}
+
+/**
+ * Tells the next navigation where the drawn cursor is, so it appears at the
+ * same spot on the new window's first frame. Init scripts pile up per page and
+ * their order is not guaranteed, so each carries a sequence number and only
+ * the newest one wins; it also moves an already-built cursor.
+ */
+export async function carryCursorToNextPage(page: Page): Promise<void> {
+  if (isFast()) return;
+  const { x, y } = getGlobalCursorPos();
+  const seq = ++navSeq;
+  await page
+    .addInitScript({
+      content: `(function(){var c=window.__arCursorInit;if(c&&c.seq>${seq})return;window.__arCursorInit={x:${x.toFixed(1)},y:${y.toFixed(1)},seq:${seq}};var el=document.getElementById('playwright-virtual-mouse');if(el){el.style.left='${x.toFixed(1)}px';el.style.top='${y.toFixed(1)}px';}})();`,
+    })
+    .catch(() => {});
+}
+
 /** Injects or re-attaches the Windows 11 Taskbar & Virtual Mouse overlay onto the current page */
 export async function ensureOverlays(
   page: Page,
   activeApp: TaskbarApp = 'chrome',
 ): Promise<void> {
   if (isFast()) return; // probe: no taskbar
-  const chromeInd = activeApp === 'chrome' ? ACTIVE_INDICATOR : 'transparent';
-  const vscodeInd = activeApp === 'vscode' ? ACTIVE_INDICATOR : 'transparent';
-  const terminalInd = activeApp === 'terminal' ? ACTIVE_INDICATOR : 'transparent';
   const { x: curX, y: curY } = getGlobalCursorPos();
 
   const code = `
     (function() {
-      // 0. Ensure Next.js dev indicator sits cleanly above the 48px Windows 11 taskbar
+      // Keep the Next.js dev indicator above the 48px taskbar.
       var elevateBadges = function() {
         var portals = document.querySelectorAll('nextjs-portal');
         for (var i = 0; i < portals.length; i++) {
@@ -193,177 +396,32 @@ export async function ensureOverlays(
       elevateBadges();
       setTimeout(elevateBadges, 500);
       setTimeout(elevateBadges, 1500);
-
-      // 1. Hyper-Realistic Windows 11 Fluent Taskbar
-      var bar = document.getElementById('win11-taskbar-overlay');
-      if (!bar) {
-        bar = document.createElement('div');
-        bar.id = 'win11-taskbar-overlay';
-        bar.style.cssText = 'position:fixed!important;bottom:0!important;left:0!important;width:100vw!important;height:48px!important;background:rgba(28,28,32,0.85)!important;backdrop-filter:blur(36px) saturate(180%)!important;-webkit-backdrop-filter:blur(36px) saturate(180%)!important;border-top:1px solid rgba(255,255,255,0.08)!important;box-shadow:0 -1px 8px rgba(0,0,0,0.35)!important;z-index:2147483645!important;display:flex!important;align-items:center!important;justify-content:space-between!important;padding:0 8px 0 12px!important;box-sizing:border-box!important;font-family:"Segoe UI Variable Small","Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,sans-serif!important;user-select:none!important;pointer-events:auto!important;';
-
-        var swallow = function(e) {
-          if (e.stopPropagation) e.stopPropagation();
-          if (e.preventDefault) e.preventDefault();
-        };
-        bar.addEventListener('mousedown', swallow, true);
-        bar.addEventListener('mouseup', swallow, true);
-        bar.addEventListener('click', swallow, true);
-
-        bar.innerHTML = [
-          // Left: Windows 11 Weather / Widgets Pill
-          '<div style="display:flex;align-items:center;gap:8px;padding:3px 8px;border-radius:4px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.04);cursor:default;">',
-          '  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">',
-          '    <circle cx="12" cy="12" r="4.5" fill="#f59e0b"/>',
-          '    <path d="M12 2v2.5M12 19.5V22M4.93 4.93l1.77 1.77M17.3 17.3l1.77 1.77M2 12h2.5M19.5 12H22M4.93 19.07l1.77-1.77M17.3 6.7l1.77-1.77" stroke="#fbbf24" stroke-width="1.8" stroke-linecap="round"/>',
-          '  </svg>',
-          '  <div style="display:flex;flex-direction:column;line-height:1.1;">',
-          '    <span style="font-size:11.5px;font-weight:600;color:#f3f4f6;letter-spacing:0.2px;">76°F</span>',
-          '    <span style="font-size:10px;color:#9ca3af;">Mostly Sunny</span>',
-          '  </div>',
-          '</div>',
-
-          // Center: Windows 11 Centered App Icons
-          '<div id="win11-taskbar-center-icons" style="display:flex;align-items:center;gap:3px;position:absolute;left:50%;transform:translateX(-50%);">',
-          
-          // Start Button (Fluent 4-Square)
-          '  <div id="win11-taskbar-start" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:5px;transition:background 0.15s ease;">',
-          '    <svg width="24" height="24" viewBox="0 0 24 24"><defs><linearGradient id="w11s" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4cc2ff"/><stop offset="1" stop-color="#0f6cbd"/></linearGradient></defs><rect x="2.5" y="2.5" width="8.6" height="8.6" rx="0.6" fill="url(#w11s)"/><rect x="12.9" y="2.5" width="8.6" height="8.6" rx="0.6" fill="url(#w11s)"/><rect x="2.5" y="12.9" width="8.6" height="8.6" rx="0.6" fill="url(#w11s)"/><rect x="12.9" y="12.9" width="8.6" height="8.6" rx="0.6" fill="url(#w11s)"/></svg>',
-          '  </div>',
-
-          // Search Button
-          '  <div id="win11-taskbar-search" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:5px;transition:background 0.15s ease;">',
-          '    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e5e7eb" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
-          '  </div>',
-
-          // Task View (Virtual Desktops)
-          '  <div id="win11-taskbar-taskview" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:5px;transition:background 0.15s ease;">',
-          '    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="10" height="12" rx="1.5" stroke="#e5e7eb" stroke-width="1.8"/><rect x="11" y="8" width="10" height="12" rx="1.5" fill="#ffffff" fill-opacity="0.2" stroke="#e5e7eb" stroke-width="1.8"/></svg>',
-          '  </div>',
-
-          // File Explorer (Fluent Yellow/Blue)
-          '  <div id="win11-taskbar-explorer" style="width:40px;height:40px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:5px;position:relative;transition:background 0.15s ease;">',
-          '    <svg width="26" height="26" viewBox="0 0 24 24"><path d="M2.5 5.5A1.5 1.5 0 0 1 4 4h5.2l2 2H20a1.5 1.5 0 0 1 1.5 1.5V9H2.5V5.5z" fill="#e39b1e"/><rect x="4.5" y="8" width="13" height="4" rx="0.6" fill="#3d8fe0"/><rect x="5.5" y="9" width="11" height="2.5" rx="0.4" fill="#e9f2fb"/><path d="M2.5 9.5h19v9A1.5 1.5 0 0 1 20 20H4a1.5 1.5 0 0 1-1.5-1.5v-9z" fill="#f9c43c"/><path d="M2.5 11h19v7.5A1.5 1.5 0 0 1 20 20H4a1.5 1.5 0 0 1-1.5-1.5V11z" fill="#ffd45c"/></svg>',
-          '    <div style="position:absolute;bottom:2px;width:6px;height:3px;background:rgba(255,255,255,0.4);border-radius:2px;"></div>',
-          '  </div>',
-
-          // Google Chrome
-          '  <div id="win11-taskbar-chrome" style="width:40px;height:40px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;border-radius:5px;transition:background 0.15s ease;${activeApp === 'chrome' ? 'background:rgba(255,255,255,0.08);' : ''}">',
-          '    <svg width="25" height="25" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10.5" fill="#ffffff"/><path fill="#ea4335" d="M12 1.5C8.1 1.5 4.7 3.6 2.9 6.8l4.6 8 .1-.1A5.5 5.5 0 0 1 12 6.5h9.6A10.5 10.5 0 0 0 12 1.5z"/><path fill="#fbbc04" d="M21.6 6.5H12a5.5 5.5 0 0 1 4.8 8.2l-4.7 8.1c5.8-.1 10.4-4.7 10.4-10.4 0-2.1-.6-4.1-1.7-5.7l.8-.2z"/><path fill="#34a853" d="M7.5 14.8 2.9 6.8A10.5 10.5 0 0 0 12.1 22.8l4.7-8.1a5.5 5.5 0 0 1-9.3.1z"/><circle cx="12" cy="12" r="4.2" fill="#ffffff"/><circle cx="12" cy="12" r="3.3" fill="#4285f4"/></svg>',
-          '    <div id="win11-chrome-indicator" style="position:absolute;bottom:2px;width:${activeApp === 'chrome' ? '16px' : '6px'};height:3px;background:${chromeInd || 'rgba(255,255,255,0.4)'};border-radius:2px;transition:all 0.2s ease;"></div>',
-          '  </div>',
-
-          // Visual Studio Code (Fluent Ribbon)
-          '  <div id="win11-taskbar-vscode" style="width:40px;height:40px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;border-radius:5px;transition:background 0.15s ease;${activeApp === 'vscode' ? 'background:rgba(255,255,255,0.08);' : ''}">',
-          '    <svg width="25" height="25" viewBox="0 0 24 24"><path fill="#0065a9" d="M17.6 1.8 8.2 10.4 4.3 7.4 2.2 8.4v7.2l2.1 1 3.9-3 9.4 8.6 4.2-2V3.8l-4.2-2z"/><path fill="#007acc" d="M17.6 1.8 8.2 10.4l3.1 2.9 6.3-4.8v-6.7z"/><path fill="#1f9cf0" d="M17.6 22.2 8.2 13.6l3.1-2.9 6.3 4.8v6.7z"/><path fill="#0065a9" d="m2.2 8.4 2.1-1 6.5 4.6-6.5 4.6-2.1-1V8.4z"/></svg>',
-          '    <div id="win11-vscode-indicator" style="position:absolute;bottom:2px;width:${activeApp === 'vscode' ? '16px' : '6px'};height:3px;background:${vscodeInd || 'rgba(255,255,255,0.4)'};border-radius:2px;transition:all 0.2s ease;"></div>',
-          '  </div>',
-
-          // Notepad
-          '  <div id="win11-taskbar-notepad" style="width:40px;height:40px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;border-radius:5px;transition:background 0.15s ease;">',
-          '    <svg width="22" height="22" viewBox="0 0 24 24"><rect width="20" height="20" x="2" y="2" rx="3" fill="#0284c7"/><path fill="#ffffff" d="M6 7h12v1.5H6V7zm0 4h12v1.5H6V11zm0 4h8v1.5H6V15z"/></svg>',
-          '    <div id="win11-notepad-indicator" style="position:absolute;bottom:2px;width:6px;height:3px;background:transparent;border-radius:2px;"></div>',
-          '  </div>',
-
-          // Windows Terminal
-          '  <div id="win11-taskbar-terminal" style="width:40px;height:40px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;border-radius:5px;transition:background 0.15s ease;${activeApp === 'terminal' ? `background:${ACTIVE_TILE_BG};` : ''}">',
-          '    <svg width="22" height="22" viewBox="0 0 24 24"><rect width="22" height="22" x="1" y="1" rx="4" fill="#18181b" stroke="rgba(255,255,255,0.1)" stroke-width="1"/><path d="m6 8 4 4-4 4" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/><line x1="12" y1="16" x2="17" y2="16" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/></svg>',
-          '    <div id="win11-terminal-indicator" style="position:absolute;bottom:2px;width:${activeApp === 'terminal' ? '16px' : '6px'};height:3px;background:${terminalInd || IDLE_INDICATOR};border-radius:2px;transition:all 0.2s ease;"></div>',
-          '  </div>',
-
-          // Microsoft Copilot (Fluent Butterfly)
-          '  <div id="win11-taskbar-copilot" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:5px;transition:background 0.15s ease;">',
-          '    <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#0ea5e9" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>',
-          '  </div>',
-          '</div>',
-
-          // Right: Windows 11 Action Center & System Tray
-          '<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#f3f4f6;">',
-          // Hidden icons chevron
-          '  <div style="width:26px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:4px;cursor:default;">',
-          '    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="2.2" stroke-linecap="round"><path d="m18 15-6-6-6 6"/></svg>',
-          '  </div>',
-          // Language selector
-          '  <div style="padding:4px 6px;border-radius:4px;font-size:11px;font-weight:600;color:#e5e7eb;letter-spacing:0.3px;">ENG</div>',
-          // System Status Pill (WiFi, Volume, Battery)
-          '  <div style="display:flex;align-items:center;gap:8px;padding:4px 8px;border-radius:4px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.04);cursor:default;">',
-          '    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#e5e7eb" stroke-width="2" stroke-linecap="round"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>',
-          '    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#e5e7eb" stroke-width="2" stroke-linecap="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>',
-          '    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#e5e7eb" stroke-width="1.8"><rect x="2" y="7" width="17" height="10" rx="2"/><path d="M22 11v2" stroke-linecap="round"/><rect x="4" y="9" width="13" height="6" fill="#10b981" stroke="none" rx="1"/></svg>',
-          '  </div>',
-          // Clock Pill (Time & Date)
-          '  <div style="display:flex;flex-direction:column;align-items:flex-end;line-height:1.15;padding:3px 6px;border-radius:4px;cursor:default;">',
-          '    <span id="win11-time" style="font-size:11.5px;font-weight:600;color:#f3f4f6;letter-spacing:0.2px;"></span>',
-          '    <span id="win11-date" style="font-size:10px;color:#9ca3af;"></span>',
-          '  </div>',
-          // Notification Bell
-          '  <div style="width:28px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:4px;cursor:default;">',
-          '    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>',
-          '  </div>',
-          // Show Desktop Slivers
-          '  <div style="width:3px;height:24px;border-left:1px solid rgba(255,255,255,0.15);margin-left:2px;"></div>',
-          '</div>'
-        ].join('');
-
-        document.documentElement.appendChild(bar);
-
-        var tick = function() {
-          var now = new Date();
-          var timeEl = document.getElementById('win11-time');
-          var dateEl = document.getElementById('win11-date');
-          if (timeEl) timeEl.textContent = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
-          if (dateEl) dateEl.textContent = now.toLocaleDateString([], { month: 'numeric', day: 'numeric', year: 'numeric' });
-        };
-        tick();
-        setInterval(tick, 1000);
-      } else {
-        // Bar already present from a previous page: repaint which tile is lit.
-        ${applyActiveAppJs(activeApp)}
-      }
-
-      // 1b. Keep both overlays attached across framework re-renders.
-      //
-      // React owns document.documentElement on any App Router page, so a render
-      // pass will happily delete children it did not create. waitForHydration()
-      // avoids the initial mount; this catches anything later, and costs nothing
-      // when nothing removes them.
-      if (!window.__autorecordOverlayGuard) {
-        window.__autorecordOverlayGuard = new MutationObserver(function () {
-          var b = document.getElementById('win11-taskbar-overlay') || window.__autorecordBar;
-          var c = document.getElementById('playwright-virtual-mouse') || window.__autorecordCursor;
-          if (b && !b.isConnected) document.documentElement.appendChild(b);
-          if (c && !c.isConnected) document.documentElement.appendChild(c);
-        });
-        window.__autorecordOverlayGuard.observe(document.documentElement, {
-          childList: true,
-        });
-      }
-      window.__autorecordBar = bar;
-
-      // 2. Virtual Mouse Cursor
-      var cursor = document.getElementById('playwright-virtual-mouse');
-      if (!cursor) {
-        cursor = document.createElement('div');
-        cursor.id = 'playwright-virtual-mouse';
-        cursor.style.cssText = 'position:fixed!important;top:${curY.toFixed(1)}px!important;left:${curX.toFixed(1)}px!important;width:24px!important;height:24px!important;z-index:2147483647!important;pointer-events:none!important;transform:translate(-4px,-2px)!important;transform-origin:4px 2px!important;transition:transform 0.04s ease-out!important;';
-        cursor.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" style="filter:drop-shadow(0 1px 1px rgba(0,0,0,0.28));"><path d="M4 2 L4 19.1 L8.4 15.1 L11.2 21.2 L14 19.9 L11.3 14.1 L17.2 14.1 Z" fill="#ffffff" stroke="#2b2b2b" stroke-width="1" stroke-linejoin="round"/></svg>';
-        document.documentElement.appendChild(cursor);
-      }
-      window.__autorecordCursor = cursor;
+      if (!window.__arBuildOverlays) { ${overlayBuilderJs()} }
+      window.__arBuildOverlays('${activeApp}', ${curX.toFixed(1)}, ${curY.toFixed(1)});
     })();
   `;
 
   await page.evaluate(code);
 }
 
-/** Glides virtual mouse down to Taskbar icon, clicks it, and illuminates active glow indicator */
+/**
+ * Glides to a taskbar tile, clicks it and lights its indicator.
+ *
+ * `navigate`, when given, starts right at the click (the window switch begins
+ * when the button is pressed, not after a pause) and is awaited before this
+ * returns.
+ */
 export async function clickTaskbarApp(
   page: Page,
   targetApp: TaskbarApp,
+  navigate?: () => Promise<unknown>,
 ): Promise<void> {
-  if (isFast()) return; // probe: no taskbar
+  if (isFast()) {
+    if (navigate) await navigate();
+    return; // probe: no taskbar
+  }
   const targetId = TASKBAR_APPS[targetApp].tileId;
 
-  // Get taskbar icon coordinates
   const coords = (await page.evaluate(`
     (function() {
       var el = document.getElementById('${targetId}');
@@ -378,28 +436,27 @@ export async function clickTaskbarApp(
     })()
   `)) as { x: number; y: number };
 
-  // Glide cursor down to taskbar icon
-  await humanGlide(page, coords.x, coords.y, 22);
+  // Aim somewhere on the icon, not its exact centre pixel.
+  await humanGlide(page, coords.x + between(-6, 6), coords.y + between(-5, 5));
 
-  // Hover visual effect
   await page.evaluate(`
     (function() {
       var el = document.getElementById('${targetId}');
-      if (el) el.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
+      if (el) el.style.backgroundColor = 'rgba(255, 255, 255, 0.06)';
     })()
   `);
-  await sleep(150);
 
-  // Click taskbar icon
-  await humanClick(page);
+  await humanClick(page, { hoverMs: [60, 120], log: false });
 
-  // Illuminate active indicator bar and update tile styles
   await page.evaluate(`
     (function() {
       ${applyActiveAppJs(targetApp)}
     })()
   `);
 
-  await sleep(400);
   logAction('click', `taskbar:${targetApp}`);
+  // Whatever loads next shows the cursor where the hand left it, from its first frame.
+  await carryCursorToNextPage(page);
+  if (navigate) await navigate();
+  else await sleep(120);
 }
