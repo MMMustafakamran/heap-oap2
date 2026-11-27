@@ -1105,6 +1105,7 @@ export class RecordingEngine {
     consoleEntries: ConsoleEntry[],
     logs: LogSource[],
     logsDir: string,
+    demoUrl = '',
   ): Promise<void> {
     let evidence;
     try {
@@ -1118,7 +1119,8 @@ export class RecordingEngine {
     if (page.isClosed()) return;
     // The server's own terminal when start-all.sh ran it in a PTY (.qa/tools/ptyrun.cjs):
     // the real output, live, nothing typed. Otherwise a shell reading the logs (below).
-    const takeText = [error, ...consoleEntries.map((e) => `${e.text} ${e.source ?? ''}`)].join('\n');
+    // The demo URL names the dev server serving this page (a compile error standing there counts).
+    const takeText = [error, demoUrl, ...consoleEntries.map((e) => `${e.text} ${e.source ?? ''}`)].join('\n');
     // Rule: a terminal only when it shows this take's error. The failure is on screen in the
     // demo (nothing rendered, a wrong reply) and no server printed an error: no terminal at all.
     if (!pickLogs(logs, 3, takeText).grepLog) {
@@ -1864,7 +1866,7 @@ export class RecordingEngine {
       await voiceTail().catch(() => {}); // the last line (e.g. a level-2 demo ending) plays out
       if (recordError) {
         mark('failure', recordError.slice(0, 160));
-        await this.showFailureEvidence(page, config.id, recordError, console_?.entries ?? [], logSources, logsDir);
+        await this.showFailureEvidence(page, config.id, recordError, console_?.entries ?? [], logSources, logsDir, config.demoUrl);
       }
 
       finalSavedFilename = await this.closeStage(

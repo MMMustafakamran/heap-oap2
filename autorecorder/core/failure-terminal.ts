@@ -190,6 +190,33 @@ function endsInCrash(src: LogSource): boolean {
   }
 }
 
+const BUILD_ERROR = /\[ERROR\]|\berror TS\d{4}\b|\bTS\d{4}:|Failed to compile|Build failed|bundle generation failed|Module not found|SyntaxError/i;
+const BUILD_OK = /compiled successfully|bundle generation complete|Compiled in|✓ Ready|ready in \d|Application startup complete/i;
+
+/**
+ * A dev server whose last build failed and has not rebuilt since: its error was printed before
+ * this take (ng serve / next dev compile at startup) and still stands, so the page it serves is
+ * broken by it.
+ */
+function endsInBuildError(src: LogSource): boolean {
+  try {
+    const tail = readFileSync(src.path, 'utf8')
+      .replace(/\x1b\[[0-9;]*[A-Za-z]/g, '')
+      .split(/\r?\n/)
+      .filter((l) => l.trim())
+      .slice(-120);
+    let err = -1;
+    let ok = -1;
+    tail.forEach((l, i) => {
+      if (BUILD_ERROR.test(l)) err = i;
+      if (BUILD_OK.test(l)) ok = i;
+    });
+    return err >= 0 && err > ok;
+  } catch {
+    return false;
+  }
+}
+
 /** The lines this page added to a log (since its offset), or [] if unreadable. */
 function newLines(src: LogSource): string[] {
   try {
@@ -249,7 +276,7 @@ export function pickLogs(
   // (e.g. ModuleNotFoundError behind "fetch failed"). A log that ends in a crash, stayed silent and
   // is pointed at by this take counts as grown, with an error.
   for (const s of scored) {
-    if (!s.grew && endsInCrash(s.src) && pointsAt(s.src)) Object.assign(s, { grew: true, hasError: true, dead: true });
+    if (!s.grew && (endsInCrash(s.src) || endsInBuildError(s.src)) && pointsAt(s.src)) Object.assign(s, { grew: true, hasError: true, dead: true });
   }
   const grown = scored.filter((s) => s.grew);
   const pool = grown.length ? grown : scored;
