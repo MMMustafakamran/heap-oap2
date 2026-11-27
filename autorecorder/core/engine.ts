@@ -23,14 +23,15 @@ import {
   writeFailureLog,
   type LogSource,
 } from './failure-evidence';
-import { gitBashTitle, pickShell, runFailureTerminal } from './failure-terminal';
+import { gitBashTitle, pickLogs, pickShell, runFailureTerminal } from './failure-terminal';
+import { SERVER_ERROR_PATTERN, findServerTerminal, streamServerTerminal } from './server-terminal';
 import { trimClipHead } from './trim-head';
 import { generateIdeHtml, type IdeTabConfig } from './ide/generator';
 import { closeNotepad, openNotepad, typeInNotepad } from './overlays/notepad';
 import { loadVoicePlan, voiceGate, voiceHasLine, voiceHoldMs, voiceTail } from './voice';
 import { setFast } from './fast';
 import { runState, startRunWatch } from './run-watch';
-import { firstCursorMoveS, getGlobalCursorPos, humanClick, humanGlide, humanScrollDown, resetIdle, restCursorSomewhere, sleep } from './overlays/cursor';
+import { firstCursorMoveS, getGlobalCursorPos, humanClick, humanGlide, humanScrollDown, resetIdle, restCursorSomewhere, sleep, smoothWheelBurst } from './overlays/cursor';
 import { between, jitter, pause, seedTake } from './overlays/human';
 import { carryCursorToNextPage, clickTaskbarApp, ensureOverlays, IDE_ROUTE_PATH, installOverlayInitScript, TERMINAL_ROUTE_PATH } from './overlays/taskbar';
 import { timeoutsFor } from './timeouts';
@@ -1115,6 +1116,83 @@ export class RecordingEngine {
       return;
     }
     if (page.isClosed()) return;
+    // The server's own terminal when start-all.sh ran it in a PTY (.qa/tools/ptyrun.cjs):
+    // the real output, live, nothing typed. Otherwise a shell reading the logs (below).
+    const takeText = [error, ...consoleEntries.map((e) => `${e.text} ${e.source ?? ''}`)].join('\n');
+    // Rule: a terminal only when it shows this take's error. The failure is on screen in the
+    // demo (nothing rendered, a wrong reply) and no server printed an error: no terminal at all.
+    if (!pickLogs(logs, 3, takeText).grepLog) {
+      console.log('   🖥️  No server printed an error during this take: no terminal shown');
+      return;
+    }
+    const server = findServerTerminal(logs, takeText);
+    if (server && server.hasError) {
+      const abort = { aborted: false };
+      let writes: Promise<unknown> = Promise.resolve();
+      const write = (data: string): void => {
+        writes = writes
+          .then(() => page.evaluate(`window.__termWrite && window.__termWrite(${JSON.stringify(data)})`))
+          .catch(() => {});
+      };
+      try {
+        await Promise.race([
+          (async () => {
+            await sleep(800);
+            await this.openTerminalWindow(page, {
+              cast: {
+                header: { version: 2, width: server.cols, height: server.rows, timestamp: Math.floor(Date.now() / 1000), title: server.name },
+                events: [],
+              },
+              title: server.name,
+              live: true,
+              viaTaskbar: true,
+            });
+            // Grid fitted to the window; the server's PTY is narrower (ptyrun: 168 x 36), so nothing rewraps.
+            await page.evaluate('window.__termFit && window.__termFit()').catch(() => null);
+            await sleep(300);
+            const run = await streamServerTerminal(server, write, { signal: abort });
+            await writes;
+            console.log(`   🖥️  Server terminal (${server.name}): ${run.bytes} bytes from ${basename(server.ptyFile)}`);
+            // The error may have scrolled above the screen (a rebuild printed after it): scroll the
+            // terminal up to it with the wheel, as a person looking for it would.
+            const found = (await page
+              .evaluate(`window.__termFindLast && window.__termFindLast(${JSON.stringify(SERVER_ERROR_PATTERN)})`)
+              .catch(() => null)) as { linesUp: number; line: number; viewportY: number; rowPx: number } | null;
+            if (found && found.linesUp > 0) {
+              const box = (await page
+                .evaluate(`(function(){var r=document.getElementById('term-host').getBoundingClientRect();return {x:r.left+r.width*0.45,y:r.top+r.height*0.5};})()`)
+                .catch(() => null)) as { x: number; y: number } | null;
+              if (box) {
+                await humanGlide(page, box.x + between(-60, 60), box.y + between(-40, 40));
+                await sleep(between(250, 500));
+                // Short wheel turns, checking where the terminal is after each one, until the error
+                // line sits near the top (xterm's pixels-per-line differs from the row height).
+                const target = Math.max(0, found.line - 2);
+                for (let turn = 0; turn < 12; turn++) {
+                  const y = Number(await page.evaluate('window.__termViewportY && window.__termViewportY()').catch(() => target));
+                  if (!(y > target)) break;
+                  const lines = Math.min(8, y - target);
+                  await smoothWheelBurst(-Math.max(1, Math.round(lines * found.rowPx * 0.5)), (d) => page.mouse.wheel(0, d));
+                  await sleep(between(120, 260));
+                }
+                const at = await page.evaluate('window.__termViewportY && window.__termViewportY()').catch(() => null);
+                console.log(`   🖥️  Scrolled up to the error (line ${found.line}, top row now ${at})`);
+              }
+            }
+            // Hold on the screen so it can be read before the clip ends.
+            await sleep(3500);
+          })(),
+          sleep(60_000).then(() => {
+            throw new Error('server terminal did not finish in 60s');
+          }),
+        ]);
+        return;
+      } catch (e) {
+        abort.aborted = true;
+        console.warn(`   Evidence note: server terminal not shown: ${e instanceof Error ? e.message : e}`);
+        return;
+      }
+    }
     const shell = pickShell();
     if (!shell) {
       console.warn('   Evidence note: no bash/powershell found, terminal not shown on camera');

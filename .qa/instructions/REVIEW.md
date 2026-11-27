@@ -62,6 +62,7 @@ prompt; bash fallback) where `ls logs`, `Get-Content <log> -Tail 25` and `Select
 (bash: `ls logs/`, `tail`, `grep`) are pasted in and their real output shown. It shows the viewer the real terminal error.
 **Never flag it**: not as an overlay, not as a glitch, not as "a harness failure on screen". Its
 red text is not an overlay. Do read it, and read `logs/<page-id>.error.log`: its **Recorder verdict** section (not on camera) is the recorder's summary of the error.
+Since 2026-11-28 a failed take shows a terminal **only** when a server printed this take's error; a failure clip that ends after the demo with no terminal is correct when the failure is only visible in the demo (never flag it as a missing segment). The terminal may also be a server's own tab (titled with its command, e.g. `npm start`, `uv run python agent_server.py`) instead of a PowerShell window: same rule, never flag it.
 
 Also never flag: a Next.js error overlay (real errors, evidence; the "N Issues" badge is turned off on purpose, `devIndicators: false`), a red
 error card rendered by CopilotKit or the app, the docs site's own callouts (yellow "Not

@@ -216,7 +216,7 @@ export function generateTerminalHtml(opts: TerminalRenderOptions): string {
     cursorBlink: true,
     cursorStyle: 'bar',
     convertEol: false,
-    scrollback: 0,
+    scrollback: ${opts.live ? 5000 : 0}, // live: a real terminal keeps its history (the error may be above the screen)
     theme: {
       background: '#0c0c0c',
       foreground: '#cccccc',
@@ -287,6 +287,23 @@ export function generateTerminalHtml(opts: TerminalRenderOptions): string {
       }
     });
   };
+
+  // Live mode: where the last line matching \`pattern\` sits relative to the screen. linesUp > 0 when
+  // it has scrolled above the visible rows (the caller wheel-scrolls up to it, as a person would).
+  window.__termFindLast = function (pattern) {
+    var re = new RegExp(pattern, 'i');
+    var b = term.buffer.active;
+    for (var i = b.length - 1; i >= 0; i--) {
+      var line = b.getLine(i);
+      if (line && re.test(line.translateToString(true))) {
+        var row = document.querySelector('.xterm-rows > div');
+        return { linesUp: Math.max(0, b.viewportY - i + 2), line: i, viewportY: b.viewportY, rowPx: row ? row.getBoundingClientRect().height : 18 };
+      }
+    }
+    return null;
+  };
+
+  window.__termViewportY = function () { return term.buffer.active.viewportY; };
 
   window.__castReplayDone = false;
   window.__castEventCount = EVENTS.length;
