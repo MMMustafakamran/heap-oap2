@@ -100,7 +100,7 @@ One JSON object per line, sorted by `t` (ties keep the order they happened in). 
 | `navigation` | `url` (main frame only) |
 | `mark` | `label`, `detail` — same as in the timeline |
 | `checkpoint` | `label`, `expect`, `observed`, `ok` — same as in the timeline |
-| `step` | (owner, 2026-11-25) `label`: `prompt-sent` (`text`), `reply-started` (`afterMs`), `reply-finished` (`chars`, the existing settle), `reply-still-streaming`, or a page action's own `waitStep` label. Keyframe `step-<label>` ~0.6 s later |
+| `step` | (owner, 2026-11-25) `label`: `prompt-sent` (`text`), `reply-started` (`afterMs`), `reply-finished` (`chars`, the existing settle), `reply-still-streaming`, or a page action's own `waitStep` label. Run watcher (`core/run-watch.ts`, 2026-11-27, from the network: run POST `/agent/<id>/run` / `agent/run` / GraphQL, AG-UI `RUN_STARTED`/`RUN_FINISHED`/`RUN_ERROR` in the stream): `run-started` (`url`), `run-finished`, `run-error` (`message`, keys redacted); when a wait gives up because the run ended and the screen stayed still for `runQuietMs` (default 8 s, 3 s after an error): `run-finished-nothing-rendered` or `run-error: <message>`. Keyframe `step-<label>` ~0.6 s later |
 | `step-missing` | `label`: a `waitStep` that timed out. Keyframe `step-missing-<label>` |
 | `click` | `target`: `<tag>: <accessible name or text>` under the cursor. Every `humanClick` in the demo segment (doc, IDE-tab and taskbar clicks are not logged). Keyframes `click-before-<name>` (requested before the press) and `click-after-<name>` (~0.6 s after) |
 | `ui` | `ui` (kind: `buttons`, `input`, `img`, `iframe`, `canvas`, `svg`, `surface`, `error`, `text`), `text` (≤ 80 chars). A meaningful UI change in the demo, from a MutationObserver started when the demo has loaded: new buttons (names), inputs, images / iframes / canvases / large SVGs, generative-UI surfaces, alerts / error banners / Next.js error overlay, and text changes outside the chat (state panels, counters). Streaming text inside chat messages, spinners, the recorder's overlays and the docs site are ignored. Debounced (~800 ms quiet), at most 30 per clip, one keyframe `ui-<kind>` per batch |
@@ -148,12 +148,15 @@ currentSegment() / timelineEvents()                   // the segment the take is
 ```ts
 waitStep(page, locatorOrSelector, label, { timeoutMs?, last? }) // -> boolean; logs step / step-missing, never throws
 logStep(label, fields?)                                          // a step event + keyframe
+runState(page)                                                   // -> {active, seen, lastStartedAt, lastFinishedAt, lastError?} (core/run-watch.ts)
+runEnded(page, sinceT, timeoutMs?)                               // -> {kind:'finished'|'error', message?, at} | undefined
+waitForUiOrRunEnd(page, locatorOrPromise, {timeoutMs, quietMs?, sinceT?}) // -> {ui} | {ended} | {timeout}; never throws
 expectUiFor('interrupt' | 'tool-card' | 'a2ui' | 'iframe' | 'shared-state' | 'reasoning' | 'sub-agents' | 'multimodal' | 'threads', ...extra)
 // PageDefinition.expectUi: { name, selector?, text?: string | RegExp, role?, changed?: boolean }[]
 ```
 
 The probe (`probe.mts`) writes the same `ui` events to `result.json` `ui` and the `step` /
-`step-missing` / `click` events to `result.json` `steps`.
+`step-missing` / `click` events to `result.json` `steps`, and the run watcher's summary to `result.json` `run` (`seen`, `active`, `lastError`).
 
 `checkpoint` never throws, never retries, and gives up on a probe after 3 s (observed `null`).
 A probe must only read the page.

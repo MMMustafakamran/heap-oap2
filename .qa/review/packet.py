@@ -796,7 +796,8 @@ def build_clip(clip, run_dir, repo, sections, out_dir, post_upload, run_label):
         if k == "ui":
             tl_rows.append((e.get("t", 0), f"ui {e.get('ui')}: {str(e.get('text', ''))[:70]}"))
         elif k in ("step", "step-missing"):
-            tl_rows.append((e.get("t", 0), f"{k} {e.get('label')}"))
+            msg = f": {str(e['message'])[:80]}" if e.get("message") else ""
+            tl_rows.append((e.get("t", 0), f"{k} {e.get('label')}{msg}"))
         elif k == "click":
             tl_rows.append((e.get("t", 0), f"click {str(e.get('target', ''))[:60]}"))
     if tl_rows:
@@ -807,6 +808,9 @@ def build_clip(clip, run_dir, repo, sections, out_dir, post_upload, run_label):
         for t, txt in tl_rows:
             L.append(f"- {fmt_t(t)} {txt}")
     errs = event_errors(events, marks, dur)
+    # Run errors from the network watcher (core/run-watch.ts): the agent run's own error text.
+    errs = [(e.get("t", 0), "run-error", 1, str(e["message"])) for e in events
+            if e.get("kind") == "step" and e.get("label") == "run-error" and e.get("message")][:2] + errs
     L.append("## Errors (demo, docs noise removed)")
     for t, k, cnt, txt in errs[:6]:
         L.append(f"- {fmt_t(t)} {k}{' x' + str(cnt) if cnt > 1 else ''}: {txt[:180]}")

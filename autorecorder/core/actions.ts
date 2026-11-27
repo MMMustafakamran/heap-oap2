@@ -6,6 +6,7 @@ import { beat, humanClick, humanGlide, idleDrift, sleep } from './overlays/curso
 import { chance, humanType, pause, planTypo } from './overlays/human';
 import { TIMEOUTS } from './timeouts';
 import { checkExpectUi, logStep } from './ui-log';
+import { RUN_ERROR_QUIET_MS, RUN_QUIET_MS, endedSince, startRunWatch } from './run-watch';
 import { SURFACE_SELECTOR, checkpoint, logAction, probeText } from './timeline';
 import {
   type ActionContext,
@@ -67,6 +68,8 @@ export interface ReplyWaitOptions {
   startTimeoutMs?: number;
   /** How long to allow the reply to stream once it has started. */
   streamTimeoutMs?: number;
+  /** After the agent run ended (run-watch.ts): how long the screen may stay still before giving up. */
+  quietMs?: number;
 }
 
 /**
@@ -104,6 +107,8 @@ export async function waitForAgentResponseCompletion(
 ): Promise<ReplyObservation> {
   const startTimeoutMs = opts.startTimeoutMs ?? TIMEOUTS.replyStartMs;
   const streamTimeoutMs = opts.streamTimeoutMs ?? TIMEOUTS.replyStreamMs;
+  const quietMs = opts.quietMs ?? TIMEOUTS.runQuietMs ?? RUN_QUIET_MS;
+  void startRunWatch(page);
   console.log(`   ⏳ Actively detecting AI agent response start & streaming progress...`);
 
   // Step 1: Wait until a new assistant message starts receiving content
@@ -123,6 +128,11 @@ export async function waitForAgentResponseCompletion(
 
   let sawBusy = false;
   let idleSince = 0;
+  // Run watcher: the prompt was sent just before this call, so its run may have started a moment
+  // earlier. A run that has ended while the screen stays still means no reply is coming.
+  const runSince = startTime - 5000;
+  let startSig = '';
+  let startSigAt = Date.now();
   while (Date.now() - startTime < startTimeoutMs) {
     const status = await page
       .evaluate(({ bCount, sel, surfaceSel, uiBase }) => {
@@ -141,10 +151,11 @@ export async function waitForAgentResponseCompletion(
             return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden';
           });
         const msgs = document.querySelectorAll(sel);
-        if (msgs.length === 0) return { started: false, len: 0, busy };
+        const sig = `${(document.body?.innerText || '').length}/${document.querySelectorAll(surfaceSel).length}/${document.querySelectorAll('iframe').length}`;
+        if (msgs.length === 0) return { started: false, len: 0, busy, sig };
         // If initialMessageCount was given, ensure we are looking at a new message
         if (bCount > 0 && msgs.length <= bCount) {
-          return { started: false, len: 0, busy };
+          return { started: false, len: 0, busy, sig };
         }
         // Scan back for the newest message that actually has text. Some pages
         // render an empty trailing node after the real reply -- reading the last
@@ -155,9 +166,9 @@ export async function waitForAgentResponseCompletion(
           const t = (msgs[i].textContent || '').trim();
           if (t) { txt = t; break; }
         }
-        return { started: txt.length > 2, len: txt.length, busy };
+        return { started: txt.length > 2, len: txt.length, busy, sig };
       }, { bCount: baseCount, sel: messageSelector, surfaceSel: SURFACE_SELECTOR, uiBase })
-      .catch(() => ({ started: false, len: 0, busy: false }));
+      .catch(() => ({ started: false, len: 0, busy: false, sig: '' }));
 
     if (status.started) {
       hasStarted = true;
@@ -176,6 +187,26 @@ export async function waitForAgentResponseCompletion(
       throw new AgentSilentError(
         `Agent run failed before any reply text appeared (${Math.round((Date.now() - startTime) / 1000)}s in): ${fatal}`,
       );
+    }
+    // The network says the run is over (RUN_FINISHED / RUN_ERROR / the stream closed) and the
+    // screen has not changed for quietMs: nothing is coming. An interrupt or a late card changes
+    // the screen inside that window and keeps the wait going.
+    const sig = (status as { sig?: string }).sig ?? '';
+    if (sig !== startSig) { startSig = sig; startSigAt = Date.now(); }
+    const ended = endedSince(page, runSince);
+    if (ended) {
+      const q = ended.kind === 'error' ? Math.min(quietMs, RUN_ERROR_QUIET_MS) : quietMs;
+      if (Date.now() - Math.max(startSigAt, ended.at) >= q) {
+        const secs = Math.round((Date.now() - startTime) / 1000);
+        if (ended.kind === 'error') {
+          logStep(`run-error: ${(ended.message ?? 'run failed').slice(0, 160)}`);
+          throw new AgentSilentError(`The agent run failed with no reply on screen (${secs}s in): ${ended.message ?? 'RUN_ERROR'}`);
+        }
+        logStep('run-finished-nothing-rendered');
+        throw new AgentSilentError(
+          `The agent run finished with nothing rendered (${secs}s in): no assistant message or UI appeared within ${Math.round(q / 1000)}s of the run ending.`,
+        );
+      }
     }
     // The chat said it was running and has stopped, with nothing on screen: the run ended empty.
     // Waiting out the rest of the start window only froze the clip (Antigravity Surfaces/Theming,
@@ -204,6 +235,7 @@ export async function waitForAgentResponseCompletion(
     let settled = false;
     let polls = 0;
     const streamStart = Date.now();
+    let runGaveUp = false;
 
     while (Date.now() - streamStart < streamTimeoutMs) {
       // A reader's hand is not still for twenty seconds. Every second or so,
@@ -267,12 +299,23 @@ export async function waitForAgentResponseCompletion(
         previousSignature = signature;
         previousText = currentText;
       }
+      // The run is over and the screen has not changed for quietMs (a busy flag that never clears,
+      // a text-less turn): stop waiting. Not marked settled: the reply checkpoint judges what shows.
+      const ended = endedSince(page, startTime - 5000);
+      if (ended && Date.now() - Math.max(stableSince, ended.at) >= quietMs) {
+        logStep(ended.kind === 'error' ? `run-error: ${(ended.message ?? 'run failed').slice(0, 160)}` : 'run-finished-nothing-rendered');
+        observed.chars = currentText.length;
+        runGaveUp = true;
+        break;
+      }
       await sleep(400);
     }
 
     // The cap ran out with text still changing. That used to fall through
     // silently and count as complete; now the caller is told.
-    if (!settled) {
+    if (!settled && runGaveUp) {
+      console.warn(`   ⚠️ The agent run ended and the screen stayed still for ${Math.round(quietMs / 1000)}s; the take continues.`);
+    } else if (!settled) {
       logStep('reply-still-streaming');
       observed.streamTimedOut = true;
       observed.chars = previousText.length;

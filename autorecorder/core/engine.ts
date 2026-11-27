@@ -29,6 +29,7 @@ import { generateIdeHtml, type IdeTabConfig } from './ide/generator';
 import { closeNotepad, openNotepad, typeInNotepad } from './overlays/notepad';
 import { loadVoicePlan, voiceGate, voiceHasLine, voiceHoldMs, voiceTail } from './voice';
 import { setFast } from './fast';
+import { runState, startRunWatch } from './run-watch';
 import { firstCursorMoveS, getGlobalCursorPos, humanClick, humanGlide, humanScrollDown, resetIdle, restCursorSomewhere, sleep } from './overlays/cursor';
 import { between, jitter, pause, seedTake } from './overlays/human';
 import { carryCursorToNextPage, clickTaskbarApp, ensureOverlays, IDE_ROUTE_PATH, installOverlayInitScript, TERMINAL_ROUTE_PATH } from './overlays/taskbar';
@@ -361,6 +362,8 @@ export interface ProbeOutcome {
   warnings: string[];
   /** The run stopped at the first failed checkpoint instead of finishing the action. */
   endedEarly?: boolean;
+  /** Agent runs seen on the network (core/run-watch.ts): count, still active, last error. */
+  run?: { seen: boolean; active: boolean; lastError?: string };
   /** UI timeline: `ui` events ({t, ui, text}), see core/ui-log.ts. */
   ui?: Record<string, unknown>[];
   /** Steps, missed steps and clicks ({t, kind, label | target}). */
@@ -1385,6 +1388,7 @@ export class RecordingEngine {
       }
 
       await startUiLog(page);
+      await startRunWatch(page);
       setExpectUi(config.expectUi);
       mark('action');
       const action = executePageAction(page, config, this.rootDir, ctx).then(() => 'done' as const);
@@ -1431,6 +1435,7 @@ export class RecordingEngine {
     const evs = timelineEvents();
     result.ui = evs.filter((e) => e.kind === 'ui').map(({ kind: _k, ...rest }) => rest);
     result.steps = evs.filter((e) => e.kind === 'step' || e.kind === 'step-missing' || e.kind === 'click').map((e) => ({ ...e }));
+    { const rs = runState(page); result.run = { seen: rs.seen, active: rs.active, lastError: rs.lastError?.message }; }
     const badCheck = result.checks.find((c) => !c.ok);
     if (!error && badCheck) error = `checkpoint failed: ${badCheck.label} (expected ${badCheck.expect}, saw ${badCheck.observed ?? 'nothing'})`;
     if (error && !failShot) await page.screenshot({ path: join(out, 'failure.png') }).catch(() => {});
@@ -1733,6 +1738,7 @@ export class RecordingEngine {
 
         // Dispatch specific demo actions
         await startUiLog(page);
+        await startRunWatch(page);
         setExpectUi(config.expectUi);
         mark('action');
         await executePageAction(page, config, this.rootDir, ctx);

@@ -290,6 +290,11 @@ export interface RecorderTimeouts {
   replyStartMs: number;
   /** A reply finishing once it has started. */
   replyStreamMs: number;
+  /**
+   * After the agent run has ended (run-watch.ts), how long the screen may stay unchanged before
+   * the reply wait gives up instead of sitting out replyStartMs / replyStreamMs. Default 8000.
+   */
+  runQuietMs?: number;
 }
 
 export type PageActionHandler = (
