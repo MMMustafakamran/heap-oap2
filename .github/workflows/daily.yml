@@ -395,6 +395,19 @@ jobs:
           echo "$HOME/ffmpeg-static" >> "$GITHUB_PATH"
           ~/ffmpeg-static/ffprobe -version | head -1
 
+      - name: "Cache static ffmpeg (before Record: head trim + end-mark clamp need ffmpeg/ffprobe)"
+        uses: actions/cache@v4
+        with:
+          path: ~/ffmpeg-static
+          key: ffmpeg-static-linux64-v1
+      - name: Install ffmpeg/ffprobe on PATH
+        run: |
+          if [ ! -x ~/ffmpeg-static/ffprobe ]; then
+            mkdir -p ~/ffmpeg-static
+            curl -fsSL --retry 3 https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz               | tar -xJ --strip-components=1 -C ~/ffmpeg-static
+          fi
+          echo "$HOME/ffmpeg-static" >> "$GITHUB_PATH"
+
       - name: Record
         id: rec
         env:
