@@ -149,7 +149,7 @@
     {
      "text": null,
      "clip": "OAI-vue-01-Quickstart",
-     "loom": "https://www.loom.com/share/3312e19e0cee401fa93e98d003430d47",
+     "loom": "https://www.loom.com/share/d49f17229ae8460baef9bef577ac8907",
      "narration": {
       "clip": "OAI-vue-01-Quickstart",
       "segments": [
@@ -183,7 +183,7 @@
        }
       ]
      },
-     "filmed": "2026-11-24"
+     "filmed": "2026-11-27"
     }
    ],
    "review": {
@@ -469,8 +469,8 @@
     {
      "text": "Issue",
      "clip": "OAI-vue-15-StateRendering",
-     "loom": "https://www.loom.com/share/882aa92beb7d4ae495de80720543cd11",
-     "filmed": "2026-11-24",
+     "loom": "https://www.loom.com/share/2649252a2b214b48aaa0104dee4dbcc7",
+     "filmed": "2026-11-27",
      "narration": {
       "clip": "OAI-vue-15-StateRendering",
       "segments": [
@@ -600,8 +600,8 @@
     {
      "text": "Render agent state in your app - Vue",
      "clip": "OAI-vue-23-SharedStateRendering",
-     "loom": "https://www.loom.com/share/2b705fab11454161a5544cac92c58be2",
-     "filmed": "2026-11-24",
+     "loom": "https://www.loom.com/share/4d269fe4e5ca4c2399d4c75ee4b5c914",
+     "filmed": "2026-11-27",
      "narration": "narration/scripts/OAI-vue-23-SharedStateRendering.json"
     }
    ],
@@ -827,8 +827,8 @@
     {
      "text": null,
      "clip": "OAI-vue-29-SubAgents",
-     "loom": "https://www.loom.com/share/35b049c8cc074b0687ed56e23c082523",
-     "filmed": "2026-11-24",
+     "loom": "https://www.loom.com/share/fb34034821a3462a94c065996f4e3b1e",
+     "filmed": "2026-11-27",
      "narration": "narration/scripts/OAI-vue-29-SubAgents.json"
     }
    ],
@@ -920,8 +920,8 @@
     {
      "text": "Issue",
      "clip": "OAI-vue-09-AgentConfig",
-     "loom": "https://www.loom.com/share/fd42f0923b6f4f0a950dda0b9d79905f",
-     "filmed": "2026-11-24",
+     "loom": "https://www.loom.com/share/021a0a18454d460b85cb8b335734ea2f",
+     "filmed": "2026-11-27",
      "narration": {
       "clip": "OAI-vue-09-AgentConfig",
       "segments": [
