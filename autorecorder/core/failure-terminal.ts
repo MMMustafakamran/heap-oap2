@@ -326,8 +326,8 @@ export async function runFailureTerminal(opts: FailureTerminalOptions): Promise<
     onData: opts.onData,
   });
   try {
-    const ready = await session.waitFor(shell.prompt, 15_000);
-    if (!ready.matched) throw new Error(`shell prompt did not appear in 15s (${shell.file})`);
+    const ready = await session.waitFor(shell.prompt, 30_000);
+    if (!ready.matched) throw new Error(`shell prompt did not appear in 30s (${shell.file})`);
     await sleep(between(700, 1100));
 
     for (const [ci, cmd] of commands.entries()) {

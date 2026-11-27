@@ -14,6 +14,7 @@ import { keystrokeDelay } from '../overlays/human';
 import { CastRecorder } from './cast';
 import { redactText } from './redact';
 import { highlightedLabel, lastLines, tailMatches } from './screen';
+import { CursorTracker } from './cursor';
 
 const POLL_INTERVAL_MS = 60;
 
@@ -105,7 +106,12 @@ export class PtySession {
     });
 
     const echo = opts.echo ?? true;
+    // A bare PTY has no terminal to answer cursor-position queries (ESC[6n): PowerShell's line
+    // editor then stalls ~1 s per query and redraws input at the wrong place. ConPTY (Windows)
+    // answers them itself, so only elsewhere.
+    const cursor = process.platform === 'win32' ? null : new CursorTracker(cols, rows);
     this.proc.onData((data) => {
+      if (cursor) for (const reply of cursor.feed(data)) this.proc.write(reply);
       this.stream += data;
       this.cast.output(data);
       if (opts.onData) opts.onData(redactText(data));
